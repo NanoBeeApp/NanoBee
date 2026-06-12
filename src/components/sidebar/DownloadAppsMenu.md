@@ -31,3 +31,9 @@ avatar that opens a popover menu with native app download links (iOS / Mac).
   scrim + popover interaction so the footer stays consistent.
 - **Key decision**: link targets come from `APP_DOWNLOAD_LINKS` in the
   shared config (site-level redirect URLs) instead of hardcoded store URLs.
+
+### 2026-06-12 — right-aligned the trigger
+- **Motivation**: user feedback — the download button should sit at the
+  right edge of the footer, not next to the avatar.
+- **Key decision**: `margin-left: auto` on the trigger and the popover
+  anchored to the footer's right edge (`right: 10px`), both in CSS only.

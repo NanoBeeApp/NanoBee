@@ -160,8 +160,8 @@ body { background: var(--surface-2); color: var(--ink); overflow: hidden; }
 .nb-account-trigger { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: none; border-radius: 999px; background: transparent; cursor: pointer; transition: background var(--dur-1) var(--ease-out); }
 .nb-account-trigger:hover { background: var(--surface-3); }
 .nb-account-pop, .nb-apps-pop { position: absolute; bottom: calc(100% + 6px); left: 10px; width: 224px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--sh-4); overflow: hidden; z-index: 60; animation: nbtoast 0.22s var(--ease-out); }
-.nb-apps-pop { left: 50px; width: 176px; }
-.nb-apps-trigger { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: none; border-radius: 999px; background: transparent; color: var(--ink-3); cursor: pointer; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+.nb-apps-pop { left: auto; right: 10px; width: 176px; }
+.nb-apps-trigger { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: none; border-radius: 999px; background: transparent; color: var(--ink-3); cursor: pointer; margin-left: auto; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
 .nb-apps-trigger:hover { background: var(--surface-3); color: var(--ink); }
 .nb-account-id { display: flex; align-items: center; gap: 9px; padding: 11px 12px; }
 .nb-account-id .meta { flex: 1; min-width: 0; }
