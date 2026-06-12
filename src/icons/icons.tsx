@@ -73,6 +73,7 @@ export const Icons: Record<IconName, IconComponent> = {
   download: (p) => <Svg {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /><path d="M12 15V3" /></Svg>,
   smartphone: (p) => <Svg {...p}><rect x="5" y="2" width="14" height="20" rx="2" /><path d="M12 18h.01" /></Svg>,
   monitor: (p) => <Svg {...p}><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></Svg>,
+  gear: (p) => <Svg {...p}><circle cx="12" cy="12" r="3" /><path d="M12 2.8 13.6 5a7.2 7.2 0 0 1 2.7 1.1l2.7-.6 1.5 2.6-1.8 2.1a7.3 7.3 0 0 1 0 2.9l1.8 2.1-1.5 2.6-2.7-.6a7.2 7.2 0 0 1-2.7 1.1l-1.6 2.3h-1.9l-1.6-2.3a7.2 7.2 0 0 1-2.7-1.1l-2.7.6-1.5-2.6 1.8-2.1a7.3 7.3 0 0 1 0-2.9L3.9 8.1l1.5-2.6 2.7.6A7.2 7.2 0 0 1 10.8 5l1.6-2.3z" /></Svg>,
 };
 
 /** Render an icon by name with a safe fallback (bell). */

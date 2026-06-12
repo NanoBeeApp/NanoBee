@@ -10,7 +10,7 @@ Shared frontend configuration: cross-component constants and external links
 
 ## Dependencies
 - Upstream: none
-- Downstream: `components/sidebar/DownloadAppsMenu.tsx`
+- Downstream: `components/sidebar/SettingsMenu.tsx`
 
 ## Notes
 - The `/download/ios` and `/download/mac` redirect endpoints are not wired

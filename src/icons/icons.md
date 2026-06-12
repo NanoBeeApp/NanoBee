@@ -30,3 +30,7 @@ Inline SVG line-icon set (Lucide-class, 24x24, rounded caps) ported 1:1 from the
   the previously used `x` icon read as "close" and confused users.
 - **Key decision**: standard Lucide `log-out` path so it stays consistent
   with the rest of the Lucide-class set.
+
+### 2026-06-12 — added `gear` icon
+- **Motivation**: the sidebar footer download button became a settings
+  (gear) button whose menu hosts the app download links.

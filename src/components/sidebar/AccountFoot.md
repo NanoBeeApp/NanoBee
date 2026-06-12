@@ -11,7 +11,7 @@ and a logout action — or a login/register entry linking to `/login`.
 
 ## Dependencies
 - Upstream: `react` (useState), `@tanstack/react-router` (Link),
-  `../../icons/icons`, `../../lib/useAuth`, `./DownloadAppsMenu`
+  `../../icons/icons`, `../../lib/useAuth`, `./SettingsMenu`
 - Downstream: `Sidebar.tsx`
 - Styles: `.nb-account-trigger` / `.nb-account-pop` / `.nb-account-id` /
   `.nb-account-action` in `src/styles/app.css`; reuses `.nb-scrim`
@@ -55,3 +55,9 @@ and a logout action — or a login/register entry linking to `/login`.
   account-level actions.
 - **Goal**: a menu action that sets `aiSetupOpen` in the app store, opening
   the same dialog used on first login (edit mode).
+
+### 2026-06-12 — DownloadAppsMenu renamed to SettingsMenu
+- **Motivation**: the footer's download icon button was repurposed as a
+  general settings button (gear) whose menu hosts the download links.
+- **Key decision**: only the import/usage changed here; the menu remains a
+  separate self-contained component.

@@ -1,30 +1,31 @@
-// Sidebar footer "download apps" button: sits next to the account avatar
-// and opens a popover menu with native app download links (iOS / Mac).
+// Sidebar footer settings button: sits at the right edge of the footer and
+// opens a popover menu. Currently hosts the native app download links
+// (iOS / Mac); future utility entries also belong here.
 
 import { useState } from "react";
 import { Icons } from "../../icons/icons";
 import { APP_DOWNLOAD_LINKS } from "../../config";
 
-export function DownloadAppsMenu() {
+export function SettingsMenu() {
 	const [open, setOpen] = useState(false);
 
 	return (
 		<>
 			<button
-				className="nb-apps-trigger"
-				title="下载 Apps"
+				className="nb-settings-trigger"
+				title="设置"
 				aria-haspopup="menu"
 				aria-expanded={open}
 				onClick={() => setOpen((o) => !o)}
-				data-testid="download-apps-trigger"
+				data-testid="settings-menu-trigger"
 			>
-				<Icons.download size={16} />
+				<Icons.gear size={16} />
 			</button>
 
 			{open && (
 				<>
 					<div className="nb-scrim" onClick={() => setOpen(false)} />
-					<div className="nb-apps-pop" data-testid="download-apps-menu">
+					<div className="nb-settings-pop" data-testid="settings-menu">
 						<a
 							className="nb-account-action"
 							href={APP_DOWNLOAD_LINKS.ios}
