@@ -14,7 +14,7 @@ export const updateRoutes = new Hono<{ Bindings: Env }>()
 	.post("/read-all", async (c) => {
 		console.log("[API] POST /api/updates/read-all");
 		try {
-			await ensureSeeded(c.env.DB);
+			await ensureSeeded(c.env);
 			await c.env.DB.prepare("UPDATE updates SET unread = 0").run();
 			return c.json({ ok: true });
 		} catch (error) {
@@ -32,7 +32,7 @@ export const updateRoutes = new Hono<{ Bindings: Env }>()
 			const { read } = c.req.valid("json");
 			console.log("[API] POST /api/updates/:id/read, id:", id, "read:", read);
 			try {
-				await ensureSeeded(c.env.DB);
+				await ensureSeeded(c.env);
 				const { meta } = await c.env.DB.prepare(
 					"UPDATE updates SET unread = ? WHERE id = ?",
 				)

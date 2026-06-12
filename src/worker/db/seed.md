@@ -1,13 +1,17 @@
 # src/worker/db/seed.ts
 
 ## Responsibility
-Idempotent demo-data seeding for D1: copies the TS demo content
-(`src/data/` chats, conversations, tasks, updates) into an empty database
-the first time the API touches it.
+Idempotent demo-data seeding for D1 — **local dev only**: copies the TS demo
+content (`src/data/` chats, conversations, tasks, updates) into an empty
+database the first time the API touches it. Seeding is gated on the
+`SEED_DEMO_DATA="1"` var (set in `.dev.vars`); deployed environments leave it
+unset so their databases start empty like a fresh user account.
 
 ## Core exports / API
-- `ensureSeeded(db)` — no-op when `chats` already has rows; otherwise inserts
-  the entire demo dataset in one `db.batch()` (a single transaction).
+- `ensureSeeded(env)` — no-op unless `env.SEED_DEMO_DATA === "1"`; no-op when
+  `chats` already has rows; otherwise inserts the entire demo dataset in one
+  `db.batch()` (a single transaction). Takes a structural `{ DB,
+  SEED_DEMO_DATA? }` slice of `Env` so the gate lives in one place.
 
 ## Dependencies
 - Upstream: `src/data/{chats,conversations,tasks,updates}` (single source of
@@ -30,3 +34,13 @@ the first time the API touches it.
 - **Key decision**: lazy seeding from the existing TS modules instead of a SQL
   seed migration — keeps one source of truth and avoids hand-maintaining a
   large Chinese-text SQL file in parallel with the TS data.
+
+### 2026-06-12 — seeding gated behind SEED_DEMO_DATA (local dev only)
+- **Motivation**: real accounts on deployed environments saw the demo data —
+  unconditional seeding re-filled any emptied database on the next request,
+  making a clean "new user" state impossible.
+- **Goal**: deployed databases start and stay empty; local dev keeps the demo
+  content for UI work and the integration tests.
+- **Key decision**: the gate lives inside `ensureSeeded` (signature changed
+  from `(db)` to `(env)`) instead of at each of the six route call sites —
+  one place to check, impossible for a future route to forget.

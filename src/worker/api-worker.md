@@ -8,8 +8,9 @@ exports `AppType` for the typed RPC client.
 ## Core exports / API
 - `default` — the Hono app (consumed by `server-entry.ts` / `ssr.tsx`)
 - `Env` — Cloudflare bindings type: `DB: D1Database` plus auth secrets
-  (`AUTH_SECRET`, `RESEND_API_KEY`, `GOOGLE_/GITHUB_CLIENT_ID/SECRET`) and
-  auth vars (`EMAIL_FROM`, `LOG_EMAIL_CODES`)
+  (`AUTH_SECRET`, `RESEND_API_KEY`, `GOOGLE_/GITHUB_CLIENT_ID/SECRET`),
+  auth vars (`EMAIL_FROM`, `LOG_EMAIL_CODES`) and the local-dev-only
+  `SEED_DEMO_DATA` demo-seeding switch
 - `AppType` — type of the mounted API routes, used by `src/lib/api-client.ts`
 - Routes: `/api/*` (see `routes/api.ts`), `GET /health`
 
@@ -39,3 +40,9 @@ exports `AppType` for the typed RPC client.
   come from `.dev.vars`, in deployments from `wrangler secret` /
   `wrangler.json` vars, and routes degrade gracefully when missing
   (e.g. 501 `provider_not_configured`).
+
+### 2026-06-12 — SEED_DEMO_DATA var added
+- **Motivation**: demo seeding had to become opt-in so deployed databases can
+  stay empty for real accounts; the switch needs a typed home in `Env`.
+- **Key decision**: optional string set only in `.dev.vars` — absent in
+  `wrangler.json` vars so no deployed environment can accidentally seed.

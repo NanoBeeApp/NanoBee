@@ -1,7 +1,9 @@
 /**
- * Idempotent demo-data seeding for D1.
+ * Idempotent demo-data seeding for D1 — local dev only.
  * The TS modules under src/data/ stay the single source of truth for the
  * demo content; this module copies them into D1 once per empty database.
+ * Seeding only runs when SEED_DEMO_DATA="1" (set in .dev.vars); deployed
+ * environments leave the var unset so their databases start empty.
  */
 
 import type { D1Database } from "@cloudflare/workers-types";
@@ -10,11 +12,21 @@ import { CONVERSATIONS } from "../../data/conversations";
 import { INITIAL_TASKS } from "../../data/tasks";
 import { INITIAL_UPDATES } from "../../data/updates";
 
+// The slice of Env this module needs (structural, to avoid a dependency on
+// the full Env type from api-worker.ts).
+interface SeedEnv {
+	DB: D1Database;
+	SEED_DEMO_DATA?: string;
+}
+
 // Per-isolate cache so we only hit the COUNT(*) check once per worker instance.
 let seededInThisIsolate = false;
 
-export async function ensureSeeded(db: D1Database): Promise<void> {
+export async function ensureSeeded(env: SeedEnv): Promise<void> {
+	// Single gate for every route: deployed environments never seed.
+	if (env.SEED_DEMO_DATA !== "1") return;
 	if (seededInThisIsolate) return;
+	const db = env.DB;
 
 	const row = await db
 		.prepare("SELECT COUNT(*) AS n FROM chats")

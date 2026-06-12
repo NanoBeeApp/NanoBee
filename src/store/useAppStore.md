@@ -7,11 +7,11 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 - `useAppStore` hook, `selectUnreadCount` selector, `View` / `SidebarMode` types
 
 ## Dependencies
-- Upstream: zustand, lib/api-client (Hono RPC), data layer (instant-render fallback content + nextId)
+- Upstream: zustand, lib/api-client (Hono RPC), data layer (UPDATE_TO_CHAT mapping + nextId)
 - Downstream: every stateful component
 
 ## Key notes
-- Data flow: initial state is the bundled demo data (instant paint); `bootstrap()` replaces it with `GET /api/bootstrap` (D1 is seeded with the same content, so the swap is invisible). On fetch failure the app stays usable on local data and shows a toast.
+- Data flow: the store starts empty (new-user state, EmptyState renders); `bootstrap()` fills it with `GET /api/bootstrap`. On fetch failure the store stays empty and shows a retry toast.
 - Mutations are optimistic: send/sendQuick append the user message immediately (ids generated client-side so D1 stores exactly what was rendered); createTask/toggleTask/markRead/markAllRead roll back and toast on API failure.
 - `deliverMessage()` is the shared send pipeline (main chat + quick chat) — POST /api/messages returns the server-generated AI reply; a 600ms minimum delay keeps the thinking indicator visible.
 - Design defaults locked from the prototype's tweak exploration: sidebar = history view, proactive = emphasized amber card, monitor card on.
@@ -29,3 +29,14 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 - **Motivation**: everything reset on reload — chats, tasks and read state were memory-only and replies were generated in the browser, so the product's core promise (the AI keeps watching for you) was an illusion.
 - **Goal**: every user action survives a reload; reply generation moves server-side behind POST /api/messages so a real LLM can be swapped in later.
 - **Key decisions**: optimistic updates with rollback instead of loading spinners (chat UX must stay instant); client-generated nanoid ids so no id remapping is needed after persistence; the bundled demo data stays as offline fallback rather than being deleted.
+
+### 2026-06-12 — empty initial state (no bundled demo data)
+- **Motivation**: real accounts saw the prototype's demo chats — the bundle
+  rendered demo data before (and instead of, on API failure) the server
+  state, so a logged-in user could never get a clean new-user view.
+- **Goal**: the app boots into the EmptyState and only ever shows what the
+  server returns; demo content lives solely behind the local-dev seed.
+- **Key decisions**: initial chats/convos/tasks/updates are empty and
+  `activeChatId` is null (ChatView already renders EmptyState for that);
+  the offline fallback to bundled demo data was dropped — an error toast
+  replaces it, since silently showing fake data is worse than an empty view.

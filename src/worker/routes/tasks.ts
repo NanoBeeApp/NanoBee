@@ -34,7 +34,7 @@ export const taskRoutes = new Hono<{ Bindings: Env }>()
 		const data = c.req.valid("json");
 		console.log("[API] POST /api/tasks, id:", data.id);
 		try {
-			await ensureSeeded(c.env.DB);
+			await ensureSeeded(c.env);
 			const { id, topicId, title, ...rest } = data;
 			await c.env.DB.prepare(
 				"INSERT OR IGNORE INTO tasks (id, topic_id, title, status, payload) VALUES (?, ?, ?, 'active', ?)",
@@ -54,7 +54,7 @@ export const taskRoutes = new Hono<{ Bindings: Env }>()
 		const id = c.req.param("id");
 		console.log("[API] POST /api/tasks/:id/toggle, id:", id);
 		try {
-			await ensureSeeded(c.env.DB);
+			await ensureSeeded(c.env);
 			const task = await getTask(c.env.DB, id);
 			if (!task) return c.json({ error: "Task not found" }, 404);
 

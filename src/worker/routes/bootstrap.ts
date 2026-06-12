@@ -1,7 +1,8 @@
 /**
  * GET /api/bootstrap — the app's initial state in a single round-trip:
  * sidebar chats, full conversations, tasks and Today-page updates.
- * Seeds the demo data on first contact with an empty database.
+ * When SEED_DEMO_DATA="1" (local dev only), seeds the demo data on first
+ * contact with an empty database; deployed environments start empty.
  */
 
 import { Hono } from "hono";
@@ -12,7 +13,7 @@ import { listChats, listConversations, listTasks, listUpdates } from "../db/repo
 export const bootstrapRoutes = new Hono<{ Bindings: Env }>().get("/", async (c) => {
 	console.log("[API] GET /api/bootstrap");
 	try {
-		await ensureSeeded(c.env.DB);
+		await ensureSeeded(c.env);
 		const [chats, conversations, tasks, updates] = await Promise.all([
 			listChats(c.env.DB),
 			listConversations(c.env.DB),

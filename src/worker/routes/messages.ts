@@ -31,7 +31,7 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 		const body = c.req.valid("json");
 		console.log("[API] POST /api/messages, chat:", body.chatId);
 		try {
-			await ensureSeeded(c.env.DB);
+			await ensureSeeded(c.env);
 
 			const reply = genReply(body.text, body.ctxTitle);
 			// A Today-page reading context pins the topic; otherwise the

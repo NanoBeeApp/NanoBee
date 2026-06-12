@@ -32,6 +32,9 @@ export type Env = {
 	EMAIL_FROM?: string;
 	// "1" logs verification codes to the console (local dev only)
 	LOG_EMAIL_CODES?: string;
+	// "1" seeds demo data into an empty database (local dev only);
+	// deployed environments leave it unset so new databases start empty
+	SEED_DEMO_DATA?: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();

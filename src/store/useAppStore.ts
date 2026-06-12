@@ -1,9 +1,8 @@
 // Global app state — the single source of truth for navigation, conversations,
 // tasks, proactive updates, the quick chat and toasts.
 //
-// Data flow: the store renders the bundled demo data instantly, then
-// bootstrap() replaces it with the server state from D1 (seeded with the
-// same content, so the swap is invisible). Mutations apply optimistically
+// Data flow: the store starts empty (new-user state), then bootstrap()
+// fills it with the server state from D1. Mutations apply optimistically
 // and persist through the typed Hono RPC client; failures roll back and
 // surface a toast.
 //
@@ -16,10 +15,7 @@ import type {
   UpdateItem, ViewingContext,
 } from '../types';
 import { apiClient } from '../lib/api-client';
-import { CHATS } from '../data/chats';
-import { CONVERSATIONS } from '../data/conversations';
-import { INITIAL_TASKS } from '../data/tasks';
-import { INITIAL_UPDATES, UPDATE_TO_CHAT } from '../data/updates';
+import { UPDATE_TO_CHAT } from '../data/updates';
 import { nextId } from '../data/ids';
 
 /** Minimum visible duration of the thinking indicator while awaiting the API. */
@@ -140,15 +136,15 @@ async function deliverMessage(
 export const useAppStore = create<AppState>((set, get) => ({
   view: 'chat',
   sidebarMode: 'history',
-  activeChatId: 'c_gold_today',
-  activeTopicId: 'gold',
-  chats: CHATS.map((c) => ({ ...c })),
-  convos: structuredClone(CONVERSATIONS),
+  activeChatId: null,
+  activeTopicId: null,
+  chats: [],
+  convos: {},
   sessionMeta: {},
-  tasks: INITIAL_TASKS.map((t) => ({ ...t })),
+  tasks: [],
   createdTaskIds: [],
-  updates: INITIAL_UPDATES.map((u) => ({ ...u })),
-  openTopics: ['gold'],
+  updates: [],
+  openTopics: [],
   notifOpen: false,
   railCollapsed: false,
   sideCollapsed: false,
@@ -176,9 +172,9 @@ export const useAppStore = create<AppState>((set, get) => ({
         updates: data.updates,
       });
     } catch (error) {
-      // Keep rendering the bundled demo data so the UI stays usable offline.
-      console.error('[bootstrap] failed, staying on local demo data:', String(error));
-      get().toast('服务器连接失败，当前为离线演示数据');
+      // The store stays empty; the user can retry by reloading.
+      console.error('[bootstrap] failed:', String(error));
+      get().toast('服务器连接失败，请稍后重试');
     }
   },
 
