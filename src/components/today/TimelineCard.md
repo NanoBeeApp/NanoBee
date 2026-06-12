@@ -25,4 +25,8 @@ Tweet-style timeline row (Today default view): round topic-color avatar, NanoBee
 
 ### 2026-06-12 — drop the action icon row
 - **Motivation**: user asked to remove the three trailing action icons (open-chat / mark-read / save-later) — they added visual noise to the otherwise quiet feed.
-- **Change**: removed the `.tl-actions` row entirely (and its CSS). To keep the primary "open in chat" affordance, the whole row is now the click target (`role="button"`, Enter/Space keyboard support) calling `onOpenChat`. Mark-read still happens automatically via the scroll-past observer in TodayView, so no per-row read button is needed. `onToggleRead` is no longer consumed here (kept on the shared `ReadItemActions` interface for list/card views).
+- **Change**: removed the `.tl-actions` row entirely (and its CSS). To keep the primary "open in chat" affordance, the whole row was briefly made the click target (`role="button"`, Enter/Space). Mark-read still happens automatically via the scroll-past observer in TodayView, so no per-row read button is needed.
+
+### 2026-06-12 — drop the row-level click handler
+- **Motivation**: user followed up with "不要整行点击" — the timeline should be a purely read-only feed with no row interaction.
+- **Change**: removed the `role="button"` / `tabIndex` / `onClick` / `onKeyDown` from the row and the `cursor: pointer` + `:hover` background from `.nb-tl-card`. The component now renders item data only; neither `onOpenChat` nor `onToggleRead` is consumed here (both stay on the shared `ReadItemActions` interface for list/card views).

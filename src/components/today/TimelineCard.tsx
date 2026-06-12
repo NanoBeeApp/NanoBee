@@ -1,8 +1,8 @@
 // Tweet-style timeline row (the Today page's default view): avatar, header
 // row, full body text and an optional trend sparkline. Rendered as a flat
 // list separated only by hairline dividers (no card box, border, shadow or
-// filled background) so nothing competes for attention. The whole row is
-// clickable to open the item in chat — there is no dedicated action icon row.
+// filled background) so nothing competes for attention. No action icons and
+// no row-level click handler — the row is a quiet, read-only feed entry.
 import type { UpdateItem } from '../../types';
 import { Icon } from '../../icons/icons';
 import { Sparkline } from '../chat/Sparkline';
@@ -12,12 +12,9 @@ interface TimelineCardProps extends ReadItemActions {
   item: UpdateItem;
 }
 
-export function TimelineCard({ item, onOpenChat }: TimelineCardProps) {
+export function TimelineCard({ item }: TimelineCardProps) {
   return (
     <div className={`nb-tl-card${item.unread ? ' unread' : ' read'}`}
-      role="button" tabIndex={0}
-      onClick={() => onOpenChat(item)}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenChat(item); } }}
       data-rid={item.unread ? item.id : undefined} data-cid={item.id}
       data-testid={`timeline-item-${item.id}`}>
       <div className="tl-av" style={{ background: item.color }}><Icon name={item.icon} size={18} /></div>
