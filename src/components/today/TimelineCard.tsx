@@ -1,5 +1,7 @@
-// Tweet-style timeline card (the Today page's default view): avatar, header
+// Tweet-style timeline row (the Today page's default view): avatar, header
 // row, full body text, optional trend sparkline and a light action row.
+// Rendered as a flat list separated only by hairline dividers (no card box,
+// border, shadow or filled background) so nothing competes for attention.
 import type { UpdateItem } from '../../types';
 import { Icon, Icons } from '../../icons/icons';
 import { Sparkline } from '../chat/Sparkline';

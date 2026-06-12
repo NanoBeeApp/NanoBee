@@ -1,7 +1,7 @@
 # src/components/today/TimelineCard.tsx
 
 ## Responsibility
-Tweet-style timeline card (Today default view): round topic-color avatar, NanoBee + time header, full body, optional trend sparkline, icon-only action row. Unread cards get amber tint + dot.
+Tweet-style timeline row (Today default view): round topic-color avatar, NanoBee + time header, full body, optional trend sparkline, icon-only action row. Rendered as a flat list separated only by hairline dividers; unread items are marked solely by a small amber dot.
 
 ## Dependencies
 - Upstream: types, icons, Sparkline
@@ -18,3 +18,7 @@ Tweet-style timeline card (Today default view): round topic-color avatar, NanoBe
 ### 2026-06-12 — declutter
 - **Motivation**: user asked to drop the topic tag from the card and make the action row icon-only (no labels).
 - **Change**: removed the topic badge from the header; action buttons now render icons only as 32px circular hit-targets with title/aria-label tooltips.
+
+### 2026-06-12 — flatten to Twitter-style timeline
+- **Motivation**: user wants the timeline to look like Twitter — items separated by faint dividers only, nothing that pulls visual attention.
+- **Change**: dropped the per-item card box (border, radius, shadow, bottom margin) and the unread amber gradient/border background; rows now sit in a flat list divided by a single `var(--border)` hairline with a subtle `surface-2` hover. Unread state is conveyed only by the existing amber dot. Sparkline inset lost its border in favour of a plain `surface-2` fill.
