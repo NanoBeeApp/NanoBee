@@ -244,7 +244,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-empty h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.025em; margin: 0; color: var(--ink-2); }
 
 /* ============ TASKS PAGE (full-page task center, opened from the sidebar) ============ */
-.nb-taskspage { flex: 1; overflow-y: auto; min-height: 0; background: var(--surface-2); }
+.nb-taskspage { flex: 1; overflow-y: auto; min-height: 0; background: var(--bg); }
 .nb-taskspage-inner { max-width: 860px; margin: 0 auto; padding: 26px 32px 120px; }
 .nb-taskspage-kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
 .nb-taskspage-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: 6px; }
@@ -305,7 +305,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 /* ============ TODAY / READER VIEW ============ */
 /* scrollbar-gutter keeps the centered column from shifting when the
    scrollbar appears/disappears across timeline/list/card view heights */
-.nb-today { flex: 1; overflow-y: auto; min-height: 0; background: var(--surface-2); scrollbar-gutter: stable; }
+.nb-today { flex: 1; overflow-y: auto; min-height: 0; background: var(--bg); scrollbar-gutter: stable; }
 .nb-today-inner { max-width: 860px; margin: 0 auto; padding: 26px 32px 170px; }
 .nb-today-date { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
 .nb-today-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: 6px; }
@@ -408,7 +408,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-quick-pop .nb-proactive { padding: 0 18px; max-width: none; }
 
 /* ============ AUTH (login / register / verify) ============ */
-.nb-auth-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 32px 20px; background: var(--surface-2); }
+.nb-auth-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 32px 20px; background: var(--bg); }
 .nb-auth-brand { display: flex; align-items: center; gap: 10px; }
 .nb-auth-brand .glyph { width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(150deg, var(--nb-honey), #d98b2b); display: grid; place-items: center; }
 .nb-auth-brand .name { font-size: 19px; font-weight: 500; letter-spacing: -0.01em; }

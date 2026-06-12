@@ -40,6 +40,10 @@ This project is a **public open-source repository**. **The public repo must only
 - **Keep platform-specific services behind adapter layers**: business logic must depend on narrow interfaces (storage, cache, queue, object store), with Cloudflare bindings and self-hosted backends as interchangeable implementations.
 - **Stay lightweight — do not pull in heavy dependencies**: prefer the standard library, platform built-ins, and small focused packages over large frameworks/ORMs/SDKs. Before adding any new dependency, justify it: what it solves, why a lighter alternative (or ~50 lines of our own code) isn't enough, and its size/transitive-dependency cost. When in doubt, don't add it.
 
+## 🎨 UI rules
+
+- **Every page must have a white background** (`var(--bg)` = `#ffffff`). Page-level containers (reading surfaces, task center, auth pages, chat, etc.) must never use gray fills like `var(--surface-2)` / `var(--surface-3)` as their background — those tokens are reserved for small inset elements (hover states, chips, code/spark blocks), not whole pages.
+
 ## 🗄️ Storage architecture principles (D1 vs Durable Objects)
 
 D1 and Durable Objects are **complementary, not competing**: D1 is the "one central SQL database" model; a Durable Object is a globally unique, single-threaded compute unit with its own SQLite store, where "fetch object by key" *is* the sharding. Apply these rules to all future storage/feature design:
