@@ -1,10 +1,11 @@
 # src/worker/reply.ts
 
 ## Responsibility
-Server-side AI-reply generator (rule-based for the MVP): picks a topic by
-keyword, proposes a matching task suggestion, and acknowledges the Today-page
-reading context when present. The single seam where a real LLM call will be
-swapped in later.
+Server-side AI-reply generator: detects a topic by keyword (chat
+categorization only) and wraps the LLM-written reply text into a chat
+message, acknowledging the Today-page reading context when present.
+Intentionally minimal — no task-suggestion cards or quick-reply chips are
+attached until those features actually ship.
 
 ## Core exports / API
 - `genReply(text, ctxTitle?)` → `{ topicId, msg: AiMessage }`
@@ -36,3 +37,13 @@ swapped in later.
   and `msg.model` is set, otherwise the original fallback copy is used.
 - **Key decision**: keep topic detection and the task card rule-based — they
   feed structured product objects the model can't reliably produce yet.
+
+### 2026-06-12 — declutter: drop task cards and quick-reply chips
+- **Motivation**: user feedback — the chat UI felt noisy; every reply pushed a
+  rule-based task card (often irrelevant, e.g. a gold-watch card on a weather
+  question) plus three canned quick-reply chips.
+- **Goal**: replies carry only the LLM text; keyword topic detection survives
+  solely to categorize the chat row. Cards/chips return when the features are
+  real instead of canned.
+- **Key decision**: the client keeps the rendering code for extras/suggest, so
+  re-enabling is a server-side change only.

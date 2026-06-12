@@ -78,15 +78,8 @@ export function MessageView({ m, createdTaskIds, onCreateTask, onSuggest }: Mess
     <div className="nb-msg" data-testid="chat-assistant-message">
       <div className="nb-role">
         <span className="av ai"><Icons.bee size={13} sw={1.6} /></span> NanoBee
-        <span style={{ opacity: 0.5 }}>·</span> <span style={{ fontWeight: 400 }}>{m.model ?? 'sonnet · agent'}</span>
       </div>
       {body}
-      <div className="nb-msg-actions">
-        <button title="复制" data-testid="copy-message"><Icons.copy size={14} /></button>
-        <button title="赞" data-testid="like-message"><Icons.up size={14} /></button>
-        <button title="重新生成" data-testid="regenerate-message"><Icons.redo size={14} /></button>
-        <button title="收藏" data-testid="bookmark-message"><Icons.bookmark size={14} /></button>
-      </div>
     </div>
   );
 }
