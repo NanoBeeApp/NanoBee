@@ -45,3 +45,12 @@ it and returns it.
   the rule-based reply so chat never breaks.
 - **Key decision**: signed-out visitors also get the backend default config —
   chat is usable without an account today and the behavior stays consistent.
+
+### 2026-06-12 — drop the persona system prompt
+- **Motivation**: per request, the send pipeline should no longer inject the
+  NanoBee product-persona system prompt; the model replies without a preset
+  voice.
+- **Goal**: stop prepending `{ role: "system", content: CONFIG.AI.SYSTEM_PROMPT }`
+  (and `CONFIG` is no longer imported here). The optional reading-context
+  system message built from `ctxTitle` stays — it is functional context, not a
+  persona prompt.

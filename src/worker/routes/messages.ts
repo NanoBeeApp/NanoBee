@@ -14,7 +14,6 @@ import { generateChatText } from "../ai/client";
 import { resolveAiConfig } from "../ai/settings";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
-import { CONFIG } from "../config";
 import { ensureSeeded } from "../db/seed";
 import { genReply } from "../reply";
 
@@ -50,7 +49,6 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 			if (aiConfig.apiKey) {
 				try {
 					const llmText = await generateChatText(aiConfig, [
-						{ role: "system", content: CONFIG.AI.SYSTEM_PROMPT },
 						...(body.ctxTitle
 							? [{ role: "system" as const, content: `用户当前正在阅读：「${body.ctxTitle}」` }]
 							: []),

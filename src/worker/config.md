@@ -40,3 +40,11 @@ default list limit). Route files must reference this instead of hardcoding.
   completion tokens, field length cap, system prompt); per the single-config
   rule they live here, while the provider catalog stays in
   `src/lib/ai-providers.ts` because the frontend needs it too.
+
+### 2026-06-12 — drop AI.SYSTEM_PROMPT
+- **Motivation**: per request, the chat pipeline should no longer inject a
+  product-persona system prompt into LLM calls; the model now replies without
+  any preset voice.
+- **Goal**: remove `CONFIG.AI.SYSTEM_PROMPT` entirely (messages route stops
+  prepending the system message). The optional reading-context system message
+  (`ctxTitle`) is functional context and stays.
