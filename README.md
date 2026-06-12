@@ -28,18 +28,58 @@ waiting to be asked.
 
 ## Tech stack
 
-- React 18 + TypeScript + Vite (client-side SPA; data is mocked for now)
-- zustand for app state
-- Ledger UI design system (tokens + base CSS in `src/styles/`), ported from
-  the approved design prototype
+- **Frontend**: React 19 + TypeScript, TanStack Start (file-based routing,
+  SSR shell) with TanStack Query, zustand for app state
+- **Design system**: Ledger UI tokens + base CSS in `src/styles/`, ported
+  from the approved design prototype (app data is mocked for now)
+- **Backend**: Hono on Cloudflare Workers — a single worker serves the app
+  shell, static assets and all `/api/*` endpoints
+- **Database**: Cloudflare D1 (SQLite at the edge) with versioned SQL
+  migrations in `migrations/`
+- **Type-safe API**: Hono RPC client (`src/lib/api-client.ts`) shares types
+  with the worker, so every `/api` call is type-checked end to end
+
+## Project layout
+
+```
+src/
+  routes/        TanStack Router file-based routes (/ mounts the app shell)
+  App.tsx        NanoBee app shell (chat / today views)
+  components/    Feature components (components/ui = shadcn/ui primitives)
+  data/          Mocked app data (until real endpoints land)
+  store/         zustand app store
+  styles/        Ledger UI design-system CSS (tokens → base → app)
+  worker/        Hono API worker — all backend endpoints live here
+    routes/      API route modules mounted under /api
+    config.ts    Backend constants (single source of truth)
+  lib/           Frontend utilities (typed API client, query client)
+  server/        TanStack Start server functions
+migrations/      D1 SQL migrations (applied with wrangler)
+```
 
 ## Development
 
 ```bash
 pnpm install
-pnpm dev       # http://localhost:5173
-pnpm build     # type-check + production build
+pnpm db:migrate:local   # apply D1 migrations to the local database
+pnpm dev                # http://localhost:5173
+pnpm build              # production build
+pnpm test:run           # API integration tests (expects `pnpm dev` running)
 ```
+
+## Deployment
+
+Deploys to Cloudflare Workers; dev and prod are always released together:
+
+```bash
+pnpm db:migrate:dev && pnpm db:migrate:prod   # apply pending D1 migrations
+pnpm deploy                                   # deploy prod + dev workers
+```
+
+| Environment | Worker | D1 database |
+|-------------|--------|-------------|
+| prod | `nanobee` | `nanobee-db` |
+| dev | `nanobee-dev` | `nanobee-db-dev` |
 
 ## Repository conventions
 
@@ -48,6 +88,8 @@ pnpm build     # type-check + production build
   responsibility, exports, dependencies and change history.
 - Interactive elements carry business-meaningful `data-testid` attributes
   for e2e testing.
+- `.env*` files are tracked by git and must never contain secrets; secrets
+  go through `wrangler secret`.
 
 ## License
 

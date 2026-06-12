@@ -1,0 +1,48 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "nanobee",
+	"main": "src/server.ts",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true
+	},
+	"upload_source_maps": true,
+	"assets": {
+		"directory": "./dist/client",
+		"not_found_handling": "single-page-application"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "nanobee-db-dev",
+			"database_id": "0a99e899-80f8-426c-9080-b45f5cddefaa"
+		}
+	],
+	"env": {
+		"prod": {
+			"name": "nanobee",
+			"vars": {},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "nanobee-db",
+					"database_id": "0d48bac8-3e63-4a80-8bba-0059f1c8a67b"
+				}
+			]
+		},
+		"dev": {
+			"name": "nanobee-dev",
+			"vars": {},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "nanobee-db-dev",
+					"database_id": "0a99e899-80f8-426c-9080-b45f5cddefaa"
+				}
+			]
+		}
+	}
+}
