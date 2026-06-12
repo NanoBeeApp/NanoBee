@@ -22,3 +22,7 @@ Tweet-style timeline row (Today default view): round topic-color avatar, NanoBee
 ### 2026-06-12 — flatten to Twitter-style timeline
 - **Motivation**: user wants the timeline to look like Twitter — items separated by faint dividers only, nothing that pulls visual attention.
 - **Change**: dropped the per-item card box (border, radius, shadow, bottom margin) and the unread amber gradient/border background; rows now sit in a flat list divided by a single `var(--border)` hairline with a subtle `surface-2` hover. Unread state is conveyed only by the existing amber dot. Sparkline inset lost its border in favour of a plain `surface-2` fill.
+
+### 2026-06-12 — drop the action icon row
+- **Motivation**: user asked to remove the three trailing action icons (open-chat / mark-read / save-later) — they added visual noise to the otherwise quiet feed.
+- **Change**: removed the `.tl-actions` row entirely (and its CSS). To keep the primary "open in chat" affordance, the whole row is now the click target (`role="button"`, Enter/Space keyboard support) calling `onOpenChat`. Mark-read still happens automatically via the scroll-past observer in TodayView, so no per-row read button is needed. `onToggleRead` is no longer consumed here (kept on the shared `ReadItemActions` interface for list/card views).
