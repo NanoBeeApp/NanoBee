@@ -15,7 +15,7 @@
   --nb-honey: #e9a13b;
 }
 html, body { height: 100%; }
-body { background: var(--surface-2); color: var(--ink); overflow: hidden; }
+body { background: var(--bg); color: var(--ink); overflow: hidden; }
 #root { height: 100vh; }
 
 /* ---- App grid: sidebar | center ---- */
@@ -35,7 +35,7 @@ body { background: var(--surface-2); color: var(--ink); overflow: hidden; }
 
 /* ============ SIDEBAR ============ */
 .nb-side {
-  background: var(--surface-2);
+  background: var(--bg);
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
   min-height: 0;
