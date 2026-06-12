@@ -30,6 +30,13 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 - **Goal**: every user action survives a reload; reply generation moves server-side behind POST /api/messages so a real LLM can be swapped in later.
 - **Key decisions**: optimistic updates with rollback instead of loading spinners (chat UX must stay instant); client-generated nanoid ids so no id remapping is needed after persistence; the bundled demo data stays as offline fallback rather than being deleted.
 
+### 2026-06-12 — todayFilter lifted into the store
+- **Motivation**: the Today page keeps the sidebar now, and its TodayNav
+  must drive the same filter the reading surface renders; component-local
+  state could not be shared.
+- **Goal**: `todayFilter` ('all' | 'unread' | topic id) + `setTodayFilter`
+  as the single source of truth for Today-page filtering.
+
 ### 2026-06-12 — empty initial state (no bundled demo data)
 - **Motivation**: real accounts saw the prototype's demo chats — the bundle
   rendered demo data before (and instead of, on API failure) the server
@@ -40,3 +47,10 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
   `activeChatId` is null (ChatView already renders EmptyState for that);
   the offline fallback to bundled demo data was dropped — an error toast
   replaces it, since silently showing fake data is worse than an empty view.
+
+### 2026-06-12 — 'tasks' view added, railCollapsed removed
+- **Motivation**: the right task rail crowded the chat page; tasks moved
+  behind a sidebar entry, so the rail's collapse state became meaningless.
+- **Goal**: `View` gains 'tasks' with `openTasks()`; `railCollapsed` /
+  `setRailCollapsed` deleted (createTask no longer force-expands a rail —
+  the creation toast is the feedback).

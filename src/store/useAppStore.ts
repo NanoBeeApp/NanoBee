@@ -24,7 +24,7 @@ const TOAST_DURATION_MS = 3600;
 const JUST_ADDED_FLASH_MS = 700;
 const TITLE_MAX_CHARS = 22;
 
-export type View = 'chat' | 'today';
+export type View = 'chat' | 'today' | 'tasks';
 export type SidebarMode = 'history' | 'topics';
 
 /** Server payload of GET /api/bootstrap. */
@@ -46,9 +46,10 @@ interface AppState {
   tasks: Task[];
   createdTaskIds: string[];
   updates: UpdateItem[];
+  /** Today-page filter: 'all' | 'unread' | a topic id. Shared by the sidebar nav and the reading surface. */
+  todayFilter: string;
   openTopics: string[];
   notifOpen: boolean;
-  railCollapsed: boolean;
   sideCollapsed: boolean;
   pending: boolean;
   toasts: Toast[];
@@ -65,12 +66,13 @@ interface AppState {
   // navigation
   setSidebarMode: (m: SidebarMode) => void;
   setSideCollapsed: (v: boolean) => void;
-  setRailCollapsed: (v: boolean) => void;
   setNotifOpen: (v: boolean) => void;
   toggleTopic: (id: string) => void;
   selectChat: (id: string) => void;
   newChat: () => void;
   openToday: () => void;
+  openTasks: () => void;
+  setTodayFilter: (f: string) => void;
   backToChat: () => void;
   openUpdateInChat: (u: UpdateItem) => void;
 
@@ -144,9 +146,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   tasks: [],
   createdTaskIds: [],
   updates: [],
+  todayFilter: 'all',
   openTopics: [],
   notifOpen: false,
-  railCollapsed: false,
   sideCollapsed: false,
   pending: false,
   toasts: [],
@@ -180,7 +182,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setSidebarMode: (sidebarMode) => set({ sidebarMode }),
   setSideCollapsed: (sideCollapsed) => set({ sideCollapsed }),
-  setRailCollapsed: (railCollapsed) => set({ railCollapsed }),
   setNotifOpen: (notifOpen) => set({ notifOpen }),
 
   toggleTopic: (id) => set((s) => ({
@@ -203,6 +204,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   newChat: () => set({ activeChatId: null, activeTopicId: null, view: 'chat', notifOpen: false, quickCtx: null }),
 
   openToday: () => set({ view: 'today', notifOpen: false }),
+
+  openTasks: () => set({ view: 'tasks', notifOpen: false }),
+
+  setTodayFilter: (todayFilter) => set({ todayFilter }),
 
   // Leaving the Today page clears the "viewing" context.
   backToChat: () => set({ view: 'chat', quickCtx: null }),
@@ -306,7 +311,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       return {
         tasks: [{ ...data, status: 'active' as const }, ...s.tasks],
         createdTaskIds: s.createdTaskIds.includes(data.id) ? s.createdTaskIds : [...s.createdTaskIds, data.id],
-        railCollapsed: false,
         justAddedTaskId: data.id,
       };
     });

@@ -1,13 +1,25 @@
 # src/components/layout/FloatingControls.tsx
 
 ## Responsibility
-Floating corner buttons replacing a fixed header: top-left back-to-chat (Today) or expand-sidebar (with unread dot); top-right notification bell and expand-task-rail (with topic task count).
+Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) expand-sidebar with unread dot, plus back-to-chat on the Today page; top-right notification bell.
 
 ## Dependencies
-- Upstream: store, topics, icons
+- Upstream: store, icons
 - Downstream: App
 
 ## Change history
 
 ### 2026-06-12 — created
 - **Motivation**: user iteration "尽量让可视区域最大化…不要有固定的 header" — chrome becomes translucent corner buttons.
+
+### 2026-06-12 — expand-task-rail button removed
+- **Motivation**: the right task rail no longer exists (tasks moved to the
+  sidebar "任务" entry + full-page TasksView), so its expand control and the
+  topic task count became dead UI.
+
+### 2026-06-12 — top-left controls only when the sidebar is collapsed
+- **Motivation**: the Today page now keeps the sidebar, so the permanent
+  back-to-chat float there became redundant chrome.
+- **Goal**: the top-left float appears only in collapsed (immersive) mode:
+  expand-sidebar always, plus back-to-chat while on the Today page so one
+  click leaves reading without re-expanding the sidebar.

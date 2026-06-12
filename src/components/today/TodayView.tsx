@@ -1,10 +1,12 @@
 // "今日事项" reading surface (Inoreader-style): timeline / list / card views,
-// topic filters, expand-to-read, scroll-past auto-read, mark-all-read and a
-// reading progress bar. Reports the item currently in view so the global
-// quick chat can be context-aware.
+// expand-to-read, scroll-past auto-read, mark-all-read and a reading progress
+// bar. Filtering lives in the store (`todayFilter`) and is driven by the
+// sidebar's TodayNav; the toolbar only shows a clearable chip for the active
+// filter. Reports the item currently in view so the global quick chat can be
+// context-aware.
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore, selectUnreadCount } from '../../store/useAppStore';
-import { TOPICS, topicShortName } from '../../data/topics';
+import { topicById, topicShortName } from '../../data/topics';
 import { Icons } from '../../icons/icons';
 import { Toggle } from '../common/Toggle';
 import { TimelineCard } from './TimelineCard';
@@ -25,11 +27,12 @@ export function TodayView() {
   const markAllRead = useAppStore((s) => s.markAllRead);
   const openUpdateInChat = useAppStore((s) => s.openUpdateInChat);
   const setQuickCtx = useAppStore((s) => s.setQuickCtx);
+  const filter = useAppStore((s) => s.todayFilter);
+  const setFilter = useAppStore((s) => s.setTodayFilter);
   const unreadCount = useAppStore(selectUnreadCount);
 
   const [viewMode, setViewMode] = useState<ViewMode>('timeline');
   const [autoRead, setAutoRead] = useState(true);
-  const [filter, setFilter] = useState('all');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -96,11 +99,9 @@ export function TodayView() {
     return () => obs.disconnect();
   }, [autoRead, viewMode, filter, updates, markRead]);
 
-  const filterChips = [
-    { v: 'all', l: '全部' },
-    { v: 'unread', l: `未读 ${unreadCount || ''}` },
-    ...TOPICS.map((t) => ({ v: t.id, l: topicShortName(t) })),
-  ];
+  // Label of the active filter (filtering itself happens in the sidebar nav).
+  const filterTopic = topicById(filter);
+  const filterLabel = filter === 'unread' ? '未读' : filterTopic ? topicShortName(filterTopic) : null;
 
   return (
     <div className="nb-today" ref={scrollRef} data-testid="today-reading-page">
@@ -115,12 +116,13 @@ export function TodayView() {
         <div className="nb-progress"><div className="fill" style={{ width: `${pct}%` }} /></div>
 
         <div className="nb-read-toolbar" data-testid="today-toolbar">
-          {filterChips.map((c) => (
-            <button key={c.v} className={`nb-fchip${filter === c.v ? ' active' : ''}`}
-              onClick={() => setFilter(c.v)} data-testid={`today-filter-${c.v}`}>
-              {c.l}
+          {filterLabel && (
+            <button className="nb-fchip active" title="清除筛选" onClick={() => setFilter('all')}
+              data-testid="today-active-filter">
+              {filterLabel}
+              <Icons.x size={11} style={{ marginLeft: 5 }} />
             </button>
-          ))}
+          )}
           <span className="nb-tool-ics">
             <button className="btn btn-ghost btn-icon btn-sm" title="全部标为已读" onClick={markAllRead}
               disabled={unreadCount === 0} data-testid="mark-all-read">
