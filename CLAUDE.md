@@ -2,6 +2,11 @@
 
 This project is a **public open-source repository**. **The public repo must only contain public code and public documentation** — every other file produced during development does not belong here.
 
+## 📁 Repository root is locked down (important)
+
+- **Never add any new file or directory directly under the repository root without confirming with the user first.** This applies to everything — config files, docs, scripts, dotfiles, folders. Before creating anything at the root, stop and ask the user; only proceed after explicit approval in the current conversation.
+- New files should live in an existing appropriate subdirectory (or `private/` for non-public artifacts). Only truly root-level necessities (e.g. a tool that hard-requires a root config) justify asking for a root addition.
+
 ## 🌐 Language rules (important)
 
 - **Everything in the public repo (outside `private/`) must be written in English**: code comments, docs, README files, script messages, etc. This is a public-facing repository.
