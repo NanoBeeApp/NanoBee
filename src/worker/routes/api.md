@@ -48,3 +48,12 @@ resource) plus the smoke-test `hello` endpoint.
   smoke-test `users` table was replaced by the auth-grade schema, and open
   list/create user endpoints would have been an information leak.
 - **Goal**: `/api/auth/*` as the only way user rows are created or read.
+
+### 2026-06-12 — OAuth mount confirmed under /auth
+- **Motivation**: during end-to-end verification, OAuth was briefly
+  remounted at `/social-auth` based on an OAuth-app JSON export, but the
+  Google Cloud Console actually registers
+  `…/api/auth/google/callback`, so the original `/auth` mount was restored.
+- **Key decision**: the registered redirect URIs in the provider consoles
+  are the contract; `tests/api.spec.ts` now pins the generated
+  `redirect_uri` path.

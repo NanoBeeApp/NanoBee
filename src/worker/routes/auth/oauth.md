@@ -15,7 +15,8 @@ HMAC-signed state, code exchange, profile fetch, user resolution
 ## Dependencies
 - Upstream: `../../config` (provider endpoints, state TTL),
   `../../auth/{crypto,cookies,store}`
-- Downstream: `routes/auth/index.ts`, `OAuthButtons.tsx`
+- Downstream: `routes/auth/index.ts` (mounted under `/api/auth`),
+  `OAuthButtons.tsx`
 
 ## Notes
 - State = HMAC-SHA256-signed `{ provider, returnTo, nonce, issuedAt }`,
@@ -27,7 +28,9 @@ HMAC-signed state, code exchange, profile fetch, user resolution
 - GitHub: public profile email is often empty → `/user/emails` is queried
   for the primary verified address; requests need a `User-Agent` header.
 - `redirect_uri` is derived from the request origin, so the same code works
-  on localhost, dev and prod without configuration.
+  on localhost, dev and prod without configuration — but the **path**
+  (`/api/auth/<provider>/callback`) must stay in sync with the redirect
+  URIs registered in the provider consoles.
 
 ## Change history
 
@@ -40,3 +43,12 @@ HMAC-signed state, code exchange, profile fetch, user resolution
 - **Key decision**: skip PKCE (confidential client with a server-held
   secret; state covers CSRF) and keep provider config in `CONFIG.AUTH`
   with credentials in secrets.
+
+### 2026-06-12 — callback path verified against Google Console
+- **Motivation**: a `redirect_uri_mismatch` during end-to-end verification;
+  an OAuth-app JSON export suggested `/api/social-auth/...` and the mount
+  was briefly moved there, but the console actually registers
+  `…/api/auth/google/callback` (dev + localhost:3333), so the original
+  mount was restored.
+- **Key decision**: treat the provider consoles as the source of truth and
+  pin the generated `redirect_uri` path with a regression test.

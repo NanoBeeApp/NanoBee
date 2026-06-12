@@ -25,3 +25,13 @@ sub-routers into `authRoutes`, mounted at `/api/auth` by `routes/api.ts`.
   existing routes/ layout.
 - **Key decision**: flat URL space (`/register`, `/me`, `/:provider/start`)
   instead of nested prefixes — shorter client calls, no ambiguity.
+
+### 2026-06-12 — OAuth callback path confirmed as /api/auth/<provider>/callback
+- **Motivation**: a `redirect_uri_mismatch` from Google during end-to-end
+  verification; an OAuth-app JSON export suggested
+  `/api/social-auth/...` and the mount was briefly moved there, but the
+  Google Cloud Console actually registers
+  `…/api/auth/google/callback` (dev + localhost:3333), so the mount was
+  restored.
+- **Key decision**: the provider consoles are the source of truth for the
+  callback path; a regression test now pins the generated `redirect_uri`.

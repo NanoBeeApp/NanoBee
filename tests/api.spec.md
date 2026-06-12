@@ -38,3 +38,11 @@ persist both sides + reply), tasks (create / toggle / 404) and updates
 - **Motivation**: the local dev server now runs on a fixed port 3333
   (`server.port` in `vite.config.ts`), so the test fallback URL had to
   follow; `API_BASE_URL` still overrides it.
+
+### 2026-06-12 — redirect_uri regression test added
+- **Motivation**: a live `redirect_uri_mismatch` from Google showed the
+  callback path is an external contract (the Google Cloud Console registers
+  `…/api/auth/google/callback`); nothing in the suite pinned it.
+- **Key decision**: assert the generated `redirect_uri` contains
+  `/api/auth/google/callback`, so a future mount rename fails the suite
+  instead of failing live logins with `redirect_uri_mismatch`.

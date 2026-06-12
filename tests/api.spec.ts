@@ -97,6 +97,17 @@ describe("auth (D1)", () => {
 		expect([302, 501]).toContain(res.status);
 	});
 
+	it("GET /api/auth/google/start callback path matches the registered redirect URI", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/google/start`, {
+			redirect: "manual",
+		});
+		if (res.status !== 302) return; // provider not configured locally
+		const location = new URL(res.headers.get("location") ?? "");
+		expect(location.searchParams.get("redirect_uri")).toContain(
+			"/api/auth/google/callback",
+		);
+	});
+
 	it("GET /api/auth/github/callback rejects a forged state", async () => {
 		const res = await fetch(
 			`${BASE_URL}/api/auth/github/callback?state=forged.signature&code=x`,

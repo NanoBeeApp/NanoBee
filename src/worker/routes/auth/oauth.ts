@@ -1,5 +1,8 @@
 /**
  * Google / GitHub OAuth routes (authorization-code flow).
+ * Mounted at /api/auth — the callback path must stay in sync with the
+ * redirect URIs registered in the providers' consoles
+ * (…/api/auth/<provider>/callback).
  * GET /:provider/start builds the consent URL with an HMAC-signed state;
  * GET /:provider/callback exchanges the code, resolves the user
  * (link-by-verified-email or create) and sets the session cookie.

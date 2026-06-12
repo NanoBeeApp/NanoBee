@@ -26,3 +26,4 @@ server-side OAuth start endpoints (full-page redirect).
 - **Key decision**: inline brand SVGs because the project icon set is
   generic-stroke only and brand marks must keep their official shapes
   and colors.
+
