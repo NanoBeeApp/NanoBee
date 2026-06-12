@@ -7,7 +7,9 @@ exports `AppType` for the typed RPC client.
 
 ## Core exports / API
 - `default` — the Hono app (consumed by `server-entry.ts` / `ssr.tsx`)
-- `Env` — Cloudflare bindings type (`DB: D1Database`)
+- `Env` — Cloudflare bindings type: `DB: D1Database` plus auth secrets
+  (`AUTH_SECRET`, `RESEND_API_KEY`, `GOOGLE_/GITHUB_CLIENT_ID/SECRET`) and
+  auth vars (`EMAIL_FROM`, `LOG_EMAIL_CODES`)
 - `AppType` — type of the mounted API routes, used by `src/lib/api-client.ts`
 - Routes: `/api/*` (see `routes/api.ts`), `GET /health`
 
@@ -28,3 +30,12 @@ exports `AppType` for the typed RPC client.
 - **Goal**: single Hono entry point for all backend logic, typed end to end.
 - **Key decision**: added the `DB: D1Database` binding to `Env` from day one
   so every route gets typed D1 access.
+
+### 2026-06-12 — auth env surface added
+- **Motivation**: the auth system needs secrets (state signing, Resend,
+  OAuth credentials) and non-secret vars; handlers must access them through
+  a typed `Env`.
+- **Key decision**: all auth env fields are optional strings — locally they
+  come from `.dev.vars`, in deployments from `wrangler secret` /
+  `wrangler.json` vars, and routes degrade gracefully when missing
+  (e.g. 501 `provider_not_configured`).

@@ -1,10 +1,11 @@
 # api.spec.ts
 
 ## Responsibility
-Vitest integration tests for the Hono API worker: /health, /api/hello, the D1
-users example, and the NanoBee endpoints — bootstrap (seeded state), messages
-(create chat + persist both sides + reply), tasks (create / toggle / 404) and
-updates (read flag / read-all / 404).
+Vitest integration tests for the Hono API worker: /health, /api/hello, the
+auth system (register / login / verify / session / OAuth error paths), and
+the NanoBee endpoints — bootstrap (seeded state), messages (create chat +
+persist both sides + reply), tasks (create / toggle / 404) and updates
+(read flag / read-all / 404).
 
 ## Dependencies
 - Upstream: a running dev server (`pnpm db:migrate:local && pnpm dev`)
@@ -23,3 +24,12 @@ updates (read flag / read-all / 404).
 ### 2026-06-12 — NanoBee endpoint coverage
 - **Motivation**: the D1 persistence MVP added four resource routes; each
   needed proof of the full write→read round-trip, not just a 2xx status.
+
+### 2026-06-12 — auth coverage replaces the users smoke tests
+- **Motivation**: the smoke-test `/api/users` endpoints were removed with
+  the auth system; the new flows needed automated coverage that works
+  without reading a mailbox.
+- **Key decision**: register against Resend's `delivered+...@resend.dev`
+  test inbox (accepted, delivered nowhere); the code-entry happy path is
+  not automatable over HTTP by design (codes only live hashed in D1), so it
+  is covered by the documented manual `LOG_EMAIL_CODES=1` flow instead.

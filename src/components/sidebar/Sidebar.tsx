@@ -2,6 +2,7 @@
 // and the history/topics view switch. Hidden entirely on the Today page.
 import { useAppStore, selectUnreadCount } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
+import { AccountFoot } from './AccountFoot';
 import { ChatHistoryList } from './ChatHistoryList';
 import { TopicGroupList } from './TopicGroupList';
 
@@ -70,16 +71,7 @@ export function Sidebar() {
         )}
       </div>
 
-      <div className="nb-side-foot">
-        <div className="nb-item" style={{ cursor: 'default' }} data-testid="account-summary">
-          <span className="avatar avatar-sm" style={{ background: '#ffe5da', color: '#7a2e10' }}>林</span>
-          <div className="meta">
-            <div className="title">林晚晴</div>
-            <div className="sub">免费版 · 已连接 6 个数据源</div>
-          </div>
-          <span style={{ color: 'var(--ink-4)' }}><Icons.more size={16} /></span>
-        </div>
-      </div>
+      <AccountFoot />
     </aside>
   );
 }

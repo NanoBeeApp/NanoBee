@@ -15,6 +15,23 @@ import type { D1Database } from "@cloudflare/workers-types";
 export type Env = {
 	// D1 database (binding "DB" in wrangler.json)
 	DB: D1Database;
+
+	// --- Auth secrets (wrangler secret / .dev.vars, never committed) ---
+	// HMAC key for OAuth state signing (>= 32 random chars)
+	AUTH_SECRET?: string;
+	// Resend API key for verification emails
+	RESEND_API_KEY?: string;
+	// OAuth client credentials
+	GOOGLE_CLIENT_ID?: string;
+	GOOGLE_CLIENT_SECRET?: string;
+	GITHUB_CLIENT_ID?: string;
+	GITHUB_CLIENT_SECRET?: string;
+
+	// --- Auth non-secret config (wrangler.json vars) ---
+	// Sender address, e.g. "NanoBee <noreply@nanobee.app>"
+	EMAIL_FROM?: string;
+	// "1" logs verification codes to the console (local dev only)
+	LOG_EMAIL_CODES?: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();

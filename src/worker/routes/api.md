@@ -2,22 +2,21 @@
 
 ## Responsibility
 Business API routes mounted under `/api`. Aggregates the NanoBee app
-endpoints (bootstrap / messages / tasks / updates, one module per resource)
-plus the original smoke-test `hello` and D1 `users` example.
+endpoints (auth / bootstrap / messages / tasks / updates, one module per
+resource) plus the smoke-test `hello` endpoint.
 
 ## Core exports / API
 - `apiRoutes` — Hono sub-app with:
+  - `route /auth` → see `auth/index.ts` (register / login / OAuth / session)
   - `route /bootstrap` → see `bootstrap.ts`
   - `route /messages` → see `messages.ts`
   - `route /tasks` → see `tasks.ts`
   - `route /updates` → see `updates.ts`
   - `GET /hello?name=` → `{ message, timestamp }`
-  - `GET /users` → `{ users: [...] }` (50 most recent, from D1)
-  - `POST /users` `{ name, email }` → `201 { user }` | `409` duplicate email | `500`
 
 ## Dependencies
-- Upstream: `hono`, `@hono/zod-validator`, `zod`, `../config`, `../api-worker`
-  (Env type), `./bootstrap`, `./messages`, `./tasks`, `./updates`
+- Upstream: `hono`, `../api-worker` (Env type), `./auth`, `./bootstrap`,
+  `./messages`, `./tasks`, `./updates`
 - Downstream: `api-worker.ts` (mounts), `src/lib/api-client.ts` (types)
 
 ## Notes
@@ -43,3 +42,9 @@ plus the original smoke-test `hello` and D1 `users` example.
 - **Motivation**: the MVP needed real chat/task/read-state persistence; one
   flat route file would have grown unreadable, so each resource got its own
   module and this file became the aggregator.
+
+### 2026-06-12 — auth mounted, smoke-test users endpoints removed
+- **Motivation**: the real auth system landed (`routes/auth/`); the 0001
+  smoke-test `users` table was replaced by the auth-grade schema, and open
+  list/create user endpoints would have been an information leak.
+- **Goal**: `/api/auth/*` as the only way user rows are created or read.

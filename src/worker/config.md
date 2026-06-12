@@ -5,11 +5,13 @@ Single source of truth for backend constants (API prefix, CORS settings,
 default list limit). Route files must reference this instead of hardcoding.
 
 ## Core exports / API
-- `CONFIG` — frozen constants object
+- `CONFIG` — constants object, including `CONFIG.AUTH` (session cookie name
+  and TTL, email-code TTL/limits, OAuth state TTL, password rules, default
+  email sender, Google/GitHub endpoint URLs + scopes)
 
 ## Dependencies
 - Upstream: none
-- Downstream: `api-worker.ts`, `routes/api.ts`
+- Downstream: `api-worker.ts`, `routes/api.ts`, `auth/*`, `routes/auth/*`
 
 ## Change history
 
@@ -26,3 +28,9 @@ default list limit). Route files must reference this instead of hardcoding.
 - **Motivation**: the project got its own domain `nanobee.app`; the previous
   `windseed.app` sender address belonged to another project.
 - **Goal**: default email sender becomes `NanoBee <noreply@nanobee.app>`.
+
+### 2026-06-12 — AUTH section added
+- **Motivation**: the auth feature introduced a dozen tunables (TTLs,
+  limits, provider endpoints); scattering them across modules violates the
+  single-config rule.
+- **Goal**: every auth constant referenced via `CONFIG.AUTH`.

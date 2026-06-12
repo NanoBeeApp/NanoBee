@@ -1,0 +1,26 @@
+# Template for .dev.vars (local development secrets).
+# Copy to .dev.vars and fill in real values. .dev.vars is gitignored;
+# production values are managed with `wrangler secret put <NAME> --env <env>`.
+
+# HMAC key for OAuth state signing — generate with:
+#   openssl rand -base64 48 | tr '+/' '-_' | tr -d '='
+AUTH_SECRET=
+
+# Resend API key for verification emails (https://resend.com)
+RESEND_API_KEY=
+
+# Sender address (domain must be verified in Resend)
+EMAIL_FROM=NanoBee <noreply@example.com>
+
+# "1" logs verification codes to the dev console (never set in production)
+LOG_EMAIL_CODES=1
+
+# Google OAuth (https://console.cloud.google.com/apis/credentials)
+# Authorized redirect URI: <origin>/api/auth/google/callback
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# GitHub OAuth (https://github.com/settings/developers)
+# Authorization callback URL: <origin>/api/auth/github/callback
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=

@@ -23,45 +23,87 @@ describe("health & hello", () => {
 	});
 });
 
-describe("users (D1)", () => {
-	const email = `test-${Date.now()}@nanobee.test`;
+describe("auth (D1)", () => {
+	// Resend's official test inbox — accepted by the API, delivered nowhere.
+	const email = `delivered+nb${Date.now()}@resend.dev`;
+	const password = "test-password-123";
 
-	it("POST /api/users creates a user", async () => {
-		const res = await fetch(`${BASE_URL}/api/users`, {
+	const postJson = (path: string, body: unknown) =>
+		fetch(`${BASE_URL}${path}`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ name: "Test User", email }),
+			body: JSON.stringify(body),
+		});
+
+	it("POST /api/auth/register creates an unverified account", async () => {
+		const res = await postJson("/api/auth/register", {
+			email,
+			password,
+			name: "Test User",
 		});
 		expect(res.status).toBe(201);
-		const body = (await res.json()) as {
-			user: { id: number; email: string };
-		};
-		expect(body.user.email).toBe(email);
+		const body = (await res.json()) as { needsVerification: boolean };
+		expect(body.needsVerification).toBe(true);
 	});
 
-	it("POST /api/users rejects a duplicate email with 409", async () => {
-		const res = await fetch(`${BASE_URL}/api/users`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ name: "Test User", email }),
-		});
-		expect(res.status).toBe(409);
-	});
-
-	it("POST /api/users rejects an invalid body with 400", async () => {
-		const res = await fetch(`${BASE_URL}/api/users`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ name: "", email: "not-an-email" }),
+	it("POST /api/auth/register rejects a weak password with 400", async () => {
+		const res = await postJson("/api/auth/register", {
+			email: `delivered+weak${Date.now()}@resend.dev`,
+			password: "short",
 		});
 		expect(res.status).toBe(400);
 	});
 
-	it("GET /api/users lists the created user", async () => {
-		const res = await fetch(`${BASE_URL}/api/users`);
+	it("POST /api/auth/login rejects a wrong password with 401", async () => {
+		const res = await postJson("/api/auth/login", {
+			email,
+			password: "wrong-password",
+		});
+		expect(res.status).toBe(401);
+	});
+
+	it("POST /api/auth/login blocks unverified accounts with 403", async () => {
+		const res = await postJson("/api/auth/login", { email, password });
+		expect(res.status).toBe(403);
+		const body = (await res.json()) as { needsVerification: boolean };
+		expect(body.needsVerification).toBe(true);
+	});
+
+	it("POST /api/auth/verify-email rejects a wrong code with 400", async () => {
+		const res = await postJson("/api/auth/verify-email", {
+			email,
+			code: "000001",
+		});
+		expect(res.status).toBe(400);
+	});
+
+	it("GET /api/auth/me returns null without a session", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/me`);
 		expect(res.status).toBe(200);
-		const body = (await res.json()) as { users: { email: string }[] };
-		expect(body.users.some((u) => u.email === email)).toBe(true);
+		const body = (await res.json()) as { user: unknown };
+		expect(body.user).toBeNull();
+	});
+
+	it("POST /api/auth/logout succeeds without a session", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/logout`, { method: "POST" });
+		expect(res.status).toBe(200);
+	});
+
+	it("GET /api/auth/google/start redirects or reports unconfigured", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/google/start`, {
+			redirect: "manual",
+		});
+		// 302 when OAuth credentials are configured, 501 otherwise.
+		expect([302, 501]).toContain(res.status);
+	});
+
+	it("GET /api/auth/github/callback rejects a forged state", async () => {
+		const res = await fetch(
+			`${BASE_URL}/api/auth/github/callback?state=forged.signature&code=x`,
+			{ redirect: "manual" },
+		);
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toContain("/login?error=");
 	});
 });
 
