@@ -1,7 +1,7 @@
 # src/components/today/TodayView.tsx
 
 ## Responsibility
-"今日事项" reading surface: date header + reading progress bar, a clearable active-filter chip (filtering itself is driven by the sidebar's TodayNav via the store), compact icon toolbar (mark-all-read, timeline/list/card switch, "more" menu with scroll-past auto-read toggle), grouped items (今天/本周) and the all-done state.
+"今日事项" reading surface: date header, a clearable active-filter chip (filtering itself is driven by the sidebar's TodayNav via the store), compact icon toolbar (mark-all-read, timeline/list/card switch, "more" menu with scroll-past auto-read toggle), grouped items (今天/本周) and the all-done state.
 
 ## Dependencies
 - Upstream: store, topics, Toggle, TimelineCard, ReadRow, ReadCard
@@ -13,6 +13,11 @@
 - Non-essential actions are folded into the ⋯ menu per the "maximize reading area, no fixed header" iteration.
 
 ## Change history
+
+### 2026-06-12 — removed the reading progress bar
+- **Motivation**: user asked to remove the reading-progress UI; the
+  "还有 N 件未读" summary next to the title already communicates progress.
+- **Goal**: less chrome above the reading list.
 
 ### 2026-06-12 — created
 - **Motivation**: PRD's second core surface — "see everything I need to care about today, mark read or auto-read".

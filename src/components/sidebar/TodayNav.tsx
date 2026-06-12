@@ -1,6 +1,6 @@
-// Today-page sidebar navigation: reading progress card, unread/topic filters
-// (with per-topic unread badges) and quick actions (mark all read, back to
-// chat). Replaces the chat lists in the sidebar scroll area while reading.
+// Today-page sidebar navigation: unread/topic filters (with per-topic unread
+// badges) and quick actions (mark all read, back to chat). Replaces the chat
+// lists in the sidebar scroll area while reading.
 import { useAppStore, selectUnreadCount } from '../../store/useAppStore';
 import { TOPICS, topicShortName } from '../../data/topics';
 import { Icon, Icons } from '../../icons/icons';
@@ -13,20 +13,8 @@ export function TodayNav() {
   const backToChat = useAppStore((s) => s.backToChat);
   const unreadCount = useAppStore(selectUnreadCount);
 
-  const readCount = updates.length - unreadCount;
-  const pct = updates.length ? Math.round((readCount / updates.length) * 100) : 100;
-
   return (
     <div className="nb-tnav" data-testid="today-sidebar-nav">
-      <div className="nb-tnav-progress" data-testid="today-nav-progress">
-        <div className="row">
-          <span className="label">阅读进度</span>
-          <span className="nums">{readCount}/{updates.length}</span>
-        </div>
-        <div className="nb-progress"><div className="fill" style={{ width: `${pct}%` }} /></div>
-        <div className="hint">{unreadCount > 0 ? `还有 ${unreadCount} 件未读` : '全部读完了'}</div>
-      </div>
-
       <div className="nb-grp">筛选</div>
       <button className={`nb-tnav-row${todayFilter === 'all' ? ' active' : ''}`}
         onClick={() => setTodayFilter('all')} data-testid="today-nav-filter-all">

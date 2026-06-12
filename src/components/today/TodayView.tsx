@@ -1,6 +1,6 @@
 // "今日事项" reading surface (Inoreader-style): timeline / list / card views,
-// expand-to-read, scroll-past auto-read, mark-all-read and a reading progress
-// bar. Filtering lives in the store (`todayFilter`) and is driven by the
+// expand-to-read, scroll-past auto-read and mark-all-read. Filtering lives in
+// the store (`todayFilter`) and is driven by the
 // sidebar's TodayNav; the toolbar only shows a clearable chip for the active
 // filter. Reports the item currently in view so the global quick chat can be
 // context-aware.
@@ -37,8 +37,6 @@ export function TodayView() {
   const [menuOpen, setMenuOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const reportedRef = useRef<string | null>(null);
-
-  const pct = updates.length ? Math.round(((updates.length - unreadCount) / updates.length) * 100) : 100;
 
   const filtered = updates.filter((u) =>
     filter === 'all' ? true : filter === 'unread' ? u.unread : u.topicId === filter);
@@ -113,7 +111,6 @@ export function TodayView() {
             {unreadCount > 0 ? `还有 ${unreadCount} 件未读` : '全部读完了'}
           </span>
         </div>
-        <div className="nb-progress"><div className="fill" style={{ width: `${pct}%` }} /></div>
 
         <div className="nb-read-toolbar" data-testid="today-toolbar">
           {filterLabel && (

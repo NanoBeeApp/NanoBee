@@ -1,9 +1,9 @@
 # src/components/sidebar/TodayNav.tsx
 
 ## Responsibility
-Sidebar body shown while the Today page is open: a reading-progress card
-(read/total + progress bar), the shared filter (全部 / 未读 / per-topic rows
-with amber unread badges) and quick actions (mark all read, back to chat).
+Sidebar body shown while the Today page is open: the shared filter (全部 /
+未读 / per-topic rows with amber unread badges) and quick actions (mark all
+read, back to chat).
 
 ## Core exports
 - `TodayNav` — self-contained (reads the store directly, no props).
@@ -21,6 +21,12 @@ with amber unread badges) and quick actions (mark all read, back to chat).
   show their total in muted mono instead.
 
 ## Change history
+
+### 2026-06-12 — removed the reading-progress card
+- **Motivation**: user asked to drop the reading-progress UI; the unread
+  summary on the page header already conveys remaining work, so the card was
+  redundant chrome in the sidebar.
+- **Goal**: leaner nav — filters and actions only.
 
 ### 2026-06-12 — created
 - **Motivation**: the Today page used to hide the sidebar entirely
