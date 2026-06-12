@@ -3,7 +3,6 @@
 // (server-loaded via bootstrap), not from the static demo module.
 import type { ChatMeta, SessionMeta } from '../../types';
 import { CHAT_HISTORY_GROUPS } from '../../data/chats';
-import { TOPICS, topicById } from '../../data/topics';
 import { Icons } from '../../icons/icons';
 
 interface ChatHistoryListProps {
@@ -23,12 +22,10 @@ export function ChatHistoryList({ activeChatId, isChatView, chats, sessions, onS
         <div>
           <div className="nb-grp">刚刚</div>
           {sessions.slice().reverse().map((s) => {
-            const t = topicById(s.topicId) ?? TOPICS[0];
             return (
               <div key={s.id}
                 className={`nb-item${isChatView && activeChatId === s.id ? ' active' : ''}`}
                 onClick={() => onSelectChat(s.id)} data-testid={`chat-history-item-${s.id}`}>
-                <span className="tdot" style={{ background: t.color }} />
                 <div className="meta">
                   <div className="title">{s.title}</div>
                   <div className="sub">快速对话</div>
@@ -45,14 +42,11 @@ export function ChatHistoryList({ activeChatId, isChatView, chats, sessions, onS
           <div key={g}>
             <div className="nb-grp">{g}</div>
             {items.map((c) => {
-              const t = topicById(c.topicId);
               return (
                 <div key={c.id}
                   className={`nb-item${isChatView && activeChatId === c.id ? ' active' : ''}`}
                   onClick={() => onSelectChat(c.id)} data-testid={`chat-history-item-${c.id}`}>
-                  {c.pinned
-                    ? <span className="star"><Icons.star size={12} /></span>
-                    : <span className="tdot" style={{ background: t?.color }} />}
+                  {c.pinned && <span className="star"><Icons.star size={12} /></span>}
                   <div className="meta">
                     <div className="title">{c.title}</div>
                     <div className="sub">{c.sub}</div>
