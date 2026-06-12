@@ -19,6 +19,7 @@ This project is a **public open-source repository**. **The public repo must only
   - Project planning, ideas, unpublished roadmaps → `private/planning/`
   - Design drafts, screenshots, prompts, debugging/explanatory artifacts → `private/design/`, `private/screenshots/`, `private/prompts/`, `private/explain/`
 - **Rule of thumb**: if a file is not "code or documentation intended for external users", it goes into `private/`; when in doubt, default to `private/`.
+- **🚫 Never reference concrete `private/` file paths in public docs (including this CLAUDE.md)**: `private/` is not committed to the public repo, so such links are dangling and confusing for anyone who clones it. Public docs must be self-contained — if background from a private document matters, summarize the conclusion inline instead of linking to it. (Describing the `private/` *convention* itself, as this section does, is fine.)
 - **Version-control rules**:
   - Changed files under `private/` → `git add / commit / push` separately inside the `private/` directory (pushed to the private remote).
   - Changed files in the main repo → commit normally at the repo root; `private/` is ignored automatically.
@@ -36,5 +37,3 @@ D1 and Durable Objects are **complementary, not competing**: D1 is the "one cent
 - **Hot counters never live in D1**: no `UPDATE ... SET count = count + 1` on high-frequency paths; use a Durable Object (or KV snapshot) and periodically flush to D1.
 - **Cross-object analytics**: DOs cannot be queried globally. Any reporting over DO-held data must go through an export pipeline (DO → Queues → R2 / analytics store), designed up front.
 - **Self-hosting caveat**: DOs are not portable off Cloudflare. As long as Docker self-deployment remains a product goal, keep storage access behind an adapter layer so the same business code can run on SQLite/Postgres outside Cloudflare.
-
-Background and full comparison: `private/reports/do-vs-d1-report.html` (in Chinese).
