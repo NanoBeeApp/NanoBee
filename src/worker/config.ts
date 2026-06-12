@@ -28,14 +28,22 @@ export const CONFIG = {
 		MAX_FIELD_LENGTH: 300,
 	},
 
-	// External public-data gateway (NanoBee-data-hub). The chat pipeline
-	// discovers sources from its catalog and pulls live data to ground replies.
-	// Base URL comes from the DATA_HUB_URL binding; unset = augmentation off.
+	// External public-data gateway (NanoBee-data-hub). The agent loop
+	// discovers sources from its catalog and exposes them as tools.
+	// Base URL comes from the DATA_HUB_URL binding; unset = no hub tools.
 	DATA_HUB: {
 		// Abort slow hub calls so a chat request never hangs on data fetching
 		REQUEST_TIMEOUT_MS: 8_000,
-		// Max sources offered to the router LLM (keeps the prompt bounded)
-		MAX_SOURCES_IN_PROMPT: 40,
+	},
+
+	// Agent loop settings (worker/agent/loop.ts)
+	AGENT: {
+		// Max model turns per request; the final turn is forced tool-free
+		MAX_ITERATIONS: 5,
+		// Per-tool execution timeout
+		TOOL_TIMEOUT_MS: 20_000,
+		// Tool results longer than this are truncated before re-prompting
+		MAX_TOOL_RESULT_CHARS: 8_000,
 	},
 
 	// Auth system constants (sessions, email codes, OAuth providers)

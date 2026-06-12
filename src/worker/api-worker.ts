@@ -41,8 +41,12 @@ export type Env = {
 
 	// --- External data gateway (NanoBee-data-hub) ---
 	// Base URL of the data hub, e.g. "http://localhost:3344" (dev) or
-	// "https://data.nanobee.app" (deployed). Unset = context augmentation off.
+	// "https://data.nanobee.app" (deployed). Unset = no data-hub tools.
 	DATA_HUB_URL?: string;
+	// MCP servers for the agent loop, as JSON:
+	//   {"datahub": "http://127.0.0.1:3344/mcp"}  or  [{"name":..., "url":...}]
+	// Unset = no MCP tools.
+	MCP_SERVERS?: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();

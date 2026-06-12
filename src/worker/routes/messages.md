@@ -11,7 +11,7 @@ it and returns it.
     → `201 { chatId, topicId, aiMessage }` | `400` invalid | `500`
 
 ## Dependencies
-- Upstream: `db/seed`, `../reply` (genReply), `../datahub/augment`, zod,
+- Upstream: `db/seed`, `../reply` (genReply), `../agent/loop`, zod,
   `../api-worker` (Env type)
 - Downstream: mounted by `routes/api.ts`; called by the store's send/sendQuick
 
@@ -66,3 +66,14 @@ it and returns it.
 - **Key decision**: augmentation is best-effort and prepended, not branched —
   no per-source logic lives in this route; the data hub being down/unset just
   skips it and chat answers from the model alone.
+
+### 2026-06-12 — agent loop replaces single-shot augmentation
+- **Motivation**: one route-then-answer pass could fetch at most one source
+  and could not react to results; the user asked for a real agent cycle with
+  tools, skills and MCP.
+- **Goal**: the send pipeline now calls `runAgentLoop` — the model
+  iteratively invokes tools (data-hub sources, built-in skills, MCP servers)
+  until it answers; `datahub/augment` was removed as superseded.
+- **Key decision**: the route stays tool-agnostic — it logs `toolsUsed` for
+  observability but never names a tool; any loop failure falls back to the
+  rule-based reply exactly as before.

@@ -1,25 +1,38 @@
-# datahub/client.ts
+# src/worker/datahub/client.ts
 
-## 文件职责
-NanoBee 访问 data-hub（公开数据统一网关）的轻量客户端。NanoBee 不直连任何第三方数据 API，一律经 data-hub 发现并调用数据源。
+## Responsibility
+Thin client for the NanoBee data hub (the single gateway for all external
+public data). NanoBee never calls third-party data APIs directly — it
+discovers sources from the hub catalog and invokes them by id.
 
-## 核心导出 / API
-- `isDataHubEnabled(env)` — 是否配置了 `DATA_HUB_URL`
-- `listDataSources(env): DataSourceDescriptor[]` — 拉 catalog；禁用/不可达返回 `[]`
-- `invokeDataSource(env, id, params): DataSourceResult | null` — 按 id 调用数据源；失败返回 `null`
-- 类型：`DataSourceParam` / `DataSourceDescriptor` / `DataSourceResult`（镜像 data-hub 契约）
+## Core exports / API
+- `isDataHubEnabled(env)` — whether `DATA_HUB_URL` is configured
+- `listDataSources(env): Promise<DataSourceDescriptor[]>` — catalog; `[]`
+  when disabled/unreachable
+- `invokeDataSource(env, id, params): Promise<DataSourceResult | null>` —
+  invoke by id; `null` on failure
+- Types mirroring the hub contract: `DataSourceParam`,
+  `DataSourceDescriptor`, `DataSourceResult`
 
-## 依赖关系
-- 上游：`datahub/augment.ts`
-- 下游：`DATA_HUB_URL` 绑定、`config.ts` 的 `DATA_HUB`、data-hub 的 `/api/sources*`
+## Dependencies
+- Upstream: `agent/datahub-tools.ts`
+- Downstream: `DATA_HUB_URL` binding, `config.ts` (`DATA_HUB`), the hub's
+  `/api/sources*` endpoints
 
-## 关键实现思路
-- 全部失败路径吞掉并返回空值/降级，保证聊天链路永不因数据中心问题中断。
-- 超时由 `CONFIG.DATA_HUB.REQUEST_TIMEOUT_MS` 控制。
+## Notes
+- Every failure path degrades to an empty value so chat never breaks on hub
+  problems; timeouts come from `CONFIG.DATA_HUB.REQUEST_TIMEOUT_MS`.
+- One-shot fetch retry smooths transient loopback resets between local
+  workerd dev servers (harmless in production).
 
-## 变更历史
+## Change history
 
-### 2026-06-12 — 创建
-- **出发点**：走通「HN 开发者新闻」流程，需从 data-hub 取数据；且数据源可无限扩展
-- **目标**：基于 catalog 的发现 + 按 id 通用调用，NanoBee 无需为每个源写代码
-- **关键决策**：所有失败优雅降级，augmentation 是可选增强而非硬依赖
+### 2026-06-12 — created
+- **Motivation**: answering "what's on HN today" needs hub data, and the set
+  of sources is open-ended — discovery must be data-driven.
+- **Key decision**: catalog discovery + invoke-by-id so NanoBee needs no
+  per-source code; all failures degrade gracefully.
+
+### 2026-06-12 — rewritten doc in English; consumer switched to agent loop
+- **Motivation**: this is a public repository (English-only docs), and the
+  one-shot `datahub/augment` consumer was replaced by `agent/datahub-tools`.

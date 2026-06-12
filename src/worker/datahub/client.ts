@@ -8,7 +8,7 @@
  * the moment it is registered.
  *
  * The hub base URL comes from the DATA_HUB_URL binding; when it is unset the
- * client is disabled and context augmentation is simply skipped.
+ * client is disabled and the agent simply gets no data-hub tools.
  */
 
 import type { Env } from "../api-worker";

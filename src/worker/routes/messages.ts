@@ -10,9 +10,8 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { Env } from "../api-worker";
-import { generateChatText } from "../ai/client";
 import { resolveAiConfig } from "../ai/settings";
-import { augmentWithData } from "../datahub/augment";
+import { runAgentLoop } from "../agent/loop";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
 import { ensureSeeded } from "../db/seed";
@@ -49,18 +48,22 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 			let llm: { text: string; model: string } | null = null;
 			if (aiConfig.apiKey) {
 				try {
-					// Ground the reply in live data when a data-hub source fits the
-					// question — the model picks the source from the catalog, so no
-					// per-topic branching lives here.
-					const augmented = await augmentWithData(c.env, aiConfig, body.text);
-					const llmText = await generateChatText(aiConfig, [
-						...augmented.messages,
+					// Agent loop: the model can iteratively call tools (data-hub
+					// sources, built-in skills, MCP servers) before answering. The
+					// toolset is discovered at runtime — nothing here names a tool.
+					const run = await runAgentLoop(c.env, aiConfig, [
 						...(body.ctxTitle
 							? [{ role: "system" as const, content: `用户当前正在阅读：「${body.ctxTitle}」` }]
 							: []),
 						{ role: "user", content: body.text },
 					]);
-					llm = { text: llmText, model: aiConfig.model };
+					if (run.toolsUsed.length > 0) {
+						console.log(
+							"[API] POST /api/messages agent tools:",
+							run.toolsUsed.map((t) => `${t.tool}${t.ok ? "" : "(failed)"}`).join(", "),
+						);
+					}
+					llm = { text: run.text, model: aiConfig.model };
 				} catch (error) {
 					console.error(
 						"[API] POST /api/messages LLM call failed (provider:",

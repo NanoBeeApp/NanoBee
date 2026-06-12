@@ -48,3 +48,10 @@ default list limit). Route files must reference this instead of hardcoding.
 - **Goal**: remove `CONFIG.AI.SYSTEM_PROMPT` entirely (messages route stops
   prepending the system message). The optional reading-context system message
   (`ctxTitle`) is functional context and stays.
+
+### 2026-06-12 — DATA_HUB + AGENT sections
+- **Motivation**: the agent loop needs bounded behavior (iteration cap,
+  per-tool timeout, result truncation) and the data-hub client needs its own
+  request timeout; per the single-config rule they live here.
+- **Goal**: `CONFIG.DATA_HUB` (hub request timeout) and `CONFIG.AGENT`
+  (MAX_ITERATIONS / TOOL_TIMEOUT_MS / MAX_TOOL_RESULT_CHARS).
