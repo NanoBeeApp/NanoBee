@@ -34,3 +34,10 @@ Inline SVG line-icon set (Lucide-class, 24x24, rounded caps) ported 1:1 from the
 ### 2026-06-12 — added `gear` icon
 - **Motivation**: the sidebar footer download button became a settings
   (gear) button whose menu hosts the app download links.
+
+### 2026-06-12 — replaced the hand-drawn gear with Font Awesome's solid gear
+- **Motivation**: user feedback — the hand-approximated stroke gear looked
+  odd; a polished, detail-rich glyph was wanted.
+- **Key decision**: inline the Font Awesome 6 Free "gear" (solid) path
+  directly (own 512 viewBox, `fill="currentColor"`) instead of adding the
+  FA library as a dependency, keeping the icon set dependency-free.
