@@ -1,8 +1,9 @@
 // Main chat composer: auto-growing textarea, quick-suggestion chips, and the
 // slash ("/task") and mention ("@watchlist") popovers that turn conversation
 // into automated tasks.
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Topic } from '../../types';
+import { useAppStore } from '../../store/useAppStore';
 import { Icon, Icons } from '../../icons/icons';
 
 const SLASH_COMMANDS = [
@@ -31,6 +32,13 @@ export function Composer({ topic, onSend }: ComposerProps) {
   const [val, setVal] = useState('');
   const [pop, setPop] = useState<Popover>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const activeChatId = useAppStore((s) => s.activeChatId);
+
+  // Focus the input on mount and whenever the conversation changes
+  // (new chat via ⌘N / sidebar button, or switching to another chat).
+  useEffect(() => {
+    taRef.current?.focus();
+  }, [activeChatId]);
 
   const autoGrow = () => {
     const ta = taRef.current;
@@ -45,7 +53,10 @@ export function Composer({ topic, onSend }: ComposerProps) {
     setVal(v);
     if (v === '/') setPop('slash');
     else if (v.endsWith('@')) setPop('mention');
-    else if (pop && !v.includes('/') && !v.endsWith('@')) setPop(null);
+    // Keep the slash popover only while the text still looks like a command
+    // being typed ("/盯盘"), not when "/" merely appears mid-sentence.
+    else if (pop === 'slash' && !(v.startsWith('/') && !v.includes(' '))) setPop(null);
+    else if (pop === 'mention' && !v.endsWith('@')) setPop(null);
     autoGrow();
   };
 
@@ -54,7 +65,12 @@ export function Composer({ topic, onSend }: ComposerProps) {
     onSend(val.trim());
     setVal('');
     setPop(null);
-    if (taRef.current) taRef.current.style.height = 'auto';
+    if (taRef.current) {
+      taRef.current.style.height = 'auto';
+      // Clicking the send button moves focus to it — bring it back so the
+      // user can keep typing without re-clicking the input.
+      taRef.current.focus();
+    }
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -116,7 +132,13 @@ export function Composer({ topic, onSend }: ComposerProps) {
             data-testid="chat-message-input" />
           <div className="nb-composer-bar">
             <button className="cbtn" title="附件" data-testid="attach-file"><Icons.attach size={16} /></button>
-            <button className="cbtn" title="任务" onClick={() => { setVal('/'); setPop('slash'); }}
+            <button className="cbtn" title="任务"
+              onClick={() => {
+                // Toggle: a second click closes the popover instead of re-opening it.
+                if (pop === 'slash') { setPop(null); setVal(''); }
+                else { setVal('/'); setPop('slash'); }
+                taRef.current?.focus();
+              }}
               data-testid="open-slash-commands"><Icons.slash size={16} /></button>
             <button className="cbtn" title="语音" data-testid="voice-input"><Icons.mic size={16} /></button>
             <span className="model" data-testid="model-selector"><Icons.spark size={12} /> sonnet · agent <Icons.chevD size={12} /></span>

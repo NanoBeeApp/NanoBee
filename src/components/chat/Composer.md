@@ -15,3 +15,7 @@ Main chat composer: auto-growing textarea, contextual quick-suggestion chips, sl
 
 ### 2026-06-12 — created
 - **Motivation**: PRD requires full ChatGPT-style chat plus task creation entry points in the composer.
+
+### 2026-06-12 — focus & popover interaction fixes
+- **Motivation**: user feedback — clicking "新对话" left the input unfocused; small interaction papercuts surfaced during a UI-detail review.
+- **Changes**: auto-focus the textarea on mount and whenever `activeChatId` changes; refocus after clicking the send button; the toolbar "/" button now toggles the popover and focuses the input; the slash popover only stays open while the text still looks like a command being typed (starts with "/", no space) instead of whenever "/" appears anywhere.
