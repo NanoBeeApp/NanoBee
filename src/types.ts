@@ -79,36 +79,15 @@ export interface SessionMeta {
 export type InlineSegment =
   | string
   | { b: string }
-  | { num: string }
-  | { cite: number };
+  | { num: string };
 
 export type Paragraph = InlineSegment[];
 
-export interface PriceCardData {
-  label: string;
-  value: string;
-  delta: string;
-  dir: 'up' | 'down';
-  sub: string;
-  tag: string;
-}
-
-export interface RecActionItem {
-  tone: 'ok' | 'info' | 'warn';
-  label: string;
-  cta: string;
-}
-
-/** Task proposal embedded in an AI reply — confirmed by the user with one click. */
+/** Task proposal (e.g. from the selection toolbar) — confirmed by the user with one click. */
 export interface TaskSuggestion extends Omit<Task, 'status'> {
   desc: string;
   config: TaskConfigChip[];
 }
-
-export type MessageExtra =
-  | { kind: 'price'; data: PriceCardData }
-  | { kind: 'rec'; data: RecActionItem[] }
-  | { kind: 'task'; data: TaskSuggestion };
 
 export interface UserMessage {
   id: string;
@@ -124,11 +103,7 @@ export interface AiMessage {
   icon?: IconName;
   title?: string;
   time?: string;
-  thinking?: string;
   model?: string;
-  extras?: MessageExtra[];
-  citations?: string[];
-  suggest?: string[];
 }
 
 export type ChatMessage = UserMessage | AiMessage;

@@ -1,10 +1,10 @@
 # src/components/chat/MessageView.tsx
 
 ## Responsibility
-Renders one chat message: user bubble / AI reply (minimal "NanoBee" role row, thinking pill, rich paragraphs, extras, citations, suggestion chips when present) / proactive amber card with "NanoBee 主动推送" tag.
+Renders one chat message: user bubble / AI reply (minimal "NanoBee" role row, rich paragraphs only) / proactive amber card with "NanoBee 主动推送" tag.
 
 ## Dependencies
-- Upstream: types, icons, InlineSegments, PriceCard, RecommendedActions, TaskSuggestCard
+- Upstream: types, icons, InlineSegments
 - Downstream: ChatView, QuickChat
 
 ## Key notes
@@ -19,3 +19,7 @@ Renders one chat message: user bubble / AI reply (minimal "NanoBee" role row, th
 ### 2026-06-12 — declutter the AI message
 - **Motivation**: user feedback — the chat felt cluttered; the model-name label and the copy/like/regenerate/bookmark action row were noise (the actions had no implementation behind them).
 - **Goal**: AI messages show only a minimal "NanoBee" role row and the body; extras/suggest rendering stays so server-driven cards/chips can return later.
+
+### 2026-06-12 — text-only messages
+- **Motivation**: user feedback — the message area was still cluttered (thinking pill, task-suggestion card, citation chips, reply-suggestion chips).
+- **Goal**: keep only the basic content — role row + paragraphs (user bubble / proactive card framing unchanged). Props reduced to `{ m }`; PriceCard / RecommendedActions / TaskSuggestCard were deleted.

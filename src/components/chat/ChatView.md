@@ -16,3 +16,7 @@ Center chat surface: auto-scrolling message feed, pending indicator, composer, a
 - **Motivation**: after a reload, a confirmed suggestion card showed "创建任务"
   again because `createdTaskIds` is session memory. The card now also counts a
   suggestion as created when its id exists in the persisted task list.
+
+### 2026-06-12 — drop task-card plumbing
+- **Motivation**: MessageView became text-only, so the createdTaskIds/createTask/onSuggest wiring had no consumer.
+- **Goal**: pass only the message to MessageView; remove the knownTaskIds memo.

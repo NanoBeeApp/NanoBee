@@ -1,7 +1,7 @@
 # src/data/conversations.ts
 
 ## Responsibility
-Scripted demo conversations keyed by chat id — pure data with rich-text paragraphs, citations, price/task extras and suggestion chips. Doubles as the D1 seed content for the messages table.
+Scripted demo conversations keyed by chat id — pure data with plain rich-text paragraphs. Doubles as the D1 seed content for the messages table.
 
 ## Dependencies
 - Upstream: src/types
@@ -18,3 +18,7 @@ Scripted demo conversations keyed by chat id — pure data with rich-text paragr
 
 ### 2026-06-12 — deterministic seed ids
 - **Motivation**: `wrangler deploy` failed with "Disallowed operation called within global scope" — `wid()` ran nanoid at module load inside the Worker bundle. Seed ids are now a plain counter, which is also more correct: seed data should have stable ids.
+
+### 2026-06-12 — strip demo clutter
+- **Motivation**: user feedback — seeded conversations filled the chat with status pills, task cards, citations and reply chips.
+- **Goal**: seed messages are plain rich-text paragraphs only (thinking/extras/citations/suggest removed, cite segments inlined into the text).

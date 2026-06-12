@@ -1,21 +1,15 @@
 // Renders one chat message: user bubble, AI reply, or proactive amber card.
-// Proactive messages are AI-initiated and visually distinguished (the design's
-// confirmed default is the emphasized card style).
-import type { ChatMessage, TaskSuggestion } from '../../types';
+// Kept intentionally minimal: just the message text (no status pills, task
+// cards, citation chips or reply suggestions).
+import type { ChatMessage } from '../../types';
 import { Icon, Icons } from '../../icons/icons';
 import { InlineSegments } from './InlineSegments';
-import { PriceCard } from './PriceCard';
-import { RecommendedActions } from './RecommendedActions';
-import { TaskSuggestCard } from './TaskSuggestCard';
 
 interface MessageViewProps {
   m: ChatMessage;
-  createdTaskIds: string[];
-  onCreateTask: (d: TaskSuggestion) => void;
-  onSuggest: (text: string) => void;
 }
 
-export function MessageView({ m, createdTaskIds, onCreateTask, onSuggest }: MessageViewProps) {
+export function MessageView({ m }: MessageViewProps) {
   if (m.role === 'user') {
     return (
       <div className="nb-msg nb-user" data-testid="chat-user-message">
@@ -24,39 +18,13 @@ export function MessageView({ m, createdTaskIds, onCreateTask, onSuggest }: Mess
     );
   }
 
-  const isProactive = m.role === 'proactive';
   const body = (
-    <>
-      {m.thinking && (
-        <div className="nb-thinking" style={{ marginBottom: 12 }}>
-          <Icons.spark size={13} /> <span>{m.thinking}</span>
-        </div>
-      )}
-      <div className="nb-body nb-selectable" data-ai-text="1">
-        {m.paras.map((p, i) => <p key={i}><InlineSegments segs={p} /></p>)}
-      </div>
-      {(m.extras ?? []).map((ex, i) => {
-        if (ex.kind === 'price') return <PriceCard key={i} d={ex.data} />;
-        if (ex.kind === 'rec') return <RecommendedActions key={i} items={ex.data} />;
-        return (
-          <TaskSuggestCard key={i} d={ex.data}
-            created={createdTaskIds.includes(ex.data.id)} onCreate={onCreateTask} />
-        );
-      })}
-      {m.citations && (
-        <div className="nb-cite-row">
-          {m.citations.map((c, i) => <span className="src" key={i}><span className="n">{i + 1}</span> {c}</span>)}
-        </div>
-      )}
-      {m.suggest && (
-        <div className="nb-suggest" data-testid="reply-suggestion-chips">
-          {m.suggest.map((s, i) => <button key={i} onClick={() => onSuggest(s)}>{s}</button>)}
-        </div>
-      )}
-    </>
+    <div className="nb-body nb-selectable" data-ai-text="1">
+      {m.paras.map((p, i) => <p key={i}><InlineSegments segs={p} /></p>)}
+    </div>
   );
 
-  if (isProactive) {
+  if (m.role === 'proactive') {
     return (
       <div className="nb-proactive" data-testid="proactive-push-card">
         <div className="nb-pro-card">

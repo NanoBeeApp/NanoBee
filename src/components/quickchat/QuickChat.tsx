@@ -1,7 +1,7 @@
 // Global floating composer + slide-up quick-chat overlay. Lives on every
 // non-chat surface; context-aware ("正在看 · …" chip) and can hand the
 // conversation off to the full chat page.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
 import { MessageView } from '../chat/MessageView';
@@ -21,16 +21,6 @@ export function QuickChat() {
   const pending = useAppStore((s) => s.quickPending);
   const sendQuick = useAppStore((s) => s.sendQuick);
   const openQuickInChat = useAppStore((s) => s.openQuickInChat);
-  const createdTaskIds = useAppStore((s) => s.createdTaskIds);
-  const tasks = useAppStore((s) => s.tasks);
-  const createTask = useAppStore((s) => s.createTask);
-
-  // A suggestion counts as created when confirmed this session or already
-  // persisted in the task list (e.g. confirmed before a reload).
-  const knownTaskIds = useMemo(
-    () => [...createdTaskIds, ...tasks.map((t) => t.id)],
-    [createdTaskIds, tasks],
-  );
 
   const [val, setVal] = useState('');
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -50,10 +40,15 @@ export function QuickChat() {
     if (!val.trim()) return;
     sendQuick(val.trim());
     setVal('');
-    if (taRef.current) taRef.current.style.height = 'auto';
+    if (taRef.current) {
+      taRef.current.style.height = 'auto';
+      // Keep focus in the input after clicking the send button.
+      taRef.current.focus();
+    }
   };
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+    if (e.key === 'Escape' && open) setOpen(false);
   };
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setVal(e.target.value);
@@ -92,8 +87,7 @@ export function QuickChat() {
           </div>
           <div className="qp-feed" ref={feedRef} data-testid="quick-chat-feed">
             {messages.map((m) => (
-              <MessageView key={m.id} m={m} createdTaskIds={knownTaskIds}
-                onCreateTask={createTask} onSuggest={sendQuick} />
+              <MessageView key={m.id} m={m} />
             ))}
             {pending && <ThinkingIndicator />}
           </div>
@@ -115,7 +109,8 @@ export function QuickChat() {
           )}
           <div className="qc-row">
             {messages.length > 0 && !open && (
-              <button className="cbtn" title="展开对话" onClick={() => setOpen(true)} data-testid="expand-quick-chat">
+              <button className="cbtn" title="展开对话"
+                onClick={() => { setOpen(true); taRef.current?.focus(); }} data-testid="expand-quick-chat">
                 <span style={{ display: 'inline-flex', transform: 'rotate(180deg)' }}><Icons.chevD size={16} /></span>
               </button>
             )}

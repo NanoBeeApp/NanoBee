@@ -1,7 +1,7 @@
 # src/components/quickchat/QuickChat.tsx
 
 ## Responsibility
-Global floating composer (every non-chat surface) + slide-up quick-chat overlay: context chip ("正在看 · …" with clear button), message feed reusing MessageView (task cards work inside the overlay), "在聊天页打开" handoff, collapse/expand.
+Global floating composer (every non-chat surface) + slide-up quick-chat overlay: context chip ("正在看 · …" with clear button), message feed reusing MessageView, "在聊天页打开" handoff, collapse/expand.
 
 ## Dependencies
 - Upstream: store, icons, MessageView, ThinkingIndicator
@@ -20,3 +20,10 @@ Global floating composer (every non-chat surface) + slide-up quick-chat overlay:
 - **Motivation**: same reload issue as ChatView — suggestion cards in the
   quick-chat overlay now treat ids present in the persisted task list as
   already created.
+
+### 2026-06-12 — focus & keyboard fixes
+- **Motivation**: UI-detail review — focus was lost after clicking send or "展开对话", and the overlay had no keyboard way to collapse.
+- **Changes**: refocus the input after a button-click send; Escape collapses the overlay; expanding via the chevron keeps focus in the input.
+
+### 2026-06-12 — drop task-card plumbing
+- **Motivation**: MessageView became text-only; removed the createdTaskIds/createTask wiring and the knownTaskIds memo.
