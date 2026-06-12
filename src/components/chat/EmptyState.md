@@ -1,12 +1,17 @@
 # src/components/chat/EmptyState.tsx
 
 ## Responsibility
-New-chat empty state: brand glyph, "今天想让我帮你盯着什么?" headline and four starter cards that send a seed message.
+New-chat empty state: brand glyph, "今天想让我帮你盯着什么?" headline and a one-line value proposition. No interactive controls — the Composer below handles input.
 
 ## Dependencies
 - Downstream: ChatView
 
 ## Change history
+
+### 2026-06-12 — remove starter cards
+- **Motivation**: the four starter suggestion cards added visual weight to the empty state and pushed the user toward canned topics.
+- **Goal**: a cleaner, calmer empty state that just states the value prop and lets the user type freely.
+- **Key decision**: dropped the `STARTERS` grid and the now-unused `onSend` prop; pruned the dead `.nb-starter*` CSS.
 
 ### 2026-06-12 — simplify subtitle copy
 - **Motivation**: the original subtitle was a two-clause sentence that slightly over-explained the value prop; the phrasing "——不用你天天来问" felt defensive.

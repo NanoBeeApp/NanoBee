@@ -28,7 +28,7 @@ export function ChatView() {
   if (!activeChatId || messages.length === 0) {
     return (
       <>
-        <EmptyState onSend={send} />
+        <EmptyState />
         <Composer topic={topic} onSend={send} showQuick={false} />
       </>
     );
