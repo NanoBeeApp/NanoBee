@@ -153,18 +153,22 @@ body { background: var(--surface-2); color: var(--ink); overflow: hidden; }
 .nb-tnav-row .n { font-family: var(--font-mono); font-size: 11px; color: var(--ink-4); }
 .nb-tnav-row .unread { min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: var(--nb-amber-soft); border: 1px solid var(--nb-amber-line); color: var(--nb-amber-ink); font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; display: grid; place-items: center; }
 
-.nb-side-foot { border-top: 1px solid var(--border); padding: 10px; position: relative; }
+.nb-side-foot { border-top: 1px solid var(--border); padding: 10px; position: relative; display: flex; align-items: center; gap: 4px; }
+.nb-side-foot .nb-login-entry { flex: 1; }
 
 /* avatar-only account trigger + popover menu */
 .nb-account-trigger { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: none; border-radius: 999px; background: transparent; cursor: pointer; transition: background var(--dur-1) var(--ease-out); }
 .nb-account-trigger:hover { background: var(--surface-3); }
-.nb-account-pop { position: absolute; bottom: calc(100% + 6px); left: 10px; width: 224px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--sh-4); overflow: hidden; z-index: 60; animation: nbtoast 0.22s var(--ease-out); }
+.nb-account-pop, .nb-apps-pop { position: absolute; bottom: calc(100% + 6px); left: 10px; width: 224px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--sh-4); overflow: hidden; z-index: 60; animation: nbtoast 0.22s var(--ease-out); }
+.nb-apps-pop { left: 50px; width: 176px; }
+.nb-apps-trigger { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: none; border-radius: 999px; background: transparent; color: var(--ink-3); cursor: pointer; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+.nb-apps-trigger:hover { background: var(--surface-3); color: var(--ink); }
 .nb-account-id { display: flex; align-items: center; gap: 9px; padding: 11px 12px; }
 .nb-account-id .meta { flex: 1; min-width: 0; }
 .nb-account-id .title { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nb-account-id .sub { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 .nb-account-sep { height: 1px; background: var(--border); }
-.nb-account-action { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px; border: none; background: transparent; cursor: pointer; font-size: 13px; color: var(--ink-2); transition: background var(--dur-1) var(--ease-out); }
+.nb-account-action { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px; border: none; background: transparent; cursor: pointer; font-size: 13px; color: var(--ink-2); text-decoration: none; box-sizing: border-box; transition: background var(--dur-1) var(--ease-out); }
 .nb-account-action:hover { background: var(--surface-2); color: var(--ink); }
 .nb-account-action:disabled { opacity: 0.55; cursor: default; }
 

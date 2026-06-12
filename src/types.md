@@ -22,3 +22,7 @@ All interfaces/types listed above plus `IconName`.
 ### 2026-06-12 — extended `IconName` with `logout`
 - **Motivation**: the sidebar account menu got a dedicated sign-out icon
   (replacing the ambiguous `x`), which required a new union member.
+
+### 2026-06-12 — extended `IconName` with `download` / `smartphone` / `monitor`
+- **Motivation**: new glyphs for the sidebar "download apps" menu (trigger
+  icon plus iOS / Mac platform icons).

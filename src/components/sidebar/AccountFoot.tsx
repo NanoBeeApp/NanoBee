@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Icons } from "../../icons/icons";
 import { useAuthUser, useLogout } from "../../lib/useAuth";
+import { DownloadAppsMenu } from "./DownloadAppsMenu";
 
 function Avatar({ image, name, className }: { image: string | null | undefined; name: string; className?: string }) {
 	if (image) {
@@ -58,6 +59,8 @@ export function AccountFoot() {
 			>
 				<Avatar className="avatar" image={user.image} name={displayName} />
 			</button>
+
+			<DownloadAppsMenu />
 
 			{menuOpen && (
 				<>

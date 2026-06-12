@@ -11,7 +11,7 @@ and a logout action — or a login/register entry linking to `/login`.
 
 ## Dependencies
 - Upstream: `react` (useState), `@tanstack/react-router` (Link),
-  `../../icons/icons`, `../../lib/useAuth`
+  `../../icons/icons`, `../../lib/useAuth`, `./DownloadAppsMenu`
 - Downstream: `Sidebar.tsx`
 - Styles: `.nb-account-trigger` / `.nb-account-pop` / `.nb-account-id` /
   `.nb-account-action` in `src/styles/app.css`; reuses `.nb-scrim`
@@ -41,3 +41,10 @@ and a logout action — or a login/register entry linking to `/login`.
 - **Key decision**: reuse the existing scrim + popover pattern from the
   notification dropdown (local state, `.nb-scrim` overlay, `z-index: 60`
   popover anchored above the footer) instead of pulling in a menu library.
+
+### 2026-06-12 — added DownloadAppsMenu next to the avatar
+- **Motivation**: users need a discoverable entry to the native iOS/Mac
+  apps; the footer next to the avatar is the natural spot.
+- **Key decision**: keep it as a separate self-contained component
+  (`DownloadAppsMenu`) so AccountFoot stays focused on auth state; the
+  footer became a flex row to host both triggers.
