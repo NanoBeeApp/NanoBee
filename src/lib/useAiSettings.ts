@@ -73,6 +73,38 @@ export function useFetchModels() {
 	});
 }
 
+export interface TestConnectionInput {
+	provider: AiProviderId;
+	apiKey?: string;
+	baseUrl?: string;
+	model?: string;
+}
+
+export interface TestConnectionResult {
+	ok: boolean;
+	latencyMs?: number;
+	modelCount?: number;
+	error?: string;
+}
+
+/**
+ * Probe the provider with the current key/host/model to confirm it works.
+ * The backend always answers 200 with `{ ok, ... }`; a failed *connection*
+ * comes back as `{ ok:false, error }`, not a thrown error.
+ */
+export function useTestConnection() {
+	return useMutation({
+		mutationFn: async (input: TestConnectionInput): Promise<TestConnectionResult> => {
+			const res = await apiClient.ai.test.$post({ json: input });
+			if (!res.ok) {
+				const data = (await res.json().catch(() => null)) as { error?: string } | null;
+				return { ok: false, error: data?.error ?? "连接测试失败" };
+			}
+			return (await res.json()) as TestConnectionResult;
+		},
+	});
+}
+
 /** Save mutation; refreshes the cached settings on success. */
 export function useSaveAiSettings() {
 	const queryClient = useQueryClient();

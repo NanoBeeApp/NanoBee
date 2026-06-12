@@ -47,3 +47,8 @@ Both require a signed-in session (401 otherwise).
   model ids via `listProviderModels`, never echoing the key.
 - **Key decision**: gate on the catalog's `canListModels`; key resolution mirrors
   resolveAiConfig so behavior stays consistent with the chat pipeline.
+
+### 2026-06-12 — add POST /api/ai/test + 抽取 resolveProbeKey
+- **出发点**：弹窗需要「测试连接」验证 provider 配置；/models 与 /test 的密钥解析逻辑重复。
+- **目标**：抽 `resolveProbeKey`（请求 key→同 provider 存储 key→内置 OpenRouter key）供两路复用；/test 对 canListModels 用 /models（返回延迟+模型数），其余用 pingChatModel。
+- **关键决策**：连接失败返回 200 `{ok:false,error}`（请求成功、连接失败语义清晰）；错误信息只给状态码不泄露 key。

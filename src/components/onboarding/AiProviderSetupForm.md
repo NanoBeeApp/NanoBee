@@ -43,3 +43,8 @@ Completely stateless — all values and callbacks come from
 - **Key decision**: stay presentational — models/loading/error and the fetch
   trigger arrive as props; the text input remains the source of truth so manual
   and dropdown-selected values share one field.
+
+### 2026-06-12 — master-detail 双栏重写 + 连接测试
+- **出发点**：用户要求弹窗左栏列所有 provider、右栏单个 provider 设置并可测试连接（按 V2 设计稿实现）。
+- **目标**：左 master（provider 列表，首字母徽标 + 默认胶囊 + 选中整块高亮，无侧条）/ 右 detail（API Key 带显示切换、Host、模型下拉+手动+自动获取、连接测试 inline 三态、保存）。
+- **关键决策**：保持纯渲染，仅保留 password 显隐这一 UI 态本地 useState；连接测试三态（idle/testing/success/error）由 props 注入，TestStatusLine 子组件渲染圆点+文案；无嵌套卡片、字号≥12px、对比度达标。

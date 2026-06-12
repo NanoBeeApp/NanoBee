@@ -12,6 +12,7 @@ import {
 	AI_PROVIDER_IDS,
 	DEFAULT_AI_PROVIDER,
 	getProviderInfo,
+	type AiProviderInfo,
 } from "../../lib/ai-providers";
 import type { Env } from "../api-worker";
 import { getSessionToken } from "../auth/cookies";
@@ -23,8 +24,31 @@ import {
 	saveUserAiSettings,
 } from "../ai/settings";
 import { listProviderModels } from "../ai/models";
+import { pingChatModel } from "../ai/client";
 
 const FIELD_MAX = CONFIG.AI.MAX_FIELD_LENGTH;
+
+/**
+ * Resolve which API key to probe a provider with, never returned to the client:
+ * caller-supplied key → the user's stored key for the same provider → the
+ * built-in OpenRouter key. Shared by the /models and /test endpoints.
+ */
+async function resolveProbeKey(
+	env: Env,
+	userId: string,
+	info: AiProviderInfo,
+	bodyApiKey: string | undefined,
+): Promise<string | null> {
+	let apiKey = bodyApiKey?.trim() || null;
+	if (!apiKey) {
+		const stored = await getStoredProviderKey(env, userId);
+		if (stored && stored.provider === info.id) apiKey = stored.apiKey;
+	}
+	if (!apiKey && info.id === DEFAULT_AI_PROVIDER) {
+		apiKey = env.OPENROUTER_API_KEY ?? null;
+	}
+	return apiKey;
+}
 
 const putSchema = z.object({
 	provider: z.enum(AI_PROVIDER_IDS),
@@ -45,6 +69,17 @@ const modelsSchema = z.object({
 		.union([z.literal(""), z.url({ protocol: /^https?$/ })])
 		.optional()
 		.default(""),
+});
+
+const testSchema = z.object({
+	provider: z.enum(AI_PROVIDER_IDS),
+	apiKey: z.string().max(FIELD_MAX).optional(),
+	baseUrl: z
+		.union([z.literal(""), z.url({ protocol: /^https?$/ })])
+		.optional()
+		.default(""),
+	// Required to ping providers without a model-list endpoint.
+	model: z.string().max(FIELD_MAX).optional().default(""),
 });
 
 export const aiSettingsRoutes = new Hono<{ Bindings: Env }>()
@@ -133,14 +168,7 @@ export const aiSettingsRoutes = new Hono<{ Bindings: Env }>()
 		}
 
 		// Resolve which key to use without ever returning it to the client.
-		let apiKey = body.apiKey?.trim() || null;
-		if (!apiKey) {
-			const stored = await getStoredProviderKey(c.env, user.id);
-			if (stored && stored.provider === info.id) apiKey = stored.apiKey;
-		}
-		if (!apiKey && info.id === DEFAULT_AI_PROVIDER) {
-			apiKey = c.env.OPENROUTER_API_KEY ?? null;
-		}
+		const apiKey = await resolveProbeKey(c.env, user.id, info, body.apiKey);
 		if (!apiKey && !info.keyOptional) {
 			return c.json({ error: `${info.label} 需要先填写 API Key 才能获取模型` }, 400);
 		}
@@ -163,5 +191,58 @@ export const aiSettingsRoutes = new Hono<{ Bindings: Env }>()
 		} catch (error) {
 			console.error("[API] POST /api/ai/models failed:", String(error));
 			return c.json({ error: "获取模型列表失败，请检查 API Key 与 Host" }, 502);
+		}
+	})
+
+	// POST /api/ai/test — probe the provider with the resolved key to confirm
+	// the key/host/model tuple actually works. Returns {ok, latencyMs, modelCount?}
+	// on success or {ok:false, error} on failure (HTTP 200 either way — the
+	// request succeeded; it's the *connection* that may have failed).
+	.post("/test", zValidator("json", testSchema), async (c) => {
+		const token = getSessionToken(c);
+		const user = token ? await getUserBySessionToken(c.env.DB, token) : null;
+		if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+		const body = c.req.valid("json");
+		const info = getProviderInfo(body.provider);
+		const baseUrl = (body.baseUrl ?? "").trim() || info.defaultBaseUrl;
+		if (!baseUrl) return c.json({ error: "请先填写 API Host" }, 400);
+
+		const apiKey = await resolveProbeKey(c.env, user.id, info, body.apiKey);
+		if (!apiKey && !info.keyOptional) {
+			return c.json({ ok: false, error: `${info.label} 需要先填写 API Key` });
+		}
+
+		const started = Date.now();
+		try {
+			if (info.canListModels) {
+				// Listing models is a cheap, token-free connectivity check.
+				const models = await listProviderModels({ protocol: info.protocol, baseUrl, apiKey });
+				const latencyMs = Date.now() - started;
+				console.log("[API] POST /api/ai/test ok, user:", user.id, "provider:", info.id, "models:", models.length);
+				return c.json({ ok: true, latencyMs, modelCount: models.length });
+			}
+			// No model-list endpoint: send a 1-token chat ping instead.
+			const model = (body.model ?? "").trim() || info.defaultModel;
+			await pingChatModel({
+				provider: info.id,
+				protocol: info.protocol,
+				baseUrl,
+				model,
+				apiKey,
+				source: "user",
+			});
+			const latencyMs = Date.now() - started;
+			console.log("[API] POST /api/ai/test ok (ping), user:", user.id, "provider:", info.id);
+			return c.json({ ok: true, latencyMs });
+		} catch (error) {
+			console.warn("[API] POST /api/ai/test failed:", info.id, String(error));
+			// Surface a short, actionable reason without leaking the raw key.
+			const raw = String(error);
+			const status = raw.match(/returned (\d{3})/)?.[1];
+			const reason = status
+				? `连接失败 (${status})，请检查 API Key、Host 与模型`
+				: "连接失败，请检查 API Key、Host 与网络";
+			return c.json({ ok: false, error: reason });
 		}
 	});

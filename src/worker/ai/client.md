@@ -46,3 +46,8 @@ diagnosable error (status + truncated body).
   wire formats; `generateChatText` becomes a thin tool-free wrapper.
 - **Key decision**: consecutive Anthropic tool results merge into a single
   user message, as the API requires one result turn per assistant tool turn.
+
+### 2026-06-12 — add pingChatModel
+- **出发点**：连接测试要覆盖没有 /models 端点的 provider（智谱、通义）。
+- **目标**：发一个 max_tokens:1 的最小 chat 请求验证 key/host/model 连通性。
+- **关键决策**：复用两种协议的 URL/header 构造，2xx 即视为连通，失败抛带状态码的可诊断错误。

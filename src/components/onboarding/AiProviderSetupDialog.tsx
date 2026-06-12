@@ -10,11 +10,17 @@ import {
 	useAiSettings,
 	useFetchModels,
 	useSaveAiSettings,
+	useTestConnection,
 	type AiSettings,
 	type SaveAiSettingsInput,
+	type TestConnectionResult,
 } from "../../lib/useAiSettings";
 import { useAppStore } from "../../store/useAppStore";
-import { AiProviderSetupForm, type AiSetupFormValues } from "./AiProviderSetupForm";
+import {
+	AiProviderSetupForm,
+	type AiSetupFormValues,
+	type TestStatus,
+} from "./AiProviderSetupForm";
 
 function initialValues(settings: AiSettings | null): AiSetupFormValues {
 	const provider = settings?.provider ?? "openrouter";
@@ -92,7 +98,10 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 	const [error, setError] = useState<string | null>(null);
 	const [models, setModels] = useState<string[]>([]);
 	const [modelsError, setModelsError] = useState<string | null>(null);
+	const [testStatus, setTestStatus] = useState<TestStatus>("idle");
+	const [testResult, setTestResult] = useState<TestConnectionResult | null>(null);
 	const fetchModels = useFetchModels();
+	const testConnection = useTestConnection();
 
 	const info = getProviderInfo(values.provider);
 	const hasStoredKey = Boolean(
@@ -124,6 +133,24 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 		[fetchModels],
 	);
 
+	const handleTestConnection = async () => {
+		setTestStatus("testing");
+		setTestResult(null);
+		try {
+			const result = await testConnection.mutateAsync({
+				provider: values.provider,
+				apiKey: values.apiKey.trim() || undefined,
+				baseUrl: values.baseUrl.trim() || undefined,
+				model: values.model.trim() || undefined,
+			});
+			setTestResult(result);
+			setTestStatus(result.ok ? "success" : "error");
+		} catch (e) {
+			setTestResult({ ok: false, error: e instanceof Error ? e.message : "连接测试失败" });
+			setTestStatus("error");
+		}
+	};
+
 	// Auto-fetch once on open when a key is already usable, so returning users
 	// see their model list without an extra click. Manual refresh covers the rest.
 	const didAutoFetch = useRef(false);
@@ -140,10 +167,12 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 	const handleProviderChange = (id: AiProviderId) => {
 		const next = getProviderInfo(id);
 		setError(null);
-		// Switching providers invalidates the previous model list and re-seeds
-		// host/model with the new provider's defaults.
+		// Switching providers invalidates the previous model list and test result,
+		// and re-seeds host/model with the new provider's defaults.
 		setModels([]);
 		setModelsError(null);
+		setTestStatus("idle");
+		setTestResult(null);
 		setValues((v) => ({ ...v, provider: id, baseUrl: next.defaultBaseUrl, model: next.defaultModel }));
 	};
 
@@ -186,9 +215,19 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 			models={models}
 			modelsLoading={fetchModels.isPending}
 			modelsError={modelsError}
+			testStatus={testStatus}
+			testResult={testResult}
 			onProviderChange={handleProviderChange}
-			onFieldChange={(field, value) => setValues((v) => ({ ...v, [field]: value }))}
+			onFieldChange={(field, value) => {
+				// Editing the key/host/model invalidates any prior test result.
+				if (testStatus !== "idle") {
+					setTestStatus("idle");
+					setTestResult(null);
+				}
+				setValues((v) => ({ ...v, [field]: value }));
+			}}
 			onFetchModels={() => void runFetchModels(values.provider, values.apiKey, values.baseUrl)}
+			onTestConnection={() => void handleTestConnection()}
 			onSubmit={() => void handleSubmit()}
 			onSkip={() => void handleSkip()}
 			onClose={props.isFirstSetup ? () => undefined : props.onClose}

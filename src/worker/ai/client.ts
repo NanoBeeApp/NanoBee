@@ -252,6 +252,45 @@ export async function generateAgentTurn(
 	return turn;
 }
 
+/**
+ * Send the smallest possible request to verify connectivity + credentials,
+ * used by the connection-test endpoint for providers that have no usable
+ * model-list endpoint. Caps the reply at 1 token so it stays cheap; any 2xx
+ * means the key/host/model tuple works. Throws with a diagnosable message.
+ */
+export async function pingChatModel(cfg: AiRuntimeConfig): Promise<void> {
+	if (!cfg.apiKey) throw new Error("No API key available for AI provider");
+	if (!cfg.baseUrl) throw new Error("No base URL configured for AI provider");
+	if (!cfg.model) throw new Error("No model configured for AI provider");
+
+	const signal = AbortSignal.timeout(CONFIG.AI.REQUEST_TIMEOUT_MS);
+	let url: string;
+	let headers: Record<string, string>;
+
+	if (cfg.protocol === "anthropic") {
+		url = joinUrl(cfg.baseUrl, "/messages");
+		headers = {
+			"Content-Type": "application/json",
+			"x-api-key": cfg.apiKey,
+			"anthropic-version": "2023-06-01",
+		};
+	} else {
+		url = joinUrl(cfg.baseUrl, "/chat/completions");
+		headers = {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${cfg.apiKey}`,
+			"X-Title": "NanoBee",
+		};
+	}
+	const payload = { model: cfg.model, max_tokens: 1, messages: [{ role: "user", content: "hi" }] };
+
+	const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload), signal });
+	if (!res.ok) {
+		const body = (await res.text()).slice(0, 300);
+		throw new Error(`provider returned ${res.status}: ${body}`);
+	}
+}
+
 /** Call the configured chat model (no tools) and return the reply text. */
 export async function generateChatText(
 	cfg: AiRuntimeConfig,

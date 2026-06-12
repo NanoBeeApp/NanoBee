@@ -38,3 +38,8 @@ settings entry.
   the model-id list and surfacing the server error message on failure.
 - **Key decision**: a mutation (not a query) since it is triggered explicitly /
   on provider change and depends on the in-form key/host, not a stable key.
+
+### 2026-06-12 — add useTestConnection
+- **出发点**：双栏弹窗的「连接测试」需要前端 mutation。
+- **目标**：`useTestConnection` 调 POST /api/ai/test，返回 `{ok,latencyMs,modelCount?,error?}`。
+- **关键决策**：失败的连接以 `{ok:false}` 返回而非 throw，组件按结果渲染三态。

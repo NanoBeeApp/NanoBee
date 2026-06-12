@@ -43,3 +43,8 @@ the pure `AiProviderSetupForm`.
   fetch once when a usable key exists, clear the list on provider change.
 - **Key decision**: auto-fetch is a one-shot ref-guarded effect (not keyed to
   every keystroke) so typing a key doesn't spam the provider; refresh is manual.
+
+### 2026-06-12 — 连接测试状态 + 双栏接线
+- **出发点**：双栏表单新增连接测试，需要状态容器持有测试态。
+- **目标**：持有 testStatus/testResult，调用 useTestConnection；provider 切换与 key/host/model 编辑都重置测试态（避免陈旧结果）。
+- **关键决策**：测试失败以结果对象呈现（不 throw）；编辑字段即让上一次测试结果失效，保证状态与输入一致。
