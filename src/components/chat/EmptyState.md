@@ -1,12 +1,17 @@
 # src/components/chat/EmptyState.tsx
 
 ## Responsibility
-New-chat empty state: brand glyph, "今天想让我帮你盯着什么?" headline and a one-line value proposition. No interactive controls — the Composer below handles input.
+New-chat empty state: a single light headline ("聊点什么有趣的话题？") that invites the user to start a conversation. No logo, no subline, no interactive controls — the Composer below handles input.
 
 ## Dependencies
 - Downstream: ChatView
 
 ## Change history
+
+### 2026-06-12 — strip to a single headline
+- **Motivation**: the empty state still carried the brand glyph plus a headline and a descriptive subline, which felt heavier than needed for a blank new chat.
+- **Goal**: a minimal, friendly entry point — just one inviting line.
+- **Key decision**: removed the glyph and the value-prop subline, changed the headline to a lighter, conversational "聊点什么有趣的话题？"; pruned the now-dead `.glyph-big` / `.nb-empty p` CSS and dropped the `Icons` import.
 
 ### 2026-06-12 — remove starter cards
 - **Motivation**: the four starter suggestion cards added visual weight to the empty state and pushed the user toward canned topics.

@@ -244,9 +244,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 
 /* ============ EMPTY STATE ============ */
 .nb-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 32px 120px; text-align: center; }
-.nb-empty .glyph-big { width: 64px; height: 64px; border-radius: 19px; background: linear-gradient(150deg, var(--nb-honey), #d98b2b); display: grid; place-items: center; box-shadow: var(--sh-3), inset 0 1px 0 rgba(255,255,255,0.4); margin-bottom: 22px; }
-.nb-empty h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.025em; margin: 0 0 8px; }
-.nb-empty p { font-size: 14.5px; color: var(--ink-3); margin: 0; max-width: 440px; line-height: 1.55; }
+.nb-empty h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.025em; margin: 0; color: var(--ink-2); }
 
 /* ============ TASKS PAGE (full-page task center, opened from the sidebar) ============ */
 .nb-taskspage { flex: 1; overflow-y: auto; min-height: 0; background: var(--surface-2); }
