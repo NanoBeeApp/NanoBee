@@ -29,7 +29,7 @@ export function ChatView() {
     return (
       <>
         <EmptyState onSend={send} />
-        <Composer topic={topic} onSend={send} />
+        <Composer topic={topic} onSend={send} showQuick={false} />
       </>
     );
   }

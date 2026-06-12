@@ -18,7 +18,7 @@ export function EmptyState({ onSend }: EmptyStateProps) {
     <div className="nb-empty" data-testid="new-chat-empty-state">
       <div className="glyph-big"><Icons.bee size={32} sw={1.5} style={{ color: '#fff' }} /></div>
       <h1>今天想让我帮你盯着什么？</h1>
-      <p>告诉我你关心的事，我会在重要的时候<strong style={{ color: 'var(--nb-amber-ink)' }}> 主动找你</strong>——不用你天天来问。</p>
+      <p>告诉我你关心的事，重要的时候我会<strong style={{ color: 'var(--nb-amber-ink)' }}>主动找你</strong>。</p>
       <div className="nb-starter-grid">
         {STARTERS.map((s, i) => (
           <button className="nb-starter" key={i} onClick={() => onSend(s.t)} data-testid={`starter-${s.ic}`}>

@@ -24,11 +24,15 @@ const TEXTAREA_MAX_HEIGHT = 160;
 interface ComposerProps {
   topic: Topic | null;
   onSend: (text: string) => void;
+  /** Whether to show the quick-suggestion chip row. Defaults to true.
+   *  Pass false on the welcome/empty state where guide cards already cover
+   *  the same actions. */
+  showQuick?: boolean;
 }
 
 type Popover = 'slash' | 'mention' | null;
 
-export function Composer({ topic, onSend }: ComposerProps) {
+export function Composer({ topic, onSend, showQuick = true }: ComposerProps) {
   const [val, setVal] = useState('');
   const [pop, setPop] = useState<Popover>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -91,13 +95,15 @@ export function Composer({ topic, onSend }: ComposerProps) {
   return (
     <div className="nb-composer-wrap">
       <div className="nb-composer-inner">
-        <div className="nb-suggest-row" data-testid="composer-quick-suggestions">
-          {quick.map((q, i) => (
-            <button key={i} onClick={() => onSend(q.t)}>
-              <span className="ic"><Icon name={q.ic} size={14} /></span>{q.t}
-            </button>
-          ))}
-        </div>
+        {showQuick && (
+          <div className="nb-suggest-row" data-testid="composer-quick-suggestions">
+            {quick.map((q, i) => (
+              <button key={i} onClick={() => onSend(q.t)}>
+                <span className="ic"><Icon name={q.ic} size={14} /></span>{q.t}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="nb-composer" data-testid="chat-composer">
           {pop === 'slash' && (

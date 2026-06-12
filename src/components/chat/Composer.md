@@ -16,6 +16,11 @@ Main chat composer: auto-growing textarea, contextual quick-suggestion chips, sl
 ### 2026-06-12 — created
 - **Motivation**: PRD requires full ChatGPT-style chat plus task creation entry points in the composer.
 
+### 2026-06-12 — add `showQuick` prop to suppress chip row
+- **Motivation**: the three quick-suggestion chips on the welcome/empty state ("帮我关注金价" / "盯着孩子的作业" / "每天来份早报") duplicate the four guide cards above, creating visual redundancy and diluting focus.
+- **Goal**: let callers hide the chip row without deleting it — chips are still useful in an active conversation where no guide cards are present.
+- **Key decision**: introduce an opt-in `showQuick?: boolean` prop (default `true`) instead of deleting the chip row outright. This preserves the chip UX for ongoing conversations; only the empty-state branch passes `showQuick={false}`.
+
 ### 2026-06-12 — focus & popover interaction fixes
 - **Motivation**: user feedback — clicking "新对话" left the input unfocused; small interaction papercuts surfaced during a UI-detail review.
 - **Changes**: auto-focus the textarea on mount and whenever `activeChatId` changes; refocus after clicking the send button; the toolbar "/" button now toggles the popover and focuses the input; the slash popover only stays open while the text still looks like a command being typed (starts with "/", no space) instead of whenever "/" appears anywhere.

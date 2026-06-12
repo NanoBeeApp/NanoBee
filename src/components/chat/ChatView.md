@@ -17,6 +17,11 @@ Center chat surface: auto-scrolling message feed, pending indicator, composer, a
   again because `createdTaskIds` is session memory. The card now also counts a
   suggestion as created when its id exists in the persisted task list.
 
+### 2026-06-12 — pass `showQuick={false}` to Composer in empty state
+- **Motivation**: the welcome screen already shows four guide cards; the three quick-suggestion chips below the composer repeat the same actions and clutter the screen.
+- **Goal**: eliminate the redundancy so the welcome page is cleaner and the guide cards get undivided attention.
+- **Key decision**: pass `showQuick={false}` only in the empty-state branch; the active-conversation branch keeps `showQuick` at its default (`true`) so chips still appear once a chat is started.
+
 ### 2026-06-12 — drop task-card plumbing
 - **Motivation**: MessageView became text-only, so the createdTaskIds/createTask/onSuggest wiring had no consumer.
 - **Goal**: pass only the message to MessageView; remove the knownTaskIds memo.
