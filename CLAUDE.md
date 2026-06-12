@@ -34,6 +34,12 @@ This project is a **public open-source repository**. **The public repo must only
   - Both are Workers Custom Domains declared in `wrangler.json` (`routes` with `custom_domain: true`); wrangler manages DNS + certificates on deploy.
 - **Default deploy target is the dev environment only** (`pnpm deploy:dev`). **Never deploy to production unless the user explicitly asks for it in the current request** (`pnpm deploy:prod`). This project rule overrides the global "always deploy dev and prod together" preference.
 
+## 🏗️ Architecture design principles (important)
+
+- **Every architecture decision must work for both deployment targets**: (1) Cloudflare (Workers / D1 / KV / R2 / DO) and (2) self-hosted deployment (Docker, plain Node.js + SQLite/Postgres). When designing any feature, state explicitly how it runs in both environments; do not adopt a design that only works on Cloudflare without flagging it to the user first.
+- **Keep platform-specific services behind adapter layers**: business logic must depend on narrow interfaces (storage, cache, queue, object store), with Cloudflare bindings and self-hosted backends as interchangeable implementations.
+- **Stay lightweight — do not pull in heavy dependencies**: prefer the standard library, platform built-ins, and small focused packages over large frameworks/ORMs/SDKs. Before adding any new dependency, justify it: what it solves, why a lighter alternative (or ~50 lines of our own code) isn't enough, and its size/transitive-dependency cost. When in doubt, don't add it.
+
 ## 🗄️ Storage architecture principles (D1 vs Durable Objects)
 
 D1 and Durable Objects are **complementary, not competing**: D1 is the "one central SQL database" model; a Durable Object is a globally unique, single-threaded compute unit with its own SQLite store, where "fetch object by key" *is* the sharding. Apply these rules to all future storage/feature design:
