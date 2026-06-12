@@ -36,3 +36,12 @@
   horizontally.
 - **Goal**: stable layout when toggling timeline/list/card — all views now
   share the same `.nb-today-inner` column; the `.nb-tlwrap` rule was removed.
+
+### 2026-06-12 — reserved a stable scrollbar gutter
+- **Motivation**: even with equal column widths, switching views still moved
+  the content when the OS shows classic scrollbars: the tall timeline view has
+  a vertical scrollbar while the shorter list view doesn't, so the centered
+  column shifted as the scrollbar appeared/disappeared.
+- **Goal**: identical content position in all view modes —
+  `scrollbar-gutter: stable` on `.nb-today` reserves the scrollbar space
+  permanently.
