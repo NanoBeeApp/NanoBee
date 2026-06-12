@@ -26,6 +26,14 @@ This project is a **public open-source repository**. **The public repo must only
   - 🚫 Never commit files under `private/` to the main repo under any circumstances (`.gitignore` + pre-commit hook provide double protection — do not bypass them).
 - After cloning this repo, reinstall the protection hook: `cp scripts/git-hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`
 
+## 🚀 Domains & deployment
+
+- **Domain**: `nanobee.app` (Cloudflare zone in this account).
+  - Production worker `nanobee` → `nanobee.app`
+  - Dev worker `nanobee-dev` → `dev.nanobee.app`
+  - Both are Workers Custom Domains declared in `wrangler.json` (`routes` with `custom_domain: true`); wrangler manages DNS + certificates on deploy.
+- **Default deploy target is the dev environment only** (`pnpm deploy:dev`). **Never deploy to production unless the user explicitly asks for it in the current request** (`pnpm deploy:prod`). This project rule overrides the global "always deploy dev and prod together" preference.
+
 ## 🗄️ Storage architecture principles (D1 vs Durable Objects)
 
 D1 and Durable Objects are **complementary, not competing**: D1 is the "one central SQL database" model; a Durable Object is a globally unique, single-threaded compute unit with its own SQLite store, where "fetch object by key" *is* the sharding. Apply these rules to all future storage/feature design:

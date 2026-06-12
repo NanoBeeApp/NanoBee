@@ -24,7 +24,16 @@
 	"env": {
 		"prod": {
 			"name": "nanobee",
-			"vars": {},
+			"workers_dev": true,
+			"routes": [
+				{
+					"pattern": "nanobee.app",
+					"custom_domain": true
+				}
+			],
+			"vars": {
+				"EMAIL_FROM": "NanoBee <noreply@nanobee.app>"
+			},
 			"d1_databases": [
 				{
 					"binding": "DB",
@@ -35,7 +44,16 @@
 		},
 		"dev": {
 			"name": "nanobee-dev",
-			"vars": {},
+			"workers_dev": true,
+			"routes": [
+				{
+					"pattern": "dev.nanobee.app",
+					"custom_domain": true
+				}
+			],
+			"vars": {
+				"EMAIL_FROM": "NanoBee <noreply@nanobee.app>"
+			},
 			"d1_databases": [
 				{
 					"binding": "DB",
