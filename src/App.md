@@ -40,3 +40,7 @@ App shell: two-column grid (sidebar | center) with a collapsible sidebar, chat/t
   sidebar body becomes the TodayNav reading nav).
 - **Goal**: collapse is purely user-controlled on every view; immersive
   reading is still one click away via the collapse button.
+
+### 2026-06-12 — mount AiProviderSetupDialog
+- **Motivation**: the first-login AI provider setup must overlay every view,
+  so it joins the global overlay layers in the app shell.

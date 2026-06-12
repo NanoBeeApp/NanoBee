@@ -59,6 +59,8 @@ interface AppState {
   quickOpen: boolean;
   quickPending: boolean;
   quickCtx: ViewingContext | null;
+  /** AI provider setup dialog opened manually from the account menu. */
+  aiSetupOpen: boolean;
 
   // server sync
   bootstrap: () => Promise<void>;
@@ -84,6 +86,9 @@ interface AppState {
   setQuickOpen: (v: boolean) => void;
   setQuickCtx: (ctx: ViewingContext | null) => void;
   openQuickInChat: () => void;
+
+  // AI provider settings dialog
+  setAiSetupOpen: (v: boolean) => void;
 
   // tasks
   createTask: (data: TaskSuggestion) => void;
@@ -157,6 +162,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   quickOpen: false,
   quickPending: false,
   quickCtx: null,
+  aiSetupOpen: false,
 
   bootstrap: async () => {
     try {
@@ -288,6 +294,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setQuickOpen: (quickOpen) => set({ quickOpen }),
   setQuickCtx: (quickCtx) => set({ quickCtx }),
+
+  setAiSetupOpen: (aiSetupOpen) => set({ aiSetupOpen }),
 
   openQuickInChat: () => {
     const s = get();

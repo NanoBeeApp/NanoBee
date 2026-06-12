@@ -54,3 +54,10 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 - **Goal**: `View` gains 'tasks' with `openTasks()`; `railCollapsed` /
   `setRailCollapsed` deleted (createTask no longer force-expands a rail —
   the creation toast is the feedback).
+
+### 2026-06-12 — aiSetupOpen flag
+- **Motivation**: the AI provider settings dialog must be openable from the
+  account menu, not only auto-shown on first login; cross-component UI state
+  belongs in the app store.
+- **Goal**: `aiSetupOpen` + `setAiSetupOpen` consumed by
+  `AiProviderSetupDialog` and triggered from `AccountFoot`.

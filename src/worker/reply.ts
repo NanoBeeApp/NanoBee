@@ -1,9 +1,10 @@
-// Server-side AI-reply generator (rule-based for the MVP).
+// Server-side AI-reply generator.
 // Picks a topic by keyword and proposes a matching task; when the user is
 // reading something on the Today page, the reply acknowledges that context.
-// This is the single place to swap in a real LLM call later.
+// The reply text comes from the configured LLM (ai/client.ts) when available;
+// the rule-based copy below is the fallback when no model call succeeded.
 import { nanoid } from "nanoid";
-import type { AiMessage, TaskSuggestion } from "../types";
+import type { AiMessage, Paragraph, TaskSuggestion } from "../types";
 
 const genId = (prefix: string) => `${prefix}_${nanoid(10)}`;
 
@@ -12,7 +13,20 @@ export interface GeneratedReply {
 	msg: AiMessage;
 }
 
-export function genReply(text: string, ctxTitle?: string | null): GeneratedReply {
+/** Split LLM output into display paragraphs (blank-line separated). */
+export function textToParas(text: string): Paragraph[] {
+	return text
+		.split(/\n{2,}|\n(?=\S)/)
+		.map((p) => p.trim())
+		.filter(Boolean)
+		.map((p) => [p] as Paragraph);
+}
+
+export function genReply(
+	text: string,
+	ctxTitle?: string | null,
+	llm?: { text: string; model: string } | null,
+): GeneratedReply {
 	const t = `${text ?? ""} ${ctxTitle ?? ""}`;
 	let topicId = "gold";
 	let task: TaskSuggestion;
@@ -53,15 +67,22 @@ export function genReply(text: string, ctxTitle?: string | null): GeneratedReply
 		});
 	}
 
+	// LLM-written reply text when the model call succeeded; otherwise the
+	// rule-based fallback copy. The task proposal stays rule-based either way.
+	const paras: Paragraph[] = llm
+		? textToParas(llm.text)
+		: [
+				...(ctxTitle ? [["结合你正在看的 ", { b: `「${ctxTitle}」` }, "："] as Paragraph] : []),
+				["好的，我来帮你盯着这件事。", { b: "重要的时候我会主动找你" }, "，平时不打扰。"],
+				["建议这样设置，你确认一下："],
+			];
+
 	return {
 		topicId,
 		msg: {
 			id: genId("m"), role: "ai",
-			paras: [
-				...(ctxTitle ? [["结合你正在看的 ", { b: `「${ctxTitle}」` }, "："] as AiMessage["paras"][number]] : []),
-				["好的，我来帮你盯着这件事。", { b: "重要的时候我会主动找你" }, "，平时不打扰。"],
-				["建议这样设置，你确认一下："],
-			],
+			paras,
+			...(llm ? { model: llm.model } : {}),
 			extras: [{ kind: "task", data: task }],
 			suggest: ["改一下通知条件", "换个时间", "先这样"],
 		},

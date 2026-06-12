@@ -15,6 +15,7 @@ import { NotificationDropdown } from './components/notifications/NotificationDro
 import { QuickChat } from './components/quickchat/QuickChat';
 import { SelectionFloat } from './components/selection/SelectionFloat';
 import { ToastStack } from './components/feedback/ToastStack';
+import { AiProviderSetupDialog } from './components/onboarding/AiProviderSetupDialog';
 
 export default function App() {
   const view = useAppStore((s) => s.view);
@@ -55,6 +56,8 @@ export default function App() {
       <QuickChat />
       <SelectionFloat />
       <ToastStack />
+      {/* First-login AI provider setup (also opened from the account menu) */}
+      <AiProviderSetupDialog />
     </div>
   );
 }

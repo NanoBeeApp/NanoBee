@@ -35,3 +35,13 @@ it and returns it.
 - **Motivation**: code review found the `isNew` flag was validated but never
   read (`INSERT OR IGNORE` already covers both cases); removed it from the
   contract.
+
+### 2026-06-12 — real LLM call in the send pipeline
+- **Motivation**: chat replies were rule-based; the backend should answer
+  with the configured AI provider (per-user settings, defaulting to
+  OpenRouter + DeepSeek V4 Flash on the built-in key).
+- **Goal**: resolve the session user → `resolveAiConfig` → `generateChatText`
+  for the reply text; any provider failure logs the error and falls back to
+  the rule-based reply so chat never breaks.
+- **Key decision**: signed-out visitors also get the backend default config —
+  chat is usable without an account today and the behavior stays consistent.

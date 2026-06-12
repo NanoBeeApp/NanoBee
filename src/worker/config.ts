@@ -17,6 +17,21 @@ export const CONFIG = {
 	// Default page size for list endpoints
 	DEFAULT_LIST_LIMIT: 50,
 
+	// AI chat-completion settings (provider catalog lives in src/lib/ai-providers.ts;
+	// the backend default is OpenRouter + DeepSeek V4 Flash via OPENROUTER_API_KEY)
+	AI: {
+		// Abort slow provider calls so the chat request never hangs
+		REQUEST_TIMEOUT_MS: 30_000,
+		// Hard cap on reply length (chat answers should stay short)
+		MAX_COMPLETION_TOKENS: 800,
+		// Upper bound on user-supplied key / URL / model field lengths
+		MAX_FIELD_LENGTH: 300,
+		// System prompt for the chat reply pipeline (product voice, zh-CN)
+		SYSTEM_PROMPT:
+			"你是 NanoBee，一个主动式 AI 助理：帮用户盯着他们关心的事，重要时刻主动通知，平时不打扰。" +
+			"请用简体中文、简洁友好地回答用户，必要时分成 1-3 个短段落，不要使用 Markdown 标题或列表符号。",
+	},
+
 	// Auth system constants (sessions, email codes, OAuth providers)
 	AUTH: {
 		// Name of the HttpOnly session cookie

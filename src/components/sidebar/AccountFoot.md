@@ -48,3 +48,10 @@ and a logout action — or a login/register entry linking to `/login`.
 - **Key decision**: keep it as a separate self-contained component
   (`DownloadAppsMenu`) so AccountFoot stays focused on auth state; the
   footer became a flex row to host both triggers.
+
+### 2026-06-12 — "AI 模型设置" menu entry
+- **Motivation**: users need a way to revisit their AI provider settings
+  after onboarding; the account popover is the existing home for
+  account-level actions.
+- **Goal**: a menu action that sets `aiSetupOpen` in the app store, opening
+  the same dialog used on first login (edit mode).

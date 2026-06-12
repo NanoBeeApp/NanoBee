@@ -34,3 +34,9 @@ default list limit). Route files must reference this instead of hardcoding.
   limits, provider endpoints); scattering them across modules violates the
   single-config rule.
 - **Goal**: every auth constant referenced via `CONFIG.AUTH`.
+
+### 2026-06-12 — CONFIG.AI section
+- **Motivation**: the LLM chat pipeline needs tunables (request timeout, max
+  completion tokens, field length cap, system prompt); per the single-config
+  rule they live here, while the provider catalog stays in
+  `src/lib/ai-providers.ts` because the frontend needs it too.

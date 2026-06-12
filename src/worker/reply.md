@@ -26,3 +26,13 @@ swapped in later.
 - **Key decision**: kept the rule-based content identical to the prototype so
   the UX is unchanged; only the id generation switched to nanoid because ids
   now land in D1 and must be unique across sessions.
+
+### 2026-06-12 — LLM reply text
+- **Motivation**: the backend now calls a real model (default: DeepSeek V4
+  Flash via OpenRouter), so the reply text should come from the LLM while
+  the structured task proposal stays rule-based.
+- **Goal**: `genReply` accepts an optional `llm` argument
+  (`{ text, model }`); when present the paragraphs come from `textToParas`
+  and `msg.model` is set, otherwise the original fallback copy is used.
+- **Key decision**: keep topic detection and the task card rule-based — they
+  feed structured product objects the model can't reliably produce yet.

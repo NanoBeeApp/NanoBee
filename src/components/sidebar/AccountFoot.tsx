@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Icons } from "../../icons/icons";
 import { useAuthUser, useLogout } from "../../lib/useAuth";
+import { useAppStore } from "../../store/useAppStore";
 import { DownloadAppsMenu } from "./DownloadAppsMenu";
 
 function Avatar({ image, name, className }: { image: string | null | undefined; name: string; className?: string }) {
@@ -22,6 +23,7 @@ function Avatar({ image, name, className }: { image: string | null | undefined; 
 export function AccountFoot() {
 	const { data: user, isLoading } = useAuthUser();
 	const logout = useLogout();
+	const setAiSetupOpen = useAppStore((s) => s.setAiSetupOpen);
 	const [menuOpen, setMenuOpen] = useState(false);
 
 	if (isLoading) {
@@ -74,6 +76,14 @@ export function AccountFoot() {
 							</div>
 						</div>
 						<div className="nb-account-sep" />
+						<button
+							className="nb-account-action"
+							onClick={() => { setMenuOpen(false); setAiSetupOpen(true); }}
+							data-testid="ai-settings-entry"
+						>
+							<Icons.spark size={15} />
+							AI 模型设置
+						</button>
 						<button
 							className="nb-account-action"
 							onClick={() => { setMenuOpen(false); logout.mutate(); }}

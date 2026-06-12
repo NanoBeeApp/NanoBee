@@ -10,6 +10,11 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { Env } from "../api-worker";
+import { generateChatText } from "../ai/client";
+import { resolveAiConfig } from "../ai/settings";
+import { getSessionToken } from "../auth/cookies";
+import { getUserBySessionToken } from "../auth/store";
+import { CONFIG } from "../config";
 import { ensureSeeded } from "../db/seed";
 import { genReply } from "../reply";
 
@@ -33,7 +38,40 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 		try {
 			await ensureSeeded(c.env);
 
-			const reply = genReply(body.text, body.ctxTitle);
+			// Resolve the AI config: the signed-in user's provider settings,
+			// or the backend default (OpenRouter + DeepSeek V4 Flash).
+			const token = getSessionToken(c);
+			const user = token ? await getUserBySessionToken(c.env.DB, token) : null;
+			const aiConfig = await resolveAiConfig(c.env, user?.id ?? null);
+
+			// Ask the configured model to write the reply text; on any failure
+			// fall back to the rule-based copy so chat never breaks.
+			let llm: { text: string; model: string } | null = null;
+			if (aiConfig.apiKey) {
+				try {
+					const llmText = await generateChatText(aiConfig, [
+						{ role: "system", content: CONFIG.AI.SYSTEM_PROMPT },
+						...(body.ctxTitle
+							? [{ role: "system" as const, content: `用户当前正在阅读：「${body.ctxTitle}」` }]
+							: []),
+						{ role: "user", content: body.text },
+					]);
+					llm = { text: llmText, model: aiConfig.model };
+				} catch (error) {
+					console.error(
+						"[API] POST /api/messages LLM call failed (provider:",
+						aiConfig.provider, "model:", aiConfig.model, "):",
+						String(error),
+					);
+				}
+			} else {
+				console.warn(
+					"[API] POST /api/messages: no API key for provider",
+					aiConfig.provider, "— using rule-based reply",
+				);
+			}
+
+			const reply = genReply(body.text, body.ctxTitle, llm);
 			// A Today-page reading context pins the topic; otherwise the
 			// reply's keyword-detected topic is the AI's auto-categorization.
 			const topicId = body.ctxTopicId ?? reply.topicId;

@@ -57,3 +57,8 @@ resource) plus the smoke-test `hello` endpoint.
 - **Key decision**: the registered redirect URIs in the provider consoles
   are the contract; `tests/api.spec.ts` now pins the generated
   `redirect_uri` path.
+
+### 2026-06-12 — mount /ai routes
+- **Motivation**: the AI provider settings feature adds its own route module.
+- **Goal**: `aiSettingsRoutes` mounted at `/ai` (kept in the RPC chain so the
+  typed client sees `apiClient.ai.settings`).

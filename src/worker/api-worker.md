@@ -46,3 +46,10 @@ exports `AppType` for the typed RPC client.
   stay empty for real accounts; the switch needs a typed home in `Env`.
 - **Key decision**: optional string set only in `.dev.vars` — absent in
   `wrangler.json` vars so no deployed environment can accidentally seed.
+
+### 2026-06-12 — OPENROUTER_API_KEY
+- **Motivation**: the backend default AI provider (DeepSeek V4 Flash via
+  OpenRouter) needs a built-in key for users who haven't supplied their own.
+- **Key decision**: optional secret in `Env` (`.dev.vars` locally,
+  `wrangler secret put` in deployed envs); when absent the chat pipeline
+  degrades to the rule-based reply instead of failing.

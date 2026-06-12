@@ -480,4 +480,20 @@ body { background: var(--surface-2); color: var(--ink); overflow: hidden; }
 .nb-login-entry { text-decoration: none; color: inherit; }
 .nb-login-entry:hover { background: var(--surface-2); }
 
+/* ---------- AI provider setup dialog (first login + account menu) ---------- */
+.nb-modal-scrim { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(15,17,23,0.32); animation: nbtoast 0.2s var(--ease-out); }
+.nb-modal { width: min(440px, 100%); max-height: calc(100vh - 48px); overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--sh-4); }
+.nb-modal-head { padding: 22px 24px 0; }
+.nb-modal-head .title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.nb-modal-head .sub { margin-top: 6px; font-size: 13px; color: var(--ink-3); line-height: 1.6; }
+.nb-modal-body { padding: 16px 24px 4px; display: flex; flex-direction: column; gap: 14px; }
+.nb-modal-foot { padding: 14px 24px 20px; display: flex; justify-content: flex-end; gap: 10px; }
+.nb-ai-providers { display: flex; flex-wrap: wrap; gap: 8px; }
+.nb-ai-provider { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); background: var(--surface-2); transition: all var(--dur-1) var(--ease-out); }
+.nb-ai-provider:hover { color: var(--ink); }
+.nb-ai-provider.selected { color: var(--brand-2); background: var(--brand-soft); }
+.nb-ai-provider .tag { font-size: 10.5px; font-weight: 700; color: var(--brand-2); background: rgba(99,91,255,0.12); padding: 1px 6px; border-radius: 999px; }
+.nb-ai-provider.selected .tag { background: rgba(99,91,255,0.16); }
+.nb-ai-hint { margin: -4px 0 0; font-size: 12.5px; color: var(--ink-4); line-height: 1.55; }
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; scroll-behavior: auto !important; } }
