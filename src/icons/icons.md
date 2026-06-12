@@ -19,3 +19,9 @@ Inline SVG line-icon set (Lucide-class, 24x24, rounded caps) ported 1:1 from the
 
 ### 2026-06-12 — created
 - **Motivation**: design handoff; keeping the exact prototype paths guarantees pixel-identical glyphs.
+
+### 2026-06-12 — added `logout` icon
+- **Motivation**: the sidebar account menu needed a clear sign-out glyph;
+  the previously used `x` icon read as "close" and confused users.
+- **Key decision**: standard Lucide `log-out` path so it stays consistent
+  with the rest of the Lucide-class set.

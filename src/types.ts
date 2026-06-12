@@ -152,4 +152,4 @@ export type IconName =
   | 'send' | 'attach' | 'mic' | 'slash' | 'at' | 'copy' | 'up' | 'redo' | 'more'
   | 'check' | 'bee' | 'panelRight' | 'panelLeft' | 'list' | 'grid' | 'feed'
   | 'eye' | 'arrowRight' | 'pause' | 'play' | 'calendar' | 'globe' | 'spark'
-  | 'x' | 'bookmark' | 'doc' | 'filter';
+  | 'x' | 'bookmark' | 'doc' | 'filter' | 'logout';

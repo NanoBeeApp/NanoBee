@@ -1,13 +1,27 @@
-// Sidebar footer account area: shows the signed-in user with a logout
-// action, or a login/register entry when signed out.
+// Sidebar footer account area: shows an avatar-only button when signed in
+// (click opens a popover menu with identity info and logout), or a
+// login/register entry when signed out.
 
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Icons } from "../../icons/icons";
 import { useAuthUser, useLogout } from "../../lib/useAuth";
 
+function Avatar({ image, name, className }: { image: string | null | undefined; name: string; className?: string }) {
+	if (image) {
+		return <img className={className} src={image} alt={name} referrerPolicy="no-referrer" />;
+	}
+	return (
+		<span className={className} style={{ background: '#ffe5da', color: '#7a2e10' }}>
+			{name.slice(0, 1).toUpperCase()}
+		</span>
+	);
+}
+
 export function AccountFoot() {
 	const { data: user, isLoading } = useAuthUser();
 	const logout = useLogout();
+	const [menuOpen, setMenuOpen] = useState(false);
 
 	if (isLoading) {
 		return <div className="nb-side-foot" data-testid="account-area" />;
@@ -34,28 +48,41 @@ export function AccountFoot() {
 
 	return (
 		<div className="nb-side-foot" data-testid="account-area">
-			<div className="nb-item" style={{ cursor: 'default' }} data-testid="account-summary">
-				{user.image ? (
-					<img className="avatar avatar-sm" src={user.image} alt={displayName} referrerPolicy="no-referrer" />
-				) : (
-					<span className="avatar avatar-sm" style={{ background: '#ffe5da', color: '#7a2e10' }}>
-						{displayName.slice(0, 1).toUpperCase()}
-					</span>
-				)}
-				<div className="meta">
-					<div className="title">{displayName}</div>
-					<div className="sub" title={user.email}>{user.email}</div>
-				</div>
-				<button
-					className="btn btn-ghost btn-icon btn-sm"
-					title="退出登录"
-					onClick={() => logout.mutate()}
-					disabled={logout.isPending}
-					data-testid="logout-button"
-				>
-					<Icons.x size={14} />
-				</button>
-			</div>
+			<button
+				className="nb-account-trigger"
+				title={displayName}
+				aria-haspopup="menu"
+				aria-expanded={menuOpen}
+				onClick={() => setMenuOpen((open) => !open)}
+				data-testid="account-menu-trigger"
+			>
+				<Avatar className="avatar" image={user.image} name={displayName} />
+			</button>
+
+			{menuOpen && (
+				<>
+					<div className="nb-scrim" onClick={() => setMenuOpen(false)} />
+					<div className="nb-account-pop" data-testid="account-menu">
+						<div className="nb-account-id">
+							<Avatar className="avatar" image={user.image} name={displayName} />
+							<div className="meta">
+								<div className="title">{displayName}</div>
+								<div className="sub" title={user.email}>{user.email}</div>
+							</div>
+						</div>
+						<div className="nb-account-sep" />
+						<button
+							className="nb-account-action"
+							onClick={() => { setMenuOpen(false); logout.mutate(); }}
+							disabled={logout.isPending}
+							data-testid="logout-button"
+						>
+							<Icons.logout size={15} />
+							退出登录
+						</button>
+					</div>
+				</>
+			)}
 		</div>
 	);
 }

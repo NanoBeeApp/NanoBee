@@ -1,23 +1,26 @@
 # AccountFoot.tsx
 
 ## Responsibility
-Sidebar footer account area: shows the signed-in user (avatar, name, email,
-logout button) or a login/register entry linking to `/login`.
+Sidebar footer account area: shows an avatar-only button for the signed-in
+user — clicking it opens a popover menu with identity info (name + email)
+and a logout action — or a login/register entry linking to `/login`.
 
 ## Core exports / API
 - `AccountFoot` — no props; reads auth state via `useAuthUser()` and
-  performs logout via `useLogout()`
+  performs logout via `useLogout()`; menu open state is local `useState`
 
 ## Dependencies
-- Upstream: `@tanstack/react-router` (Link), `../../icons/icons`,
-  `../../lib/useAuth`
+- Upstream: `react` (useState), `@tanstack/react-router` (Link),
+  `../../icons/icons`, `../../lib/useAuth`
 - Downstream: `Sidebar.tsx`
+- Styles: `.nb-account-trigger` / `.nb-account-pop` / `.nb-account-id` /
+  `.nb-account-action` in `src/styles/app.css`; reuses `.nb-scrim`
 
 ## Notes
 - Avatar: provider image when available (`referrerPolicy="no-referrer"` for
   Google-hosted avatars), otherwise the first letter of the display name.
-- Test anchors: `account-area`, `account-summary`, `login-entry`,
-  `logout-button`.
+- Test anchors: `account-area`, `account-menu-trigger`, `account-menu`,
+  `login-entry`, `logout-button`.
 
 ## Change history
 
@@ -28,3 +31,13 @@ logout button) or a login/register entry linking to `/login`.
   component.
 - **Key decision**: render an empty footer while the session query loads to
   avoid a logged-out flash for returning users.
+
+### 2026-06-12 — avatar-only trigger with popover menu
+- **Motivation**: the inline name/email row with a bare `x` logout button
+  read as "close" and felt confusing; users expected clicking the account
+  area to open a menu.
+- **Goal**: collapse the footer to a single avatar; move identity info and
+  logout into a popover menu opened by clicking the avatar.
+- **Key decision**: reuse the existing scrim + popover pattern from the
+  notification dropdown (local state, `.nb-scrim` overlay, `z-index: 60`
+  popover anchored above the footer) instead of pulling in a menu library.
