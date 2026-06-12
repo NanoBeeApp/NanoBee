@@ -408,7 +408,6 @@ body { background: var(--surface-2); color: var(--ink); overflow: hidden; }
 .nb-alldone p { font-size: 13px; color: var(--ink-3); margin: 0; }
 
 /* timeline (tweet-card) view */
-.nb-tlwrap { max-width: 600px; margin: 0 auto; }
 .nb-tl-card { display: flex; gap: 13px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 10px; box-shadow: var(--sh-1); transition: border-color var(--dur-2) var(--ease-out); }
 .nb-tl-card:hover { border-color: var(--border-2); }
 .nb-tl-card.unread { border-color: var(--nb-amber-line); background: linear-gradient(125deg, var(--nb-amber-soft), var(--surface) 42%); }

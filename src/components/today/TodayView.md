@@ -23,3 +23,11 @@
   rows on the page would violate the minimalism rule.
 - **Goal**: one shared `todayFilter` in the store; the toolbar only shows a
   single clearable chip when a filter is active.
+
+### 2026-06-12 — unified content width across the three view modes
+- **Motivation**: the timeline view wrapped each group in `.nb-tlwrap`
+  (max-width 600px, centered) while list/card used the full 860px inner
+  container, so switching views made group headers and content jump
+  horizontally.
+- **Goal**: stable layout when toggling timeline/list/card — all views now
+  share the same `.nb-today-inner` column; the `.nb-tlwrap` rule was removed.

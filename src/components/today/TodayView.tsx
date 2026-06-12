@@ -175,7 +175,7 @@ export function TodayView() {
           const items = filtered.filter((u) => u.group === g);
           if (!items.length) return null;
           return (
-            <div key={g} className={viewMode === 'timeline' ? 'nb-tlwrap' : ''}>
+            <div key={g}>
               <div className="nb-grp" style={{ paddingLeft: 2 }}>{g}</div>
               {viewMode === 'timeline' ? (
                 <div>
