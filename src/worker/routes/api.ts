@@ -1,8 +1,8 @@
 /**
  * Business API routes.
- * The /api/users endpoints are a small D1-backed example proving the
- * full stack (Hono + zod validation + D1) works end to end; replace
- * them with real NanoBee endpoints as the product grows.
+ * NanoBee endpoints live in sibling modules (bootstrap / messages / tasks /
+ * updates) and are mounted here; the /api/users endpoints remain as the
+ * original full-stack smoke-test example.
  */
 
 import { Hono } from "hono";
@@ -10,8 +10,17 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { CONFIG } from "../config";
 import type { Env } from "../api-worker";
+import { bootstrapRoutes } from "./bootstrap";
+import { messageRoutes } from "./messages";
+import { taskRoutes } from "./tasks";
+import { updateRoutes } from "./updates";
 
 export const apiRoutes = new Hono<{ Bindings: Env }>()
+	// NanoBee app endpoints (chained for typed RPC inference)
+	.route("/bootstrap", bootstrapRoutes)
+	.route("/messages", messageRoutes)
+	.route("/tasks", taskRoutes)
+	.route("/updates", updateRoutes)
 	// GET /api/hello — minimal RPC smoke-test endpoint
 	.get("/hello", (c) => {
 		const name = c.req.query("name") || "World";

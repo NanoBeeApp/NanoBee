@@ -1,18 +1,22 @@
 // ChatGPT-style flat chat history, time-grouped, with session ("刚刚") chats
-// created during this visit shown on top.
-import type { SessionMeta } from '../../types';
-import { CHATS, CHAT_HISTORY_GROUPS } from '../../data/chats';
+// created during this visit shown on top. Chats come from the store
+// (server-loaded via bootstrap), not from the static demo module.
+import type { ChatMeta, SessionMeta } from '../../types';
+import { CHAT_HISTORY_GROUPS } from '../../data/chats';
 import { TOPICS, topicById } from '../../data/topics';
 import { Icons } from '../../icons/icons';
 
 interface ChatHistoryListProps {
   activeChatId: string | null;
   isChatView: boolean;
+  chats: ChatMeta[];
   sessions: SessionMeta[];
   onSelectChat: (id: string) => void;
 }
 
-export function ChatHistoryList({ activeChatId, isChatView, sessions, onSelectChat }: ChatHistoryListProps) {
+export function ChatHistoryList({ activeChatId, isChatView, chats, sessions, onSelectChat }: ChatHistoryListProps) {
+  // Chats created in past sessions also land in "今天" after a reload.
+  const sessionIds = new Set(sessions.map((s) => s.id));
   return (
     <>
       {sessions.length > 0 && (
@@ -35,7 +39,7 @@ export function ChatHistoryList({ activeChatId, isChatView, sessions, onSelectCh
         </div>
       )}
       {CHAT_HISTORY_GROUPS.map((g) => {
-        const items = CHATS.filter((c) => c.group === g);
+        const items = chats.filter((c) => c.group === g && !sessionIds.has(c.id));
         if (!items.length) return null;
         return (
           <div key={g}>

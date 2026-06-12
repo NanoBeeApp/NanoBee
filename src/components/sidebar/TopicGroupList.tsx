@@ -1,7 +1,7 @@
 // Topic-group sidebar view: collapsible topic cards, each listing its
-// conversations and tasks. Grouping is presented as AI-managed.
-import type { Task } from '../../types';
-import { CHATS } from '../../data/chats';
+// conversations and tasks. Grouping is presented as AI-managed. Chats come
+// from the store (server-loaded via bootstrap), not the static demo module.
+import type { ChatMeta, Task } from '../../types';
 import { TOPICS } from '../../data/topics';
 import { Icon, Icons } from '../../icons/icons';
 
@@ -9,18 +9,19 @@ interface TopicGroupListProps {
   activeChatId: string | null;
   isChatView: boolean;
   openTopics: string[];
+  chats: ChatMeta[];
   tasks: Task[];
   onSelectChat: (id: string) => void;
   onToggleTopic: (id: string) => void;
 }
 
-export function TopicGroupList({ activeChatId, isChatView, openTopics, tasks, onSelectChat, onToggleTopic }: TopicGroupListProps) {
+export function TopicGroupList({ activeChatId, isChatView, openTopics, chats: allChats, tasks, onSelectChat, onToggleTopic }: TopicGroupListProps) {
   return (
     <div style={{ paddingTop: 6 }}>
       <div className="nb-grp">话题 · NanoBee 自动归类</div>
       {TOPICS.map((t) => {
         const open = openTopics.includes(t.id);
-        const chats = CHATS.filter((c) => c.topicId === t.id);
+        const chats = allChats.filter((c) => c.topicId === t.id);
         const topicTasks = tasks.filter((k) => k.topicId === t.id);
         return (
           <div key={t.id} className={`nb-topic${open ? ' open' : ''}`}>

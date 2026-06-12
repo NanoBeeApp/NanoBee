@@ -1,7 +1,7 @@
 // Global floating composer + slide-up quick-chat overlay. Lives on every
 // non-chat surface; context-aware ("正在看 · …" chip) and can hand the
 // conversation off to the full chat page.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
 import { MessageView } from '../chat/MessageView';
@@ -22,7 +22,15 @@ export function QuickChat() {
   const sendQuick = useAppStore((s) => s.sendQuick);
   const openQuickInChat = useAppStore((s) => s.openQuickInChat);
   const createdTaskIds = useAppStore((s) => s.createdTaskIds);
+  const tasks = useAppStore((s) => s.tasks);
   const createTask = useAppStore((s) => s.createTask);
+
+  // A suggestion counts as created when confirmed this session or already
+  // persisted in the task list (e.g. confirmed before a reload).
+  const knownTaskIds = useMemo(
+    () => [...createdTaskIds, ...tasks.map((t) => t.id)],
+    [createdTaskIds, tasks],
+  );
 
   const [val, setVal] = useState('');
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -84,7 +92,7 @@ export function QuickChat() {
           </div>
           <div className="qp-feed" ref={feedRef} data-testid="quick-chat-feed">
             {messages.map((m) => (
-              <MessageView key={m.id} m={m} createdTaskIds={createdTaskIds}
+              <MessageView key={m.id} m={m} createdTaskIds={knownTaskIds}
                 onCreateTask={createTask} onSuggest={sendQuick} />
             ))}
             {pending && <ThinkingIndicator />}

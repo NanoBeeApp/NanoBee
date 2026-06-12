@@ -19,3 +19,9 @@ App shell: three-column grid (sidebar | center | task rail) with collapse states
 ### 2026-06-12 — created
 - **Motivation**: implement the approved NanoBee design (chat home + Today reading page + global quick chat) from the Claude Design handoff bundle.
 - **Decision**: view state lives in the store ('chat' | 'today') rather than a URL router — matches the prototype's stateful navigation; routing can be added when real persistence lands.
+
+### 2026-06-12 — D1 bootstrap
+- **Motivation**: the app rendered bundled demo data only; persisted state in
+  D1 needed a load point. App mount now calls `store.bootstrap()` once to
+  replace the demo data with the server state (seeded identically, so the
+  swap is invisible).

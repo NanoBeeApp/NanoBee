@@ -20,7 +20,7 @@ function getApiBaseUrl() {
  *
  * Usage:
  * ```typescript
- * const res = await apiClient.api.users.$get();
+ * const res = await apiClient.bootstrap.$get();
  * const data = await res.json();
  * ```
  */

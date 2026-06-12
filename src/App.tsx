@@ -22,8 +22,14 @@ export default function App() {
   const sideCollapsed = useAppStore((s) => s.sideCollapsed);
   const notifOpen = useAppStore((s) => s.notifOpen);
   const newChat = useAppStore((s) => s.newChat);
+  const bootstrap = useAppStore((s) => s.bootstrap);
 
   const isToday = view === 'today';
+
+  // Replace the bundled demo data with the persisted server state from D1.
+  useEffect(() => {
+    void bootstrap();
+  }, [bootstrap]);
 
   // ⌘N / Ctrl+N starts a new chat (shortcut shown on the sidebar button).
   useEffect(() => {

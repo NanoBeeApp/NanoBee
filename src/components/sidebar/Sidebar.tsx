@@ -10,6 +10,7 @@ export function Sidebar() {
   const sidebarMode = useAppStore((s) => s.sidebarMode);
   const setSidebarMode = useAppStore((s) => s.setSidebarMode);
   const activeChatId = useAppStore((s) => s.activeChatId);
+  const chats = useAppStore((s) => s.chats);
   const sessionMeta = useAppStore((s) => s.sessionMeta);
   const openTopics = useAppStore((s) => s.openTopics);
   const tasks = useAppStore((s) => s.tasks);
@@ -61,10 +62,10 @@ export function Sidebar() {
       <div className="nb-side-scroll" data-testid="sidebar-scroll-area">
         {sidebarMode === 'history' ? (
           <ChatHistoryList activeChatId={activeChatId} isChatView={isChatView}
-            sessions={Object.values(sessionMeta)} onSelectChat={selectChat} />
+            chats={chats} sessions={Object.values(sessionMeta)} onSelectChat={selectChat} />
         ) : (
           <TopicGroupList activeChatId={activeChatId} isChatView={isChatView}
-            openTopics={openTopics} tasks={tasks}
+            openTopics={openTopics} chats={chats} tasks={tasks}
             onSelectChat={selectChat} onToggleTopic={toggleTopic} />
         )}
       </div>

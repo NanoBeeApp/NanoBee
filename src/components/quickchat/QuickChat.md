@@ -15,3 +15,8 @@ Global floating composer (every non-chat surface) + slide-up quick-chat overlay:
 
 ### 2026-06-12 — created
 - **Motivation**: user iteration "这个浮动输入框和聊天弹出是全局的，任何地方都要有；AI 要知道用户正在看的内容".
+
+### 2026-06-12 — created-state from persisted tasks
+- **Motivation**: same reload issue as ChatView — suggestion cards in the
+  quick-chat overlay now treat ids present in the persisted task list as
+  already created.

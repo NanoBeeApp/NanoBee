@@ -1,13 +1,17 @@
 // Scripted demo conversations keyed by chat id (pure data, no JSX).
 import type { ChatMessage } from '../types';
-import { nextId } from './ids';
 
 /** Omit that distributes over union members (plain Omit collapses unions). */
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
-/** Assign ids to message descriptors lacking one. */
+// Seed message ids must be deterministic: they are persisted to D1 and this
+// module also loads in the Worker, where random values are forbidden in
+// global scope. A counter keeps them stable across isolates and reloads.
+let seedSeq = 0;
+
+/** Assign deterministic ids to message descriptors lacking one. */
 function wid(arr: Array<DistributiveOmit<ChatMessage, 'id'> & { id?: string }>): ChatMessage[] {
-  return arr.map((m) => ({ id: m.id ?? nextId(), ...m }) as ChatMessage);
+  return arr.map((m) => ({ id: m.id ?? `m_seed_${++seedSeq}`, ...m }) as ChatMessage);
 }
 
 export const CONVERSATIONS: Record<string, ChatMessage[]> = {
