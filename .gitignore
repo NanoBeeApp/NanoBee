@@ -1,0 +1,33 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+count.txt
+.nitro
+.tanstack
+.wrangler
+.output
+.vinxi
+todos.json
+
+!.dev.vars.example
+!.env.example
+*.gen.ts
+tanstack-start-demo
+
+# Localflare generated files
+.localflare/
+.playwright-mcp
+
+# Dev logs
+logs/*.log
+/*.png
+build
+.build
+
+# Local Claude Code settings (machine-specific, not part of the public repo)
+.claude/settings.local.json
+
+# Private content (independent private repo NanoBee_Private — never commit to the public main repo)
+/private/

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Prevent files under private/ (the nested private repo) from being committed
+# to the public main repo, even when force-added with `git add -f`.
+# Install: cp scripts/git-hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+if git diff --cached --name-only | grep -E '^private(/|$)' >/dev/null 2>&1; then
+  echo "❌ Files under private/ are staged. That directory belongs to the private repo NanoBee_Private and must not be committed to the public main repo."
+  echo "   Unstage them with: git restore --staged private/"
+  exit 1
+fi
