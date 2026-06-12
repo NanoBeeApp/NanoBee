@@ -12,6 +12,7 @@ path aliases.
   section at build time.
 - Plugin order matters: devtools → cloudflare → paths → tailwind →
   tanstackStart → react.
+- Dev server runs on a fixed port `3333` (not Vite's default 5173).
 
 ## Change history
 
@@ -24,3 +25,8 @@ path aliases.
 - **Goal**: same vite entry serves SSR shell, static assets and Hono /api.
 - **Key decision**: kept the template plugin chain verbatim minus its no-op
   hono-api-info logging plugin.
+
+### 2026-06-12 — fixed dev port 3333
+- **Motivation**: the user wants the local app on a stable, known port
+  instead of Vite's default 5173 (predictable URL for testing and tooling).
+- **Goal**: `pnpm dev` always serves at `http://localhost:3333`.

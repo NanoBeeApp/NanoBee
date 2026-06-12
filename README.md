@@ -62,7 +62,7 @@ migrations/      D1 SQL migrations (applied with wrangler)
 ```bash
 pnpm install
 pnpm db:migrate:local   # apply D1 migrations to the local database
-pnpm dev                # http://localhost:5173
+pnpm dev                # http://localhost:3333
 pnpm build              # production build
 pnpm test:run           # API integration tests (expects `pnpm dev` running)
 ```

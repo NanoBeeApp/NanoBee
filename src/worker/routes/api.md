@@ -26,7 +26,7 @@ resource) plus the smoke-test `hello` endpoint.
 
 ## Verification
 1. `pnpm db:migrate:local && pnpm dev`
-2. `curl localhost:5173/api/bootstrap` → seeded `{ chats, conversations, tasks, updates }`
+2. `curl localhost:3333/api/bootstrap` → seeded `{ chats, conversations, tasks, updates }`
 3. `pnpm test:run` → all integration tests pass
 
 ## Change history

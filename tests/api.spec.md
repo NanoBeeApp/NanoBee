@@ -33,3 +33,8 @@ persist both sides + reply), tasks (create / toggle / 404) and updates
   test inbox (accepted, delivered nowhere); the code-entry happy path is
   not automatable over HTTP by design (codes only live hashed in D1), so it
   is covered by the documented manual `LOG_EMAIL_CODES=1` flow instead.
+
+### 2026-06-12 — default BASE_URL moved to port 3333
+- **Motivation**: the local dev server now runs on a fixed port 3333
+  (`server.port` in `vite.config.ts`), so the test fallback URL had to
+  follow; `API_BASE_URL` still overrides it.

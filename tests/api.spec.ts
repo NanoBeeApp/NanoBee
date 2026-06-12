@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 
-const BASE_URL = process.env.API_BASE_URL || "http://localhost:5173";
+const BASE_URL = process.env.API_BASE_URL || "http://localhost:3333";
 
 describe("health & hello", () => {
 	it("GET /health returns ok", async () => {
