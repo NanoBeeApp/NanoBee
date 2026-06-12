@@ -28,6 +28,16 @@ export const CONFIG = {
 		MAX_FIELD_LENGTH: 300,
 	},
 
+	// External public-data gateway (NanoBee-data-hub). The chat pipeline
+	// discovers sources from its catalog and pulls live data to ground replies.
+	// Base URL comes from the DATA_HUB_URL binding; unset = augmentation off.
+	DATA_HUB: {
+		// Abort slow hub calls so a chat request never hangs on data fetching
+		REQUEST_TIMEOUT_MS: 8_000,
+		// Max sources offered to the router LLM (keeps the prompt bounded)
+		MAX_SOURCES_IN_PROMPT: 40,
+	},
+
 	// Auth system constants (sessions, email codes, OAuth providers)
 	AUTH: {
 		// Name of the HttpOnly session cookie

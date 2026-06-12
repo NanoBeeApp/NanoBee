@@ -11,7 +11,8 @@ it and returns it.
     → `201 { chatId, topicId, aiMessage }` | `400` invalid | `500`
 
 ## Dependencies
-- Upstream: `db/seed`, `../reply` (genReply), zod, `../api-worker` (Env type)
+- Upstream: `db/seed`, `../reply` (genReply), `../datahub/augment`, zod,
+  `../api-worker` (Env type)
 - Downstream: mounted by `routes/api.ts`; called by the store's send/sendQuick
 
 ## Notes
@@ -54,3 +55,14 @@ it and returns it.
   (and `CONFIG` is no longer imported here). The optional reading-context
   system message built from `ctxTitle` stays — it is functional context, not a
   persona prompt.
+
+### 2026-06-12 — ground replies in live data-hub data
+- **Motivation**: questions like "what developer news is on HN today" need
+  live external data, but the data sources are open-ended — hardcoding a route
+  per topic does not scale.
+- **Goal**: before the answering call, run `augmentWithData` which lets the
+  model route the question to a data-hub source (discovered from the hub
+  catalog), fetch it, and prepend the digest as grounding context.
+- **Key decision**: augmentation is best-effort and prepended, not branched —
+  no per-source logic lives in this route; the data hub being down/unset just
+  skips it and chat answers from the model alone.

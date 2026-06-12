@@ -12,6 +12,7 @@ import { z } from "zod";
 import type { Env } from "../api-worker";
 import { generateChatText } from "../ai/client";
 import { resolveAiConfig } from "../ai/settings";
+import { augmentWithData } from "../datahub/augment";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
 import { ensureSeeded } from "../db/seed";
@@ -48,7 +49,12 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 			let llm: { text: string; model: string } | null = null;
 			if (aiConfig.apiKey) {
 				try {
+					// Ground the reply in live data when a data-hub source fits the
+					// question — the model picks the source from the catalog, so no
+					// per-topic branching lives here.
+					const augmented = await augmentWithData(c.env, aiConfig, body.text);
 					const llmText = await generateChatText(aiConfig, [
+						...augmented.messages,
 						...(body.ctxTitle
 							? [{ role: "system" as const, content: `用户当前正在阅读：「${body.ctxTitle}」` }]
 							: []),
