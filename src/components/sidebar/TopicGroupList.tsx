@@ -3,7 +3,7 @@
 // from the store (server-loaded via bootstrap), not the static demo module.
 import type { ChatMeta, Task } from '../../types';
 import { TOPICS } from '../../data/topics';
-import { Icon, Icons } from '../../icons/icons';
+import { Icons } from '../../icons/icons';
 
 interface TopicGroupListProps {
   activeChatId: string | null;
@@ -26,9 +26,6 @@ export function TopicGroupList({ activeChatId, isChatView, openTopics, chats: al
         return (
           <div key={t.id} className={`nb-topic${open ? ' open' : ''}`}>
             <div className="nb-topic-head" onClick={() => onToggleTopic(t.id)} data-testid={`topic-group-${t.id}`}>
-              <div className="nb-topic-ico" style={{ background: t.color }}>
-                <Icon name={t.icon} size={15} />
-              </div>
               <span className="nb-topic-name">{t.name}</span>
               <span className="nb-topic-count">{chats.length}·{topicTasks.length}</span>
               <span className="nb-topic-chev"><Icons.chevR size={15} /></span>
@@ -39,15 +36,11 @@ export function TopicGroupList({ activeChatId, isChatView, openTopics, chats: al
                   <div key={c.id}
                     className={`nb-sub-item${isChatView && activeChatId === c.id ? ' active' : ''}`}
                     onClick={() => onSelectChat(c.id)} data-testid={`topic-chat-item-${c.id}`}>
-                    <span className="ic"><Icons.chat size={13} /></span>
                     <span className="nb-sub-label">{c.title}</span>
                   </div>
                 ))}
                 {topicTasks.map((k) => (
                   <div key={k.id} className="nb-sub-item task" data-testid={`topic-task-item-${k.id}`}>
-                    <span className="ic">
-                      {k.triggerType === 'schedule' ? <Icons.clock size={13} /> : <Icons.bolt size={13} />}
-                    </span>
                     <span className="nb-sub-label">{k.title}</span>
                     {k.status === 'paused'
                       ? <span className="badge badge-neutral" style={{ fontSize: 9, padding: '1px 5px' }}>暂停</span>
