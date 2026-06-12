@@ -107,7 +107,7 @@ body { background: var(--surface-2); color: var(--ink); overflow: hidden; }
 
 .nb-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; cursor: pointer; transition: background var(--dur-1) var(--ease-out); position: relative; }
 .nb-item:hover { background: var(--surface-3); }
-.nb-item.active { background: var(--surface); box-shadow: var(--sh-1); border: 1px solid var(--border); }
+.nb-item.active { background: var(--surface); box-shadow: var(--sh-1); }
 .nb-item .meta { flex: 1; min-width: 0; }
 .nb-item .title { font-size: 13px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nb-item .sub { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
