@@ -41,3 +41,9 @@ Inline SVG line-icon set (Lucide-class, 24x24, rounded caps) ported 1:1 from the
 - **Key decision**: inline the Font Awesome 6 Free "gear" (solid) path
   directly (own 512 viewBox, `fill="currentColor"`) instead of adding the
   FA library as a dependency, keeping the icon set dependency-free.
+
+### 2026-06-12 — switched the gear to the Lucide line-style glyph
+- **Motivation**: user feedback — the solid FA gear clashed with the
+  stroke-based icon set; a line icon was wanted.
+- **Key decision**: use Lucide's "settings" gear path inside the shared
+  `Svg` stroke wrapper so it inherits the set's stroke width and color.
