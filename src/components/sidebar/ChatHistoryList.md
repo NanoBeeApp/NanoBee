@@ -1,10 +1,10 @@
 # src/components/sidebar/ChatHistoryList.tsx
 
 ## Responsibility
-ChatGPT-style flat history: session ("刚刚") chats on top, then time-grouped chats; pinned chats show a star, others show just the title.
+ChatGPT-style flat history: session ("刚刚") chats on top, then time-grouped chats. Each row shows only the title — no leading icon, no subtext.
 
 ## Dependencies
-- Upstream: data/chats (group labels), types (ChatMeta), icons
+- Upstream: data/chats (group labels), types (ChatMeta)
 - Downstream: Sidebar
 
 ## Key notes
@@ -21,3 +21,6 @@ ChatGPT-style flat history: session ("刚刚") chats on top, then time-grouped c
 
 ### 2026-06-12 — drop the leading topic-color dots
 - **Motivation**: on the new white sidebar the per-item topic-color dots read as random yellow specks and added visual noise; removed them so titles align flat. The pinned star stays as the only leading marker, and the now-unused topics import was dropped.
+
+### 2026-06-12 — title-only rows (no icon, no subtext)
+- **Motivation**: user wanted the history list as clean as possible. Removed the pinned star (the last remaining icon, plus its icons import) and the `.sub` description line ("快速对话" / per-chat subtitle) so each row renders just the title.

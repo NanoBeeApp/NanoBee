@@ -3,7 +3,6 @@
 // (server-loaded via bootstrap), not from the static demo module.
 import type { ChatMeta, SessionMeta } from '../../types';
 import { CHAT_HISTORY_GROUPS } from '../../data/chats';
-import { Icons } from '../../icons/icons';
 
 interface ChatHistoryListProps {
   activeChatId: string | null;
@@ -28,7 +27,6 @@ export function ChatHistoryList({ activeChatId, isChatView, chats, sessions, onS
                 onClick={() => onSelectChat(s.id)} data-testid={`chat-history-item-${s.id}`}>
                 <div className="meta">
                   <div className="title">{s.title}</div>
-                  <div className="sub">快速对话</div>
                 </div>
               </div>
             );
@@ -46,10 +44,8 @@ export function ChatHistoryList({ activeChatId, isChatView, chats, sessions, onS
                 <div key={c.id}
                   className={`nb-item${isChatView && activeChatId === c.id ? ' active' : ''}`}
                   onClick={() => onSelectChat(c.id)} data-testid={`chat-history-item-${c.id}`}>
-                  {c.pinned && <span className="star"><Icons.star size={12} /></span>}
                   <div className="meta">
                     <div className="title">{c.title}</div>
-                    <div className="sub">{c.sub}</div>
                   </div>
                 </div>
               );
