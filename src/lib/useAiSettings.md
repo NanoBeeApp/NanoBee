@@ -30,3 +30,11 @@ settings entry.
 - **Key decision**: update the cache from the PUT response via `setQueryData`
   instead of invalidating — the dialog closes instantly rather than waiting
   for a refetch (a review finding).
+
+### 2026-06-12 — add useFetchModels
+- **Motivation**: the setup dialog should offer a model dropdown fetched from
+  the provider instead of asking users to type model ids by hand.
+- **Goal**: a `useFetchModels` mutation hitting POST /api/ai/models, returning
+  the model-id list and surfacing the server error message on failure.
+- **Key decision**: a mutation (not a query) since it is triggered explicitly /
+  on provider change and depends on the in-form key/host, not a stable key.

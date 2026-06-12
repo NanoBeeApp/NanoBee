@@ -35,3 +35,11 @@ the pure `AiProviderSetupForm`.
 - **Key decision**: state/render split per project convention; visibility is
   derived (`!configured` || store flag) rather than stored, so it stays
   correct across login/logout without effects.
+
+### 2026-06-12 — own model fetching state
+- **Motivation**: the form gained a model dropdown that needs a fetched list,
+  loading/error state, and a one-shot auto-fetch on open.
+- **Goal**: hold `models`/`modelsError` here and call `useFetchModels`; auto-
+  fetch once when a usable key exists, clear the list on provider change.
+- **Key decision**: auto-fetch is a one-shot ref-guarded effect (not keyed to
+  every keystroke) so typing a key doesn't spam the provider; refresh is manual.

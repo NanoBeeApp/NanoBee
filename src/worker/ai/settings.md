@@ -37,3 +37,11 @@ user's saved settings when present, otherwise the backend default
 - **Key decision**: split "what the API returns" (`UserAiSettings`, masked)
   from "what the model call needs" (`AiRuntimeConfig`, decrypted) so route
   handlers can never accidentally leak a stored key.
+
+### 2026-06-12 — add getStoredProviderKey
+- **Motivation**: the model-list endpoint needs the user's decrypted key for a
+  provider, possibly one the user is about to switch to.
+- **Goal**: expose `{ provider, apiKey }` (key decrypted) without widening the
+  masked `UserAiSettings` shape that routes return to clients.
+- **Key decision**: only the model-list route consumes it, and it pairs the key
+  with its provider so callers can reject a key meant for a different provider.

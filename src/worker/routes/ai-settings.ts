@@ -17,7 +17,12 @@ import type { Env } from "../api-worker";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
 import { CONFIG } from "../config";
-import { getUserAiSettings, saveUserAiSettings } from "../ai/settings";
+import {
+	getStoredProviderKey,
+	getUserAiSettings,
+	saveUserAiSettings,
+} from "../ai/settings";
+import { listProviderModels } from "../ai/models";
 
 const FIELD_MAX = CONFIG.AI.MAX_FIELD_LENGTH;
 
@@ -30,6 +35,16 @@ const putSchema = z.object({
 		.optional()
 		.default(""),
 	model: z.string().max(FIELD_MAX).optional().default(""),
+});
+
+const modelsSchema = z.object({
+	provider: z.enum(AI_PROVIDER_IDS),
+	// Caller-supplied key takes priority; blank means "use my stored key".
+	apiKey: z.string().max(FIELD_MAX).optional(),
+	baseUrl: z
+		.union([z.literal(""), z.url({ protocol: /^https?$/ })])
+		.optional()
+		.default(""),
 });
 
 export const aiSettingsRoutes = new Hono<{ Bindings: Env }>()
@@ -96,4 +111,57 @@ export const aiSettingsRoutes = new Hono<{ Bindings: Env }>()
 		const settings = await getUserAiSettings(c.env.DB, user.id);
 		console.log("[API] PUT /api/ai/settings, user:", user.id, "provider:", info.id);
 		return c.json({ configured: true, settings });
+	})
+
+	// POST /api/ai/models — auto-fetch the provider's available model list.
+	// Uses the caller-supplied key, else the user's stored key for the same
+	// provider, else the built-in key for OpenRouter. Never echoes the key.
+	.post("/models", zValidator("json", modelsSchema), async (c) => {
+		const token = getSessionToken(c);
+		const user = token ? await getUserBySessionToken(c.env.DB, token) : null;
+		if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+		const body = c.req.valid("json");
+		const info = getProviderInfo(body.provider);
+		if (!info.canListModels) {
+			return c.json({ error: `${info.label} 不支持自动获取模型列表，请手动填写` }, 400);
+		}
+
+		const baseUrl = (body.baseUrl ?? "").trim() || info.defaultBaseUrl;
+		if (!baseUrl) {
+			return c.json({ error: "请先填写 API Host" }, 400);
+		}
+
+		// Resolve which key to use without ever returning it to the client.
+		let apiKey = body.apiKey?.trim() || null;
+		if (!apiKey) {
+			const stored = await getStoredProviderKey(c.env, user.id);
+			if (stored && stored.provider === info.id) apiKey = stored.apiKey;
+		}
+		if (!apiKey && info.id === DEFAULT_AI_PROVIDER) {
+			apiKey = c.env.OPENROUTER_API_KEY ?? null;
+		}
+		if (!apiKey && !info.keyOptional) {
+			return c.json({ error: `${info.label} 需要先填写 API Key 才能获取模型` }, 400);
+		}
+
+		try {
+			const models = await listProviderModels({
+				protocol: info.protocol,
+				baseUrl,
+				apiKey,
+			});
+			console.log(
+				"[API] POST /api/ai/models, user:",
+				user.id,
+				"provider:",
+				info.id,
+				"count:",
+				models.length,
+			);
+			return c.json({ models });
+		} catch (error) {
+			console.error("[API] POST /api/ai/models failed:", String(error));
+			return c.json({ error: "获取模型列表失败，请检查 API Key 与 Host" }, 502);
+		}
 	});

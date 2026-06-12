@@ -48,3 +48,12 @@ links (iOS / Mac); future footer-level utility entries also belong here.
   `nb-settings-*`; trigger test anchor renamed to `settings-menu-trigger`.
 - **Key decision**: keep the component as the single footer utility menu so
   future entries (preferences, shortcuts, …) slot in without another trigger.
+
+### 2026-06-12 — add AI provider settings entry
+- **Motivation**: user request — the sidebar gear should let you configure the
+  LLM provider, not only host the app download links.
+- **Goal**: top entry "AI 模型设置" that opens the provider setup dialog via the
+  app store's `setAiSetupOpen`, with a separator above the download links.
+- **Key decision**: reuse the existing `aiSetupOpen` flag + `AiProviderSetupDialog`
+  rather than duplicating the dialog; the gear only renders for signed-in users
+  (mounted inside AccountFoot's signed-in branch), so no signed-out dead click.

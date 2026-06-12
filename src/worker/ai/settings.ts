@@ -60,6 +60,28 @@ export async function getUserAiSettings(
 	};
 }
 
+/**
+ * The user's stored provider + decrypted API key, or null when none is saved.
+ * Used by the model-list endpoint, which may need the key for a provider the
+ * caller is *about* to switch to (only valid when it matches the stored one).
+ */
+export async function getStoredProviderKey(
+	env: Env,
+	userId: string,
+): Promise<{ provider: AiProviderId; apiKey: string | null } | null> {
+	const row = await env.DB.prepare(
+		"SELECT provider, base_url, model, api_key_enc FROM user_ai_settings WHERE user_id = ?",
+	)
+		.bind(userId)
+		.first<SettingsRow>();
+	if (!row) return null;
+	let apiKey: string | null = null;
+	if (row.api_key_enc && env.AUTH_SECRET) {
+		apiKey = await decryptSecret(row.api_key_enc, env.AUTH_SECRET);
+	}
+	return { provider: getProviderInfo(row.provider).id, apiKey };
+}
+
 export interface SaveAiSettingsInput {
 	provider: AiProviderId;
 	baseUrl: string;

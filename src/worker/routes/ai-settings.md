@@ -38,3 +38,12 @@ Both require a signed-in session (401 otherwise).
 - **Motivation**: code review found that a direct API call switching
   providers while omitting `apiKey` would carry the old provider's key over.
 - **Goal**: a stored key is only ever sent to the provider it was entered for.
+
+### 2026-06-12 — add POST /api/ai/models
+- **Motivation**: auto-fetch the provider's model list so users pick from a
+  dropdown rather than copy-pasting model ids from each vendor's docs.
+- **Goal**: authenticated endpoint that resolves the effective key (request key
+  → stored key for the same provider → built-in OpenRouter key) and returns the
+  model ids via `listProviderModels`, never echoing the key.
+- **Key decision**: gate on the catalog's `canListModels`; key resolution mirrors
+  resolveAiConfig so behavior stays consistent with the chat pipeline.

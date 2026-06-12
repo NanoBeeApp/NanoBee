@@ -2,6 +2,7 @@
 // Stateless: receives all values + callbacks from AiProviderSetupDialog,
 // which owns form state, validation and the save mutation.
 
+import { Icons } from "../../icons/icons";
 import { AI_PROVIDERS, type AiProviderId, type AiProviderInfo } from "../../lib/ai-providers";
 
 export interface AiSetupFormValues {
@@ -20,8 +21,13 @@ export interface AiProviderSetupFormProps {
 	isFirstSetup: boolean;
 	saving: boolean;
 	error: string | null;
+	/** Auto-fetched model ids for the current provider (empty until fetched). */
+	models: string[];
+	modelsLoading: boolean;
+	modelsError: string | null;
 	onProviderChange: (id: AiProviderId) => void;
 	onFieldChange: (field: "apiKey" | "baseUrl" | "model", value: string) => void;
+	onFetchModels: () => void;
 	onSubmit: () => void;
 	onSkip: () => void;
 	onClose: () => void;
@@ -29,6 +35,10 @@ export interface AiProviderSetupFormProps {
 
 export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 	const { values, info, hasStoredKey, isFirstSetup, saving, error } = props;
+	const { models, modelsLoading, modelsError } = props;
+	// A model is "from the list" only when it matches a fetched id; otherwise the
+	// select shows the placeholder and the text input carries the manual value.
+	const selectValue = models.includes(values.model) ? values.model : "";
 
 	const keyPlaceholder = hasStoredKey
 		? "已保存，留空保持不变"
@@ -105,7 +115,37 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 					</div>
 
 					<div className="field">
-						<label className="field-label" htmlFor="ai-model">模型</label>
+						<div className="field-label-row">
+							<label className="field-label" htmlFor="ai-model">模型</label>
+							{info.canListModels && (
+								<button
+									type="button"
+									className="nb-fetch-models"
+									onClick={props.onFetchModels}
+									disabled={modelsLoading}
+									data-testid="ai-fetch-models"
+								>
+									<Icons.redo size={13} />
+									{modelsLoading ? "获取中…" : "自动获取模型"}
+								</button>
+							)}
+						</div>
+
+						{models.length > 0 && (
+							<select
+								className="input"
+								value={selectValue}
+								onChange={(e) => props.onFieldChange("model", e.target.value)}
+								aria-label="从列表中选择模型"
+								data-testid="ai-model-select"
+							>
+								<option value="">— 从列表中选择（{models.length} 个）—</option>
+								{models.map((m) => (
+									<option key={m} value={m}>{m}</option>
+								))}
+							</select>
+						)}
+
 						<input
 							id="ai-model"
 							className="input"
@@ -116,6 +156,17 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 							onChange={(e) => props.onFieldChange("model", e.target.value)}
 							data-testid="ai-model-input"
 						/>
+						{modelsError ? (
+							<p className="nb-ai-subhint nb-ai-subhint-err" data-testid="ai-models-error">
+								{modelsError}
+							</p>
+						) : (
+							<p className="nb-ai-subhint">
+								{info.canListModels
+									? "可点「自动获取模型」从供应商拉取列表，或直接手动填写模型 ID。"
+									: "该供应商不支持自动获取，请手动填写模型 ID。"}
+							</p>
+						)}
 					</div>
 
 					{error && (

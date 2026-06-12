@@ -47,6 +47,32 @@ export interface SaveAiSettingsInput {
 	model?: string;
 }
 
+export interface FetchModelsInput {
+	provider: AiProviderId;
+	/** Blank = use the stored key (or built-in key for OpenRouter). */
+	apiKey?: string;
+	baseUrl?: string;
+}
+
+/**
+ * Fetch the provider's available model list from the backend (which talks to
+ * the provider so the key never leaves the server). Returns model ids; throws
+ * with the server's error message on failure so the form can surface it.
+ */
+export function useFetchModels() {
+	return useMutation({
+		mutationFn: async (input: FetchModelsInput): Promise<string[]> => {
+			const res = await apiClient.ai.models.$post({ json: input });
+			if (!res.ok) {
+				const data = (await res.json().catch(() => null)) as { error?: string } | null;
+				throw new Error(data?.error ?? "获取模型列表失败");
+			}
+			const data = (await res.json()) as { models: string[] };
+			return data.models;
+		},
+	});
+}
+
 /** Save mutation; refreshes the cached settings on success. */
 export function useSaveAiSettings() {
 	const queryClient = useQueryClient();

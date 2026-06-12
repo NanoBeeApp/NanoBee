@@ -1,13 +1,15 @@
 // Sidebar footer settings button: sits at the right edge of the footer and
-// opens a popover menu. Currently hosts the native app download links
-// (iOS / Mac); future utility entries also belong here.
+// opens a popover menu. Hosts the AI provider settings entry and the native
+// app download links (iOS / Mac); future utility entries also belong here.
 
 import { useState } from "react";
 import { Icons } from "../../icons/icons";
 import { APP_DOWNLOAD_LINKS } from "../../config";
+import { useAppStore } from "../../store/useAppStore";
 
 export function SettingsMenu() {
 	const [open, setOpen] = useState(false);
+	const setAiSetupOpen = useAppStore((s) => s.setAiSetupOpen);
 
 	return (
 		<>
@@ -26,6 +28,15 @@ export function SettingsMenu() {
 				<>
 					<div className="nb-scrim" onClick={() => setOpen(false)} />
 					<div className="nb-settings-pop" data-testid="settings-menu">
+						<button
+							className="nb-account-action"
+							onClick={() => { setOpen(false); setAiSetupOpen(true); }}
+							data-testid="settings-ai-entry"
+						>
+							<Icons.spark size={15} />
+							AI 模型设置
+						</button>
+						<div className="nb-account-sep" />
 						<a
 							className="nb-account-action"
 							href={APP_DOWNLOAD_LINKS.ios}

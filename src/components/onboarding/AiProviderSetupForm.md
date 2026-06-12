@@ -34,3 +34,12 @@ Completely stateless — all values and callbacks come from
 - **Key decision**: provider choice as a pill radio-group (not a `<select>`)
   so all five options and the "默认" tag are visible at a glance during
   onboarding.
+
+### 2026-06-12 — model dropdown + auto-fetch
+- **Motivation**: typing model ids by hand is error-prone; users want to pick
+  from the provider's actual model list.
+- **Goal**: an "自动获取模型" button plus a `<select>` of fetched ids, with the
+  free-text input kept as a manual fallback for ids not in the list.
+- **Key decision**: stay presentational — models/loading/error and the fetch
+  trigger arrive as props; the text input remains the source of truth so manual
+  and dropdown-selected values share one field.

@@ -3,11 +3,12 @@
 // and on demand via the account menu (store flag aiSetupOpen). Owns form
 // state + validation and delegates rendering to AiProviderSetupForm.
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getProviderInfo, type AiProviderId } from "../../lib/ai-providers";
 import { useAuthUser } from "../../lib/useAuth";
 import {
 	useAiSettings,
+	useFetchModels,
 	useSaveAiSettings,
 	type AiSettings,
 	type SaveAiSettingsInput,
@@ -89,16 +90,60 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 		initialValues(props.settings),
 	);
 	const [error, setError] = useState<string | null>(null);
+	const [models, setModels] = useState<string[]>([]);
+	const [modelsError, setModelsError] = useState<string | null>(null);
+	const fetchModels = useFetchModels();
 
 	const info = getProviderInfo(values.provider);
 	const hasStoredKey = Boolean(
 		props.settings?.hasApiKey && props.settings.provider === values.provider,
 	);
 
+	// A usable key exists when the user typed one, a key is on file for this
+	// provider, or the provider rides on NanoBee's built-in key (OpenRouter).
+	const hasUsableKey = Boolean(values.apiKey.trim()) || hasStoredKey || info.keyOptional;
+
+	const runFetchModels = useCallback(
+		async (provider: AiProviderId, apiKey: string, baseUrl: string) => {
+			const target = getProviderInfo(provider);
+			if (!target.canListModels) return;
+			setModelsError(null);
+			try {
+				const list = await fetchModels.mutateAsync({
+					provider,
+					apiKey: apiKey.trim() || undefined,
+					baseUrl: baseUrl.trim() || undefined,
+				});
+				setModels(list);
+				if (list.length === 0) setModelsError("供应商未返回任何模型");
+			} catch (e) {
+				setModels([]);
+				setModelsError(e instanceof Error ? e.message : "获取模型列表失败");
+			}
+		},
+		[fetchModels],
+	);
+
+	// Auto-fetch once on open when a key is already usable, so returning users
+	// see their model list without an extra click. Manual refresh covers the rest.
+	const didAutoFetch = useRef(false);
+	useEffect(() => {
+		if (didAutoFetch.current) return;
+		didAutoFetch.current = true;
+		if (hasUsableKey && info.canListModels) {
+			void runFetchModels(values.provider, values.apiKey, values.baseUrl);
+		}
+		// Intentionally one-shot on mount; later fetches are explicit.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const handleProviderChange = (id: AiProviderId) => {
 		const next = getProviderInfo(id);
 		setError(null);
-		// Switching providers re-seeds host/model with that provider's defaults.
+		// Switching providers invalidates the previous model list and re-seeds
+		// host/model with the new provider's defaults.
+		setModels([]);
+		setModelsError(null);
 		setValues((v) => ({ ...v, provider: id, baseUrl: next.defaultBaseUrl, model: next.defaultModel }));
 	};
 
@@ -138,8 +183,12 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 			isFirstSetup={props.isFirstSetup}
 			saving={props.saving}
 			error={error}
+			models={models}
+			modelsLoading={fetchModels.isPending}
+			modelsError={modelsError}
 			onProviderChange={handleProviderChange}
 			onFieldChange={(field, value) => setValues((v) => ({ ...v, [field]: value }))}
+			onFetchModels={() => void runFetchModels(values.provider, values.apiKey, values.baseUrl)}
 			onSubmit={() => void handleSubmit()}
 			onSkip={() => void handleSkip()}
 			onClose={props.isFirstSetup ? () => undefined : props.onClose}
