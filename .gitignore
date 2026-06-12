@@ -31,3 +31,6 @@ build
 
 # Private content (independent private repo NanoBee_Private — never commit to the public main repo)
 /private/
+
+# agy local output buffer (temporary, never committed)
+.agy-output/
