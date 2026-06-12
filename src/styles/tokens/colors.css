@@ -1,0 +1,44 @@
+/* Ledger UI — Color tokens
+   Light-primary fintech palette. Deep-navy brand ink, Stripe-indigo primary
+   action, warm-coral accent, desaturated semantic colors. */
+:root {
+  /* ---------- Surface ---------- */
+  --bg:           #ffffff;           /* pure white page bg */
+  --surface:      #ffffff;           /* card / elevated */
+  --surface-2:    #f6f8fa;           /* subtle inset */
+  --surface-3:    #eceef2;           /* deeper inset */
+  --overlay:      rgba(15, 17, 23, 0.55);
+
+  /* ---------- Ink (text) ---------- */
+  --ink:          #0f1117;           /* primary text */
+  --ink-2:        #2a2d36;           /* secondary text */
+  --ink-3:        #5a5e6b;           /* tertiary / labels */
+  --ink-4:        #8b8f9a;           /* disabled / hints */
+  --ink-on-dark:  #f5f4ef;
+
+  /* ---------- Border ---------- */
+  --border:       #e4e6eb;
+  --border-2:     #d4d7dd;
+  --border-strong:#0f1117;
+  --ring:         rgba(38, 79, 217, 0.35);
+
+  /* ---------- Brand & accent ---------- */
+  --brand:        #0a2540;           /* deep navy ink */
+  --brand-2:      #635bff;           /* primary indigo (actions) */
+  --brand-2-hover:#5a52e8;
+  --brand-soft:   #efeefe;
+  --accent:       #ff6a3d;           /* warm coral */
+  --accent-soft:  #fff0e8;
+  --gold:         #d4a64a;
+  --gold-soft:    #f9efd6;
+
+  /* ---------- Semantic ---------- */
+  --success:      #1a7f55;
+  --success-soft: #e2f3eb;
+  --warning:      #b6791e;
+  --warning-soft: #fbf0d9;
+  --danger:       #c4362b;
+  --danger-soft:  #fbe5e2;
+  --info:         #2563b3;
+  --info-soft:    #e3edf9;
+}

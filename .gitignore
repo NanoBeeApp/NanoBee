@@ -34,3 +34,6 @@ build
 
 # agy local output buffer (temporary, never committed)
 .agy-output/
+
+# TypeScript incremental build artifact
+tsconfig.tsbuildinfo

@@ -1,0 +1,26 @@
+/* Ledger UI — Effect tokens: radii, shadow, motion */
+:root {
+  /* ---------- Radii ---------- */
+  --r-1: 4px;
+  --r-2: 6px;
+  --r-3: 10px;
+  --r-4: 14px;
+  --r-5: 20px;
+  --r-pill: 999px;
+
+  /* ---------- Shadow (layered, low-saturation) ---------- */
+  --sh-1: 0 1px 0 rgba(15,17,23,0.04), 0 1px 2px rgba(15,17,23,0.04);
+  --sh-2: 0 1px 2px rgba(15,17,23,0.06), 0 4px 12px rgba(15,17,23,0.05);
+  --sh-3: 0 2px 4px rgba(15,17,23,0.06), 0 12px 28px rgba(15,17,23,0.08);
+  --sh-4: 0 6px 16px rgba(15,17,23,0.08), 0 30px 60px rgba(15,17,23,0.12);
+  --sh-glow: 0 0 0 4px rgba(38, 79, 217, 0.18);
+  --sh-inset: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(15,17,23,0.04);
+
+  /* ---------- Motion ---------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);    /* @kind other */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* @kind other */
+  --dur-1: 120ms;                                /* @kind other */
+  --dur-2: 200ms;                                /* @kind other */
+  --dur-3: 360ms;                                /* @kind other */
+  --dur-4: 600ms;                                /* @kind other */
+}
