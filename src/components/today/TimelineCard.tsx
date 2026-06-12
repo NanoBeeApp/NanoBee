@@ -1,7 +1,6 @@
 // Tweet-style timeline card (the Today page's default view): avatar, header
 // row, full body text, optional trend sparkline and a light action row.
 import type { UpdateItem } from '../../types';
-import { topicById, topicShortName } from '../../data/topics';
 import { Icon, Icons } from '../../icons/icons';
 import { Sparkline } from '../chat/Sparkline';
 import type { ReadItemActions } from './ReadBody';
@@ -11,7 +10,6 @@ interface TimelineCardProps extends ReadItemActions {
 }
 
 export function TimelineCard({ item, onOpenChat, onToggleRead }: TimelineCardProps) {
-  const t = topicById(item.topicId);
   return (
     <div className={`nb-tl-card${item.unread ? ' unread' : ' read'}`}
       data-rid={item.unread ? item.id : undefined} data-cid={item.id}
@@ -20,7 +18,6 @@ export function TimelineCard({ item, onOpenChat, onToggleRead }: TimelineCardPro
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="tl-head">
           <b>NanoBee</b>
-          {t && <span className="badge" style={{ background: t.soft, color: t.color, border: 'none' }}>{topicShortName(t)}</span>}
           <span className="htime">{item.time}</span>
           {item.unread && <span className="tl-dot" />}
         </div>
@@ -38,14 +35,14 @@ export function TimelineCard({ item, onOpenChat, onToggleRead }: TimelineCardPro
         )}
         {item.source && <div className="src-line" style={{ marginTop: 8 }}>来源 · {item.source}</div>}
         <div className="tl-actions">
-          <button onClick={() => onOpenChat(item)} data-testid={`timeline-open-chat-${item.id}`}>
-            <Icons.chat size={13} /> 打开对话
+          <button onClick={() => onOpenChat(item)} aria-label="打开对话" title="打开对话" data-testid={`timeline-open-chat-${item.id}`}>
+            <Icons.chat size={15} />
           </button>
-          <button onClick={() => onToggleRead(item.id, item.unread)} data-testid={`timeline-toggle-read-${item.id}`}>
-            <Icons.check size={13} /> {item.unread ? '标为已读' : '标为未读'}
+          <button onClick={() => onToggleRead(item.id, item.unread)} aria-label={item.unread ? '标为已读' : '标为未读'} title={item.unread ? '标为已读' : '标为未读'} data-testid={`timeline-toggle-read-${item.id}`}>
+            <Icons.check size={15} />
           </button>
-          <button data-testid={`timeline-save-later-${item.id}`}>
-            <Icons.bookmark size={13} /> 稍后
+          <button aria-label="稍后" title="稍后" data-testid={`timeline-save-later-${item.id}`}>
+            <Icons.bookmark size={15} />
           </button>
         </div>
       </div>
