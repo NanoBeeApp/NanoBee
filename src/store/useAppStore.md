@@ -19,6 +19,19 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ## Change history
 
+### 2026-06-13 — per-page sidebar nav: `openChat`, `focusItem`, `tasksFilter`
+- **Motivation**: the sidebar became context-aware (a different list per page),
+  which needed three new store hooks.
+- **Goal**: support the "聊天" nav tile, sidebar-driven scroll-to-item on the
+  Today/Tasks pages, and a sidebar-clearable tasks filter.
+- **Change**: added `openChat()` (return to the chat view keeping the active
+  conversation, unlike `newChat`); a generic `focusItem(id)` that sets
+  `focusItemId` + bumps `focusItemTick` so the active center page can scroll the
+  matching `[data-cid]` into view (and repeat clicks re-trigger); and
+  `tasksFilter` + `setTasksFilter`, lifting the Tasks page's topic filter into
+  the store so `TasksNavList` can clear it before jumping (avoids a
+  setState-in-effect anti-pattern in `TasksView`).
+
 ### 2026-06-13 — temporary sidebar peek state (`sidePeek`)
 - **Motivation**: the collapsed sidebar only supported a persistent expand; the
   user wanted the left-edge reveal to open it *temporarily* and auto-close on
@@ -86,3 +99,11 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
   `selectedArtifactId` / `artifactsLoading` state. `deliverMessage` now returns
   the reply's `artifacts`; `send`/`sendQuick` refresh the list + toast when a
   reply produced one.
+
+### 2026-06-13 — quick-launch shortcut runner
+- **Motivation**: the user wanted one-click shortcuts on the Artifacts page
+  that generate without typing.
+- **Goal**: `runArtifactShortcut(prompt)` + `artifactGenerating` flag — posts a
+  canned prompt through `/api/messages` (so the create_card_artifact agent tool
+  runs), records the exchange to a chat, then refreshes + selects the new deck
+  while staying on the Artifacts page.

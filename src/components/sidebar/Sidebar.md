@@ -1,13 +1,42 @@
 # src/components/sidebar/Sidebar.tsx
 
 ## Responsibility
-Left rail: brand row with collapse button, "新对话" (⌘N), the amber "今日事项" inbox entry, the "任务" entry (opens the full-page task center) with an active-task count, and the chat lists (history/topics switch) shown on every view, plus the account footer.
+Left rail: brand row with collapse button, "新对话" (⌘N), and the page nav grid
+— a wide "聊天" tile leading a 2×2 of 今日事项 / 任务 / Artifacts / 研究画布. The
+scroll area below is **context-aware**: it renders the list that belongs to the
+current page (chats, today items, tasks, decks, or research projects). The
+history/topics switch only shows on the chat view. The account/settings controls
+no longer live here — they moved to the top-right floating bar (`FloatingControls`
+/ `AccountFoot`).
 
 ## Dependencies
-- Upstream: store, AccountFoot, ChatHistoryList, TopicGroupList, icons
+- Upstream: store, ChatHistoryList, TopicGroupList, TodayNavList, TasksNavList,
+  ArtifactsNavList, ResearchNavList, icons
 - Downstream: App
 
 ## Change history
+
+### 2026-06-13 — context-aware sidebar list + "聊天" nav tile
+- **Motivation**: the user wanted the sidebar list to reflect the current page
+  (today items on 今日事项, tasks on 任务, decks on Artifacts, projects on
+  研究画布) instead of always showing the chat history, plus a dedicated "聊天"
+  card to return to the chat view from any page.
+- **Goal**: per-page sidebar lists, with the chat view keeping its
+  history/topics list + switch.
+- **Key decision**: added a wide `nb-nav-tile` for 聊天 (it is both the primary
+  view and the way back to chat, so it leads the grid) and dispatched the
+  scroll-area content by `view` to four new self-contained list components. This
+  reverses the earlier "chat lists stay visible on every page" decision — the
+  new 聊天 tile is now the one-click way back, so the chat list no longer needs
+  to be omnipresent. The history/topics switch is gated to the chat view.
+
+### 2026-06-13 — account footer moved to the top-right corner
+- **Motivation**: user request — move the sidebar's user icon and settings
+  button to the page's top-right corner.
+- **Goal**: keep the left rail focused on navigation and the chat lists.
+- **Change**: removed `<AccountFoot />` (and its import) from the rail; the
+  account avatar + settings gear now render in `FloatingControls`'s
+  top-right float.
 
 ### 2026-06-13 — auto-close the temporary peek on pointer leave
 - **Motivation**: the new edge-reveal "peek" opens the sidebar as a temporary

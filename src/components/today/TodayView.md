@@ -10,8 +10,17 @@
 ## Key notes
 - Context awareness: a scroll listener (rAF-throttled) reports the first visible [data-cid] item to the store as the quick-chat "正在看" context.
 - Non-essential actions are folded into the ⋯ menu per the "maximize reading area, no fixed header" iteration.
+- Sidebar jump: a second effect watches `focusItemId` / `focusItemTick` and scrolls the matching `[data-cid]` element into view when the sidebar `TodayNavList` requests it (rAF so a just-cleared filter renders the target first).
 
 ## Change history
+
+### 2026-06-13 — scroll-to-item from the sidebar index
+- **Motivation**: the new `TodayNavList` sidebar index needs clicking an entry
+  to bring that item into view on the reading surface.
+- **Goal**: react to the store's `focusItem` requests without a new bespoke
+  channel.
+- **Change**: added a `focusItemId`/`focusItemTick` effect that scrolls the
+  matching `[data-cid]` into view; reused the existing `scrollRef`.
 
 ### 2026-06-13 — filtering moved into the page (TodayFilterBar)
 - **Motivation**: filters lived in the sidebar (TodayNav), which replaced the
