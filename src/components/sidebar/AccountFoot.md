@@ -33,6 +33,12 @@ menu offers login/register plus the shared settings actions.
 
 ## Change history
 
+### 2026-06-13 — "AI 模型设置" navigates to /settings (was: open modal)
+- **Motivation**: settings became a page with its own URL instead of a modal.
+- **Change**: both account-menu "AI 模型设置" entries (signed-in and signed-out)
+  now call `openSettings()` (router navigation) after closing the menu; the
+  `setAiSetupOpen` import was replaced by `openSettings`.
+
 ### 2026-06-12 — created
 - **Motivation**: the sidebar footer showed a hardcoded demo persona; with
   the auth system the shell must reflect real session state.

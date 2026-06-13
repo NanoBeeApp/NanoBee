@@ -17,6 +17,12 @@ shows on the chat view. The account avatar lives in the top-right floating bar
 
 ## Change history
 
+### 2026-06-13 — settings tile navigates to /settings (was: open modal)
+- **Motivation**: settings became a page with its own URL instead of a modal.
+- **Change**: the "设置" tile now calls `openSettings()` (router navigation) and
+  gets an `active` state when `view === 'settings'`, like the other nav tiles;
+  the `setAiSetupOpen` import was replaced by `openSettings`.
+
 ### 2026-06-13 — recolor nav tiles to neutral cards + indigo selection
 - **Motivation**: the provided mockup replaced the amber-filled tile block with
   neutral white cards and an indigo (`--brand-2`) selection accent. The solid

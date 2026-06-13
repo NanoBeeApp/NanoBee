@@ -5,6 +5,8 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ## Key exports
 - `useAppStore` hook, `View` / `SidebarMode` types
+- `VIEW_PATH` (view → URL path map) and `viewFromPath(pathname)` (reverse), used
+  by the `_app` layout to keep `view` in sync with the router.
 
 ## Dependencies
 - Upstream: zustand, lib/api-client (Hono RPC), data layer (UPDATE_TO_CHAT mapping + nextId)
@@ -16,8 +18,32 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 - `deliverMessage()` is the shared send pipeline (main chat + quick chat) — POST /api/messages returns the server-generated AI reply; a 600ms minimum delay keeps the thinking indicator visible.
 - Design defaults locked from the prototype's tweak exploration: sidebar = history view, proactive = emphasized amber card, monitor card on.
 - Leaving the Today page (backToChat / openUpdateInChat / openQuickInChat / newChat / selectChat) clears the "viewing" context so the quick chat never carries a stale chip.
+- **Navigation is URL-driven.** The router is the source of truth; `view` is a cache the `_app` layout writes via `syncView()` from the active path. The layout binds the router's `navigate()` into the store (`bindNavigate`), and every view-switching action (`openChat/openToday/openTasks/openResearch/openArtifacts/openSettings/selectChat/newChat/backToChat/openQuickInChat/send/runArtifactShortcut`) navigates through `_navigate` rather than setting `view` directly.
 
 ## Change history
+
+### 2026-06-13 — URL-driven navigation; settings becomes a route; drop `aiSetupOpen`
+- **Motivation**: the user asked that every page have its own URL and that
+  settings be a page instead of a modal. Navigation was a single `view` flag on
+  the `/` route.
+- **Goal**: make the router the source of truth while keeping the many existing
+  components that read `s.view` working unchanged.
+- **Key decisions**: added `VIEW_PATH` + `viewFromPath`, a `_navigate` bridge
+  (`bindNavigate`) and `syncView` so the `_app` layout mirrors the URL into the
+  cached `view`; rewired every view-switching action to call `_navigate(path)`
+  (and no longer set `view` directly); added `'settings'` to `View` plus an
+  `openSettings()` action; removed `aiSetupOpen` / `setAiSetupOpen` (the modal
+  is gone — settings is the `/settings` route now).
+
+### 2026-06-13 — docked right chat panel: drop `quickOpen`, add `rightCollapsed`
+- **Motivation**: the quick chat moved from a slide-up overlay to a docked right
+  panel (see App / QuickChat). The per-conversation open/closed toggle lost its
+  consumer, but the panel as a whole now needs its own collapse state.
+- **Change**: dropped `quickOpen` + `setQuickOpen` (removed from the state, the
+  initial state, `sendQuick` and `openQuickInChat`); added `rightCollapsed` +
+  `setRightCollapsed` for the whole-panel collapse (no peek, unlike the
+  sidebar — re-opening is an explicit click from FloatingControls).
+  `quickChatId` / `quickPending` / `quickCtx` are unchanged.
 
 ### 2026-06-13 — per-page sidebar nav: `openChat`, `focusItem`, `tasksFilter`
 - **Motivation**: the sidebar became context-aware (a different list per page),

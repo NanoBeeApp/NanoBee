@@ -1,9 +1,13 @@
-// State container for the AI provider setup dialog.
-// Shows automatically on first login (signed-in user with no saved settings)
-// and on demand via the account menu (store flag aiSetupOpen). Owns form
-// state + validation and delegates rendering to AiProviderSetupForm.
+// State container for the /settings page (formerly the AI provider modal).
+// Owns the data fetching (auth + saved settings) and the form state + autosave,
+// delegating the master-detail layout to AiSettingsForm. Settings are optional:
+// the backend falls back to NanoBee's built-in defaults when nothing is saved,
+// so there is no forced onboarding — this is just a normal page reachable from
+// the sidebar, and edits auto-save as you type.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Icons } from "../../icons/icons";
 import {
 	DEFAULT_WEB_SEARCH_PROVIDER,
 	getProviderInfo,
@@ -20,24 +24,15 @@ import {
 	type SaveAiSettingsInput,
 	type TestConnectionResult,
 } from "../../lib/useAiSettings";
-import { useAppStore } from "../../store/useAppStore";
 import {
-	AiProviderSetupForm,
+	AiSettingsForm,
 	type AiSetupFormValues,
 	type SaveState,
 	type TestStatus,
-} from "./AiProviderSetupForm";
+} from "./AiSettingsForm";
 
 /** Debounce window before an edit is persisted (ms). */
 const AUTOSAVE_DELAY = 700;
-
-/** Default fallback config: OpenRouter + built-in key (the old "use defaults"). */
-const DEFAULT_SAVE_INPUT: SaveAiSettingsInput = {
-	provider: "openrouter",
-	apiKey: "",
-	baseUrl: "",
-	model: "",
-};
 
 /** Human-readable text for the inline auto-save status line. */
 function saveStateText(state: SaveState, invalidMsg: string | null): string {
@@ -81,8 +76,8 @@ function toSaveInput(
 	const webSearchKey = values.webSearchKey.trim();
 	return {
 		provider: values.provider,
-		// Store "" when the user kept the provider default, so future
-		// default updates apply automatically.
+		// Store "" when the user kept the provider default, so future default
+		// updates apply automatically.
 		baseUrl: baseUrl === info.defaultBaseUrl ? "" : baseUrl,
 		model: model === info.defaultModel ? "" : model,
 		// Blank input keeps a stored key; otherwise it means "no own key".
@@ -93,53 +88,48 @@ function toSaveInput(
 	};
 }
 
-export function AiProviderSetupDialog() {
-	const { data: user } = useAuthUser();
+export function SettingsView() {
+	const { data: user, isLoading: authLoading } = useAuthUser();
 	const settingsQuery = useAiSettings(Boolean(user));
-	const manualOpen = useAppStore((s) => s.aiSetupOpen);
-	const setAiSetupOpen = useAppStore((s) => s.setAiSetupOpen);
 	const save = useSaveAiSettings();
 
-	const data = settingsQuery.data ?? null;
-	const needsFirstSetup = Boolean(user) && data !== null && !data.configured;
-
-	// First login with no saved config: auto-open the (now dismissible) dialog
-	// once. A ref guards against reopening after the user closes it, even while
-	// the settings query is still refetching the freshly-saved config.
-	const autoOpenedRef = useRef(false);
-	useEffect(() => {
-		if (needsFirstSetup && !manualOpen && !autoOpenedRef.current) {
-			autoOpenedRef.current = true;
-			setAiSetupOpen(true);
-		}
-	}, [needsFirstSetup, manualOpen, setAiSetupOpen]);
-
-	// Visibility is latched on the store flag so an auto-save flipping
-	// `configured` (first setup) never closes or remounts the open dialog.
-	const visible = Boolean(user) && data !== null && manualOpen;
-
-	if (!visible) return null;
-
 	return (
-		<AiSetupFormState
-			settings={data.settings}
-			isFirstSetup={needsFirstSetup}
-			onClose={() => setAiSetupOpen(false)}
-			onPersist={(input) => save.mutateAsync(input)}
-		/>
+		<div className="nb-settings-page" data-testid="settings-page">
+			<header className="nb-settings-head">
+				<h1 className="nb-settings-title">设置</h1>
+				<p className="nb-settings-sub">配置 AI 模型与联网搜索供应商 · 修改自动保存</p>
+			</header>
+
+			{authLoading || (user && settingsQuery.isLoading) ? (
+				<div className="nb-settings-state" data-testid="settings-loading">
+					<Icons.spark size={22} style={{ color: "var(--ink-4)" }} />
+					<p>正在加载设置…</p>
+				</div>
+			) : !user ? (
+				<div className="nb-settings-state" data-testid="settings-signed-out">
+					<Icons.bee size={26} sw={1.6} style={{ color: "var(--brand-2)" }} />
+					<p>登录后即可配置专属的 AI 模型与联网搜索供应商。</p>
+					<Link to="/login" className="btn btn-primary" data-testid="settings-login-link">
+						登录 / 注册
+					</Link>
+				</div>
+			) : (
+				<SettingsFormState
+					settings={settingsQuery.data?.settings ?? null}
+					onPersist={(input) => save.mutateAsync(input)}
+				/>
+			)}
+		</div>
 	);
 }
 
-interface AiSetupFormStateProps {
+interface SettingsFormStateProps {
 	settings: AiSettings | null;
-	/** True while no config has ever been saved (mandatory first-time flow). */
-	isFirstSetup: boolean;
-	onClose: () => void;
-	/** Persist settings without closing the dialog (used by auto-save). */
+	/** Persist settings (used by auto-save). */
 	onPersist: (input: SaveAiSettingsInput) => Promise<unknown>;
 }
 
-function AiSetupFormState(props: AiSetupFormStateProps) {
+function SettingsFormState(props: SettingsFormStateProps) {
 	const [values, setValues] = useState<AiSetupFormValues>(() =>
 		initialValues(props.settings),
 	);
@@ -246,7 +236,7 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 
 	// Instant auto-save: debounce edits and persist whenever the form is valid
 	// and the payload actually changed. The initial mount is skipped so simply
-	// opening the dialog never writes (important for the first-setup flow).
+	// opening the page never writes.
 	const dirtyRef = useRef(false);
 	const lastSavedRef = useRef<string | null>(null);
 	useEffect(() => {
@@ -280,24 +270,8 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [values, hasStoredKey, hasStoredWebSearchKey]);
 
-	// Closing: first-time users must leave with a saved config. If nothing has
-	// been persisted yet, save the current valid form (or the defaults).
-	const handleClose = async () => {
-		if (props.isFirstSetup && lastSavedRef.current === null) {
-			const input = validate()
-				? DEFAULT_SAVE_INPUT
-				: toSaveInput(values, hasStoredKey, hasStoredWebSearchKey);
-			try {
-				await props.onPersist(input);
-			} catch {
-				// Closing should not be blocked by a transient save failure.
-			}
-		}
-		props.onClose();
-	};
-
 	return (
-		<AiProviderSetupForm
+		<AiSettingsForm
 			values={values}
 			info={info}
 			hasStoredKey={hasStoredKey}
@@ -328,7 +302,6 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 			}}
 			onFetchModels={() => void runFetchModels(values.provider, values.apiKey, values.baseUrl)}
 			onTestConnection={() => void handleTestConnection()}
-			onClose={() => void handleClose()}
 		/>
 	);
 }

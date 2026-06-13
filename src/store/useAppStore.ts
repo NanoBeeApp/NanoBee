@@ -25,8 +25,31 @@ const TOAST_DURATION_MS = 3600;
 const JUST_ADDED_FLASH_MS = 700;
 const TITLE_MAX_CHARS = 22;
 
-export type View = 'chat' | 'today' | 'tasks' | 'artifacts' | 'research';
+export type View = 'chat' | 'today' | 'tasks' | 'artifacts' | 'research' | 'settings';
 export type SidebarMode = 'history' | 'topics';
+
+/** URL path for each view. The router is the source of truth for navigation;
+ *  `view` in the store is a cache kept in sync with the active route. */
+export const VIEW_PATH: Record<View, string> = {
+  chat: '/',
+  today: '/today',
+  tasks: '/tasks',
+  artifacts: '/artifacts',
+  research: '/research',
+  settings: '/settings',
+};
+
+/** Resolve a pathname back to its view (unknown paths fall back to chat). */
+export function viewFromPath(pathname: string): View {
+  switch (pathname) {
+    case '/today': return 'today';
+    case '/tasks': return 'tasks';
+    case '/artifacts': return 'artifacts';
+    case '/research': return 'research';
+    case '/settings': return 'settings';
+    default: return 'chat';
+  }
+}
 
 /** Server payload of GET /api/bootstrap. */
 interface BootstrapData {
@@ -63,16 +86,20 @@ interface AppState {
   /** Temporary "peek": the sidebar is shown as an overlay while collapsed
    *  (triggered by the left-edge reveal) and auto-closes on mouse leave. */
   sidePeek: boolean;
+  /** Persistent collapse state of the docked right chat panel (QuickChat).
+   *  Unlike the sidebar there is no peek — a chat panel that vanished on mouse
+   *  leave would be hostile, so re-opening is an explicit click. */
+  rightCollapsed: boolean;
   pending: boolean;
   toasts: Toast[];
   justAddedTaskId: string | null;
   // global quick chat
   quickChatId: string | null;
-  quickOpen: boolean;
   quickPending: boolean;
   quickCtx: ViewingContext | null;
-  /** AI provider setup dialog opened manually from the account menu. */
-  aiSetupOpen: boolean;
+  /** Bridge to the router's navigate(), bound once by the app layout so store
+   *  actions can change the URL — the source of truth for the current view. */
+  _navigate: ((to: string) => void) | null;
   // artifacts (card decks generated from chat)
   artifacts: Artifact[];
   selectedArtifactId: string | null;
@@ -84,6 +111,12 @@ interface AppState {
   bootstrap: () => Promise<void>;
 
   // navigation
+  /** Bind the router's navigate() (called once by the app layout). */
+  bindNavigate: (fn: (to: string) => void) => void;
+  /** Sync the cached `view` from the active route (called by the layout). */
+  syncView: (view: View) => void;
+  /** Open the settings page (its own route now, no longer a dialog). */
+  openSettings: () => void;
   setSidebarMode: (m: SidebarMode) => void;
   setSideCollapsed: (v: boolean) => void;
   /** Open the sidebar temporarily (overlay peek) without changing the
@@ -91,6 +124,8 @@ interface AppState {
   peekSidebar: () => void;
   /** End a temporary peek (called when the pointer leaves the sidebar). */
   endPeek: () => void;
+  /** Collapse / expand the docked right chat panel. */
+  setRightCollapsed: (v: boolean) => void;
   setNotifOpen: (v: boolean) => void;
   toggleTopic: (id: string) => void;
   selectChat: (id: string) => void;
@@ -119,12 +154,8 @@ interface AppState {
 
   // quick chat
   sendQuick: (text: string) => void;
-  setQuickOpen: (v: boolean) => void;
   setQuickCtx: (ctx: ViewingContext | null) => void;
   openQuickInChat: () => void;
-
-  // AI provider settings dialog
-  setAiSetupOpen: (v: boolean) => void;
 
   // tasks
   createTask: (data: TaskSuggestion) => void;
@@ -191,14 +222,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   notifOpen: false,
   sideCollapsed: false,
   sidePeek: false,
+  rightCollapsed: false,
   pending: false,
   toasts: [],
   justAddedTaskId: null,
   quickChatId: null,
-  quickOpen: false,
   quickPending: false,
   quickCtx: null,
-  aiSetupOpen: false,
+  _navigate: null,
   artifacts: [],
   selectedArtifactId: null,
   artifactsLoading: false,
@@ -226,11 +257,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  bindNavigate: (fn) => set({ _navigate: fn }),
+  syncView: (view) => { if (get().view !== view) set({ view }); },
+  openSettings: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.settings); },
+
   setSidebarMode: (sidebarMode) => set({ sidebarMode }),
   // Pinning or collapsing always ends any temporary peek.
   setSideCollapsed: (sideCollapsed) => set({ sideCollapsed, sidePeek: false }),
   peekSidebar: () => { if (get().sideCollapsed) set({ sidePeek: true }); },
   endPeek: () => { if (get().sidePeek) set({ sidePeek: false }); },
+  setRightCollapsed: (rightCollapsed) => set({ rightCollapsed }),
   setNotifOpen: (notifOpen) => set({ notifOpen }),
 
   toggleTopic: (id) => set((s) => ({
@@ -244,23 +280,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((s) => ({
       activeChatId: id,
       activeTopicId: c ? c.topicId : (s.sessionMeta[id]?.topicId ?? 'gold'),
-      view: 'chat',
       notifOpen: false,
       quickCtx: null,
     }));
+    get()._navigate?.(VIEW_PATH.chat);
   },
 
-  newChat: () => set({ activeChatId: null, activeTopicId: null, view: 'chat', notifOpen: false, quickCtx: null }),
+  newChat: () => {
+    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null });
+    get()._navigate?.(VIEW_PATH.chat);
+  },
 
   // The sidebar "聊天" tile: just switch back to the chat view, keeping whatever
   // conversation is active (unlike newChat, which clears it).
-  openChat: () => set({ view: 'chat', notifOpen: false }),
+  openChat: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.chat); },
 
-  openToday: () => set({ view: 'today', notifOpen: false }),
+  openToday: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.today); },
 
-  openTasks: () => set({ view: 'tasks', notifOpen: false }),
+  openTasks: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.tasks); },
 
-  openResearch: () => set({ view: 'research', notifOpen: false }),
+  openResearch: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.research); },
 
   focusItem: (id) => set((s) => ({ focusItemId: id, focusItemTick: s.focusItemTick + 1 })),
 
@@ -268,10 +307,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   // refreshes the list so a just-created artifact shows up.
   openArtifacts: (id) => {
     set((s) => ({
-      view: 'artifacts',
       notifOpen: false,
       selectedArtifactId: id ?? s.selectedArtifactId,
     }));
+    get()._navigate?.(VIEW_PATH.artifacts);
     void get().loadArtifacts();
   },
 
@@ -324,7 +363,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   // still recorded to a chat, consistent with the chat-trigger model.
   runArtifactShortcut: async (prompt) => {
     if (get().artifactGenerating) return;
-    set({ view: 'artifacts', artifactGenerating: true, notifOpen: false });
+    set({ artifactGenerating: true, notifOpen: false });
+    get()._navigate?.(VIEW_PATH.artifacts);
     const chatId = nextId('c');
     const userMessageId = nextId();
     try {
@@ -359,7 +399,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setTasksFilter: (tasksFilter) => set({ tasksFilter }),
 
   // Leaving the Today page clears the "viewing" context.
-  backToChat: () => set({ view: 'chat', quickCtx: null }),
+  backToChat: () => { set({ quickCtx: null }); get()._navigate?.(VIEW_PATH.chat); },
 
   openUpdateInChat: (u) => {
     set({ notifOpen: false, quickCtx: null });
@@ -371,7 +411,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const s = get();
     let chatId = s.activeChatId;
     const userMessageId = nextId();
-    const patch: Partial<AppState> = { view: 'chat', notifOpen: false, pending: true };
+    const patch: Partial<AppState> = { notifOpen: false, pending: true };
 
     // Free-typed message in a brand-new chat: create session metadata for it.
     if (!chatId || !s.convos[chatId]) {
@@ -387,6 +427,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       [chatId]: [...(s.convos[chatId] ?? []), { id: userMessageId, role: 'user', text }],
     };
     set(patch);
+    get()._navigate?.(VIEW_PATH.chat);
 
     const result = await deliverMessage(set, {
       chatId, userMessageId, title: truncateTitle(text), text,
@@ -413,7 +454,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const s = get();
     let id = s.quickChatId;
     const userMessageId = nextId();
-    const patch: Partial<AppState> = { quickOpen: true, quickPending: true };
+    const patch: Partial<AppState> = { quickPending: true };
     if (!id) {
       id = nextId('c');
       patch.quickChatId = id;
@@ -445,10 +486,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  setQuickOpen: (quickOpen) => set({ quickOpen }),
   setQuickCtx: (quickCtx) => set({ quickCtx }),
-
-  setAiSetupOpen: (aiSetupOpen) => set({ aiSetupOpen }),
 
   openQuickInChat: () => {
     const s = get();
@@ -456,11 +494,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       activeChatId: s.quickChatId,
       activeTopicId: s.sessionMeta[s.quickChatId]?.topicId ?? s.quickCtx?.topicId ?? 'gold',
-      view: 'chat',
-      quickOpen: false,
       notifOpen: false,
       quickCtx: null,
     });
+    get()._navigate?.(VIEW_PATH.chat);
   },
 
   createTask: async (data) => {

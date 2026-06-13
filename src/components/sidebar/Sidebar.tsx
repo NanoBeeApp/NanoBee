@@ -3,8 +3,8 @@
 // scroll area below is context-aware: it shows the list that belongs to the
 // current page — chats on the chat view, today's items on 今日事项, tasks on
 // 任务, decks on Artifacts, projects on 研究画布. The "聊天" tile is how you
-// return to the chat view from any other page; "设置" opens the AI/settings
-// dialog (the app's only settings surface today).
+// return to the chat view from any other page; "设置" navigates to the
+// /settings page (AI model & web-search configuration).
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
 import { ChatHistoryList } from './ChatHistoryList';
@@ -31,7 +31,7 @@ export function Sidebar() {
   const openTasks = useAppStore((s) => s.openTasks);
   const openArtifacts = useAppStore((s) => s.openArtifacts);
   const openResearch = useAppStore((s) => s.openResearch);
-  const setAiSetupOpen = useAppStore((s) => s.setAiSetupOpen);
+  const openSettings = useAppStore((s) => s.openSettings);
   const toggleTopic = useAppStore((s) => s.toggleTopic);
   const setSideCollapsed = useAppStore((s) => s.setSideCollapsed);
   const endPeek = useAppStore((s) => s.endPeek);
@@ -95,7 +95,7 @@ export function Sidebar() {
             <span className="label">研究画布</span>
           </button>
 
-          <button className="nb-nav-tile" onClick={() => setAiSetupOpen(true)}
+          <button className={`nb-nav-tile${view === 'settings' ? ' active' : ''}`} onClick={openSettings}
             data-testid="settings-entry">
             <span className="ic"><Icons.gear size={17} /></span>
             <span className="label">设置</span>

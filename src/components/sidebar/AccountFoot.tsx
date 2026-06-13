@@ -42,7 +42,7 @@ function DownloadLinks({ onPick }: { onPick: () => void }) {
 export function AccountFoot() {
 	const { data: user, isLoading } = useAuthUser();
 	const logout = useLogout();
-	const setAiSetupOpen = useAppStore((s) => s.setAiSetupOpen);
+	const openSettings = useAppStore((s) => s.openSettings);
 	const setNotifOpen = useAppStore((s) => s.setNotifOpen);
 	const [menuOpen, setMenuOpen] = useState(false);
 	const close = () => setMenuOpen(false);
@@ -94,7 +94,7 @@ export function AccountFoot() {
 										<Icons.bell size={15} />
 										最近动态
 									</button>
-									<button className="nb-account-action" onClick={() => { close(); setAiSetupOpen(true); }}
+									<button className="nb-account-action" onClick={() => { close(); openSettings(); }}
 										data-testid="ai-settings-entry">
 										<Icons.spark size={15} />
 										AI 模型设置
@@ -115,7 +115,7 @@ export function AccountFoot() {
 										登录 / 注册
 									</Link>
 									<div className="nb-account-sep" />
-									<button className="nb-account-action" onClick={() => { close(); setAiSetupOpen(true); }}
+									<button className="nb-account-action" onClick={() => { close(); openSettings(); }}
 										data-testid="ai-settings-entry">
 										<Icons.spark size={15} />
 										AI 模型设置

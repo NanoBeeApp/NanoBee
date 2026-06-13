@@ -12,6 +12,12 @@ export function FloatingControls() {
   const setSideCollapsed = useAppStore((s) => s.setSideCollapsed);
   const peekSidebar = useAppStore((s) => s.peekSidebar);
   const backToChat = useAppStore((s) => s.backToChat);
+  const rightCollapsed = useAppStore((s) => s.rightCollapsed);
+  const setRightCollapsed = useAppStore((s) => s.setRightCollapsed);
+
+  // The docked right chat panel only exists off the chat view; only then can it
+  // be collapsed, and only then do we surface a control to bring it back.
+  const showExpandRight = view !== 'chat' && rightCollapsed;
 
   return (
     <>
@@ -44,6 +50,11 @@ export function FloatingControls() {
         </>
       )}
       <div className="nb-float tr">
+        {showExpandRight && (
+          <button className="fbtn" title="展开快速对话" onClick={() => setRightCollapsed(false)} data-testid="expand-right-chat">
+            <Icons.panelRight size={16} />
+          </button>
+        )}
         <AccountFoot />
       </div>
     </>

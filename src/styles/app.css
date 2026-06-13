@@ -19,8 +19,14 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 #root { height: 100vh; }
 
 /* ---- App grid: sidebar | center ---- */
-.nb-app { --nb-side-w-open: 280px; --nb-side-w: var(--nb-side-w-open); display: grid; grid-template-columns: var(--nb-side-w) minmax(0, 1fr); height: 100vh; background: var(--bg); }
+.nb-app { --nb-side-w-open: 280px; --nb-side-w: var(--nb-side-w-open); --nb-rightchat-w: 360px; display: grid; grid-template-columns: var(--nb-side-w) minmax(0, 1fr); height: 100vh; background: var(--bg); }
 .nb-app.side-collapsed { --nb-side-w: 0px; }
+/* Non-chat surfaces dock a third column: the right chat panel (see QuickChat). */
+.nb-app.with-rightchat { grid-template-columns: var(--nb-side-w) minmax(0, 1fr) var(--nb-rightchat-w); }
+/* Collapsed right panel: drop the third column back to a two-column grid and
+   hide the panel. Re-opened from the floating top-right control. */
+.nb-app.with-rightchat.right-collapsed { grid-template-columns: var(--nb-side-w) minmax(0, 1fr); }
+.nb-app.right-collapsed .nb-rightchat { display: none; }
 /* Collapsed hides the rail entirely — unless it is temporarily peeking, where
    it floats over the content as an overlay (see .side-peek below). */
 .nb-app.side-collapsed:not(.side-peek) .nb-side { display: none; }
@@ -198,10 +204,10 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-role { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; font-size: 11px; font-weight: 600; color: var(--ink-3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
 .nb-role .av { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font-family: var(--font-sans); font-weight: 700; font-size: 11px; text-transform: none; letter-spacing: 0; flex-shrink: 0; }
 .nb-role .av.ai { background: linear-gradient(150deg, var(--nb-honey), #d98b2b); color: #fff; position: relative; overflow: hidden; }
-.nb-body { font-size: 15px; line-height: 1.65; color: var(--ink); }
-.nb-body p { margin: 0 0 12px; } .nb-body p:last-child { margin-bottom: 0; }
-.nb-body strong { font-weight: 700; }
-.nb-body .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+/* Chat AI body = a .markdown-body context (see components/common/Markdown.css).
+   .nb-body only supplies the prose context via CSS variables; .markdown-body
+   owns every element's styling. */
+.nb-body { --md-fs: 15px; --md-lh: 1.65; --md-fg: var(--ink); --md-gap: 12px; }
 
 .nb-user { display: flex; justify-content: flex-end; }
 .nb-user .bubble { background: var(--brand-2); color: #fff; padding: 11px 15px; border-radius: 17px 17px 5px 17px; max-width: 76%; font-size: 14.5px; line-height: 1.5; }
@@ -403,27 +409,33 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-viewseg button:hover { color: var(--ink-2); }
 .nb-viewseg button.active { background: var(--surface-3); color: var(--ink); }
 
-/* ============ GLOBAL QUICK CHAT ============ */
-/* Centered within the content area to the right of the sidebar, not the viewport */
-.nb-qc-wrap { position: fixed; left: calc(var(--nb-side-w, 0px) + (100vw - var(--nb-side-w, 0px)) / 2); transform: translateX(-50%); bottom: 18px; z-index: 80; width: min(640px, calc(100vw - var(--nb-side-w, 0px) - 48px)); }
-.nb-qc { background: var(--surface); border: 1px solid var(--border-2); border-radius: 17px; box-shadow: var(--sh-4); transition: border-color var(--dur-2) var(--ease-out); }
-.nb-qc:focus-within { border-color: var(--brand-2); box-shadow: var(--sh-4), 0 0 0 4px rgba(99,91,255,0.12); }
-.nb-qc-ctx { display: flex; padding: 9px 10px 0; }
+/* ============ DOCKED RIGHT CHAT PANEL (non-chat surfaces) ============ */
+/* Third grid column on every non-chat view: feed (top) + composer (bottom). */
+.nb-rightchat { grid-column: 3; display: flex; flex-direction: column; min-height: 0; height: 100vh; background: var(--bg); border-left: 1px solid var(--border); }
+
+.nb-rc-head { display: flex; align-items: center; gap: 9px; padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.nb-rc-head b { font-size: 13px; white-space: nowrap; }
+.nb-rc-glyph { width: 24px; height: 24px; border-radius: 8px; background: linear-gradient(150deg, var(--nb-honey), #d98b2b); color: #fff; display: grid; place-items: center; flex-shrink: 0; }
+
+.nb-rc-ctx { padding: 10px 14px 0; }
+
+.nb-rc-feed { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 0; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+/* Messages span the narrow panel width with tighter side padding. */
+.nb-rightchat .nb-msg, .nb-rightchat .nb-proactive { padding: 0 16px; max-width: none; }
+.nb-rc-thinking { padding: 0 16px; }
+
+/* Empty state: centered within the feed until the first message arrives. */
+.nb-rc-empty { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px; text-align: center; }
+.nb-rc-empty-glyph { width: 42px; height: 42px; border-radius: 13px; background: var(--nb-amber-soft); color: var(--nb-amber-ink); display: grid; place-items: center; }
+.nb-rc-empty p { margin: 0; max-width: 220px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
+
+.nb-rc-composer { flex-shrink: 0; padding: 12px 14px 14px; border-top: 1px solid var(--border); }
+.nb-qc { background: var(--surface); border: 1px solid var(--border-2); border-radius: 15px; box-shadow: var(--sh-2); transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out); }
+.nb-qc:focus-within { border-color: var(--brand-2); box-shadow: var(--sh-2), 0 0 0 4px rgba(99,91,255,0.12); }
 .nb-qc .qc-row { display: flex; align-items: flex-end; gap: 4px; padding: 6px 8px 8px; }
 .nb-qc textarea { flex: 1; border: 0; outline: none; resize: none; background: transparent; font-family: var(--font-sans); font-size: 14.5px; line-height: 1.5; color: var(--ink); padding: 8px 8px; max-height: 120px; }
 .nb-qc textarea::placeholder { color: var(--ink-4); }
-.nb-qc .cbtn { width: 34px; height: 36px; border-radius: 9px; color: var(--ink-3); display: grid; place-items: center; transition: all var(--dur-1) var(--ease-out); flex-shrink: 0; }
-.nb-qc .cbtn:hover { background: var(--surface-2); color: var(--ink); }
 .nb-qc .nb-send { width: 34px; height: 34px; margin: 0 0 1px; flex-shrink: 0; }
-
-.nb-quick-pop { position: fixed; left: calc(var(--nb-side-w, 0px) + (100vw - var(--nb-side-w, 0px)) / 2); transform: translateX(-50%); bottom: 92px; z-index: 79; width: min(640px, calc(100vw - var(--nb-side-w, 0px) - 48px)); max-height: 58vh; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--sh-4); overflow: hidden; animation: nbslideup 0.28s var(--ease-out); }
-@keyframes nbslideup { from { opacity: 0; transform: translate(-50%, 18px); } to { opacity: 1; transform: translate(-50%, 0); } }
-.qp-head { display: flex; align-items: center; gap: 9px; padding: 10px 12px 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); flex-shrink: 0; }
-.qp-head b { font-size: 13px; white-space: nowrap; }
-.qp-glyph { width: 24px; height: 24px; border-radius: 8px; background: linear-gradient(150deg, var(--nb-honey), #d98b2b); color: #fff; display: grid; place-items: center; flex-shrink: 0; }
-.qp-feed { overflow-y: auto; padding: 16px 0 18px; display: flex; flex-direction: column; gap: 18px; }
-.nb-quick-pop .nb-msg { padding: 0 18px; max-width: none; }
-.nb-quick-pop .nb-proactive { padding: 0 18px; max-width: none; }
 
 /* ============ AUTH (login / register / verify) ============ */
 .nb-auth-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 32px 20px; background: var(--bg); }
@@ -449,7 +461,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-auth-code-input { font-family: var(--font-mono); font-size: 18px; letter-spacing: 6px; text-align: center; }
 .nb-auth-foot { font-size: 12px; color: var(--ink-4); margin: 0; }
 
-/* ---------- AI provider setup dialog (first login + account menu) ---------- */
+/* ---------- Shared modal chrome (agent trace, alerts) ---------- */
 .nb-modal-scrim { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(15,17,23,0.32); animation: nbtoast 0.2s var(--ease-out); }
 .nb-modal { width: min(440px, 100%); max-height: calc(100vh - 48px); overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--sh-4); }
 .nb-modal-head { padding: 22px 24px 0; }
@@ -457,15 +469,25 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-modal-head .sub { margin-top: 6px; font-size: 13px; color: var(--ink-3); line-height: 1.6; }
 .nb-modal-body { padding: 16px 24px 4px; display: flex; flex-direction: column; gap: 14px; }
 .nb-modal-foot { padding: 14px 24px 20px; display: flex; justify-content: flex-end; gap: 10px; }
-/* ===== AI provider settings — master-detail dialog ===== */
-.nb-modal-ai { position: relative; width: min(760px, 100%); display: flex; flex-direction: column; height: min(620px, calc(100vh - 32px)); max-height: calc(100vh - 32px); overflow: hidden; }
-
-/* No header bar — float the close so the form area spans the full modal height */
+/* Floating close affordance (top-right) — shared by the agent-trace modal */
 .nb-ai-close { position: absolute; top: 12px; right: 12px; z-index: 3; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; color: var(--ink-4); background: var(--surface); transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
 .nb-ai-close:hover { background: var(--surface-3); color: var(--ink-2); }
 
-/* Two columns: master (provider list) left, detail right, distinguished by bg */
+/* ---------- /settings page (AI model & web search) ---------- */
+/* White page surface; a slim heading bar over the master-detail body so the
+   content area stays maximal (no modal frame, no footer band). */
+.nb-settings-page { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surface); overflow: hidden; }
+.nb-settings-head { flex-shrink: 0; padding: 20px 28px 16px; }
+.nb-settings-title { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+.nb-settings-sub { margin: 4px 0 0; font-size: 13px; color: var(--ink-3); line-height: 1.55; }
+/* Centered states (loading / signed-out) fill the body below the heading. */
+.nb-settings-state { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; }
+.nb-settings-state p { margin: 0; max-width: 320px; font-size: 14px; color: var(--ink-3); line-height: 1.6; }
+
+/* Two columns: master (provider list) left, detail right, distinguished by bg.
+   On the page the split fills the area below the heading. */
 .nb-ai-split { display: grid; grid-template-columns: 216px minmax(0, 1fr); flex: 1; min-height: 0; }
+.nb-settings-split { border-top: 1px solid var(--border); }
 
 .nb-ai-master { background: var(--surface-2); padding: 10px 10px 12px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
 .nb-ai-master-label { padding: 8px 10px 6px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }

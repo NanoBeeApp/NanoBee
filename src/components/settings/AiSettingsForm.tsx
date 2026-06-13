@@ -1,8 +1,9 @@
-// Pure render component for the AI provider setup dialog.
+// Pure render component for the AI settings page.
 // Master-detail layout: a provider list on the left (master), the selected
 // provider's settings on the right (detail) — API key, host, model picker and
-// a connection test. Stateless except for a UI-only password-visibility toggle;
-// all data + callbacks come from AiProviderSetupDialog.
+// a connection test. Stateless except for UI-only password-visibility toggles;
+// all data + callbacks come from SettingsView. Rendered inline on the /settings
+// page (no modal scrim) — changes auto-save, so there is no save/cancel pair.
 
 import { useState } from "react";
 import { Icons } from "../../icons/icons";
@@ -33,7 +34,7 @@ export type TestStatus = "idle" | "testing" | "success" | "error";
 /** Inline auto-save status shown at the bottom of the provider column. */
 export type SaveState = "idle" | "saving" | "saved" | "error" | "invalid";
 
-export interface AiProviderSetupFormProps {
+export interface AiSettingsFormProps {
 	values: AiSetupFormValues;
 	info: AiProviderInfo;
 	/** True when a key is already stored for the selected provider. */
@@ -58,10 +59,9 @@ export interface AiProviderSetupFormProps {
 	) => void;
 	onFetchModels: () => void;
 	onTestConnection: () => void;
-	onClose: () => void;
 }
 
-export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
+export function AiSettingsForm(props: AiSettingsFormProps) {
 	const { values, info, hasStoredKey, hasStoredWebSearchKey, error } = props;
 	const { models, modelsLoading, modelsError, testStatus, testResult, saveState, saveText } = props;
 	const [showKey, setShowKey] = useState(false);
@@ -82,92 +82,70 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 			: "sk-...";
 
 	return (
-		<div className="nb-modal-scrim" onClick={props.onClose}>
-			<div
-				className="nb-modal nb-modal-ai"
-				role="dialog"
-				aria-modal="true"
-				aria-label="AI 模型设置"
-				onClick={(e) => e.stopPropagation()}
-				data-testid="ai-provider-setup-dialog"
-			>
-				{/* No header/footer bar — the form spans the full modal height.
-				    Close is a floating affordance; changes auto-save, so there is
-				    no explicit save/cancel pair. */}
-				<button
-					type="button"
-					className="nb-ai-close"
-					onClick={props.onClose}
-					aria-label="关闭"
-					data-testid="ai-settings-close"
-				>
-					<Icons.x size={16} />
-				</button>
-
-				<div className="nb-ai-split">
-					{/* Master: provider list + auto-save status */}
-					<div className="nb-ai-master">
-						<div className="nb-ai-master-list">
-							<div className="nb-ai-master-grp">模型供应商</div>
-							<div role="radiogroup" aria-label="AI 模型供应商" style={{ display: "contents" }}>
-								{AI_PROVIDERS.map((p) => {
-									const selected = activePane === "provider" && values.provider === p.id;
-									return (
-										<button
-											key={p.id}
-											type="button"
-											role="radio"
-											aria-checked={selected}
-											className={`nb-ai-prow${selected ? " selected" : ""}`}
-											onClick={() => {
-												setActivePane("provider");
-												props.onProviderChange(p.id);
-											}}
-											data-testid={`ai-provider-option-${p.id}`}
-										>
-											<ProviderLogo id={p.id} />
-											<span className="nb-ai-prow-name">{p.label}</span>
-											{p.id === "openrouter" && <span className="nb-ai-prow-tag">默认</span>}
-										</button>
-									);
-								})}
-							</div>
-							<div className="nb-ai-master-grp">联网搜索</div>
-							<button
-								type="button"
-								className={`nb-ai-prow${activePane === "websearch" ? " selected" : ""}`}
-								aria-current={activePane === "websearch"}
-								onClick={() => setActivePane("websearch")}
-								data-testid="ai-websearch-entry"
-							>
-								<span
-									className="nb-ai-prow-logo"
-									style={{ background: "rgba(14,165,233,0.12)", color: "#0ea5e9" }}
-									aria-hidden="true"
+		<div className="nb-ai-split nb-settings-split" data-testid="ai-settings-form">
+			{/* Master: provider list + auto-save status */}
+			<div className="nb-ai-master">
+				<div className="nb-ai-master-list">
+					<div className="nb-ai-master-grp">模型供应商</div>
+					<div role="radiogroup" aria-label="AI 模型供应商" style={{ display: "contents" }}>
+						{AI_PROVIDERS.map((p) => {
+							const selected = activePane === "provider" && values.provider === p.id;
+							return (
+								<button
+									key={p.id}
+									type="button"
+									role="radio"
+									aria-checked={selected}
+									className={`nb-ai-prow${selected ? " selected" : ""}`}
+									onClick={() => {
+										setActivePane("provider");
+										props.onProviderChange(p.id);
+									}}
+									data-testid={`ai-provider-option-${p.id}`}
 								>
-									<Icons.globe size={15} />
-								</span>
-								<span className="nb-ai-prow-name">Web 搜索</span>
-							</button>
-						</div>
-						{saveText && (
-							<div
-								className="nb-ai-savehint"
-								data-state={saveState}
-								data-testid="ai-settings-savehint"
-								role="status"
-							>
-								<span className="dot" aria-hidden="true" />
-								{saveText}
-							</div>
-						)}
+									<ProviderLogo id={p.id} />
+									<span className="nb-ai-prow-name">{p.label}</span>
+									{p.id === "openrouter" && <span className="nb-ai-prow-tag">默认</span>}
+								</button>
+							);
+						})}
 					</div>
+					<div className="nb-ai-master-grp">联网搜索</div>
+					<button
+						type="button"
+						className={`nb-ai-prow${activePane === "websearch" ? " selected" : ""}`}
+						aria-current={activePane === "websearch"}
+						onClick={() => setActivePane("websearch")}
+						data-testid="ai-websearch-entry"
+					>
+						<span
+							className="nb-ai-prow-logo"
+							style={{ background: "rgba(14,165,233,0.12)", color: "#0ea5e9" }}
+							aria-hidden="true"
+						>
+							<Icons.globe size={15} />
+						</span>
+						<span className="nb-ai-prow-name">Web 搜索</span>
+					</button>
+				</div>
+				{saveText && (
+					<div
+						className="nb-ai-savehint"
+						data-state={saveState}
+						data-testid="ai-settings-savehint"
+						role="status"
+					>
+						<span className="dot" aria-hidden="true" />
+						{saveText}
+					</div>
+				)}
+			</div>
 
-					{/* Detail: AI model provider settings, or the standalone web
-					    search settings — switched by the master-list selection. */}
-					<div className="nb-ai-detail">
-						{activePane === "provider" ? (
-						<>
+			{/* Detail: AI model provider settings, or the standalone web search
+			    settings — switched by the master-list selection. */}
+			<div className="nb-ai-detail">
+				{activePane === "provider" ? (
+					<>
 						<div className="nb-ai-detail-head">
 							<div className="title" data-testid="ai-detail-title">{info.label}</div>
 							<div className="sub" data-testid="ai-provider-hint">{info.hint}</div>
@@ -285,9 +263,9 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 								<TestStatusLine status={testStatus} result={testResult} />
 							</div>
 						</div>
-						</>
-						) : (
-						<>
+					</>
+				) : (
+					<>
 						<div className="nb-ai-detail-head">
 							<div className="title" data-testid="ai-detail-title">Web 搜索</div>
 							<div className="sub">
@@ -341,16 +319,14 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 							</div>
 							<p className="nb-ai-subhint">{webSearchInfo.hint}</p>
 						</div>
-						</>
-						)}
+					</>
+				)}
 
-						{error && (
-							<div className="field-error" role="alert" data-testid="ai-settings-error">
-								{error}
-							</div>
-						)}
+				{error && (
+					<div className="field-error" role="alert" data-testid="ai-settings-error">
+						{error}
 					</div>
-				</div>
+				)}
 			</div>
 		</div>
 	);
