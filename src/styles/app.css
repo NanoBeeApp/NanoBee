@@ -446,6 +446,9 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 
 .nb-ai-master { background: var(--surface-2); padding: 10px 10px 12px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
 .nb-ai-master-label { padding: 8px 10px 6px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+/* Group sub-headers inside the master list (model providers / web search) */
+.nb-ai-master-grp { padding: 6px 10px 5px; font-family: var(--font-mono); font-size: 10px; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.09em; }
+.nb-ai-master-grp:not(:first-child) { margin-top: 8px; }
 .nb-ai-master-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 /* Inline auto-save status; replaces the old save/cancel button pair */
 .nb-ai-savehint { display: flex; align-items: center; gap: 7px; padding: 10px 10px 4px; margin-top: auto; font-size: 12px; font-weight: 500; color: var(--ink-3); }

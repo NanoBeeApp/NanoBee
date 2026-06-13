@@ -71,3 +71,8 @@ Completely stateless — all values and callbacks come from
 - **出发点**：原 Web 搜索字段只有 Tavily 一个 Key 输入框，用户要求支持多家搜索供应商。
 - **目标**：把单一 Tavily 字段改为「Web 搜索（联网，可选）」分区——供应商下拉（Tavily / Brave / Serper / Exa）+ 对应 Key 输入框，hint 与 placeholder 随所选供应商变化。
 - **关键决策**：`AiSetupFormValues` 增加 `webSearchProvider`；`onFieldChange` 字段联合类型加入 `webSearchProvider`；保持纯渲染，供应商目录来自 `lib/ai-providers` 的 `WEB_SEARCH_PROVIDERS`。
+
+### 2026-06-13 — Web 搜索拆为独立分组
+- **出发点**：用户指出搜索设置不属于任何单个模型供应商，应独立成组；原来它作为字段挤在每个 provider 的详情区里。
+- **目标**：左侧 master 列分两组——「模型供应商」（13 家）与「联网搜索」（一个 Web 搜索条目）；右侧详情区按所选项切换：选模型供应商显示 API Key/Host/模型/连接测试，选 Web 搜索显示搜索供应商下拉 + API Key。
+- **关键决策**：新增 UI 本地态 `activePane`（"provider" | "websearch"，不持久化）；模型供应商行的选中态改为 `activePane==="provider" && values.provider===p.id`；Web 搜索条目用 globe 图标 + 天蓝 tile；搜索字段从 provider 详情整体移到 websearch pane，连接测试仅留在 provider pane；`error`（保存失败）置于两 pane 之外始终可见。

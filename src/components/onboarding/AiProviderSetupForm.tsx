@@ -66,6 +66,9 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 	const { models, modelsLoading, modelsError, testStatus, testResult, saveState, saveText } = props;
 	const [showKey, setShowKey] = useState(false);
 	const [showWebSearchKey, setShowWebSearchKey] = useState(false);
+	// Which detail pane is shown: an AI model provider, or the standalone web
+	// search settings (independent of the model provider). UI-only nav state.
+	const [activePane, setActivePane] = useState<"provider" | "websearch">("provider");
 	const webSearchInfo = getWebSearchProviderInfo(values.webSearchProvider);
 
 	// A model is "from the list" only when it matches a fetched id; otherwise the
@@ -104,26 +107,48 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 				<div className="nb-ai-split">
 					{/* Master: provider list + auto-save status */}
 					<div className="nb-ai-master">
-						<div className="nb-ai-master-label">供应商</div>
-						<div className="nb-ai-master-list" role="radiogroup" aria-label="AI 供应商">
-							{AI_PROVIDERS.map((p) => {
-								const selected = values.provider === p.id;
-								return (
-									<button
-										key={p.id}
-										type="button"
-										role="radio"
-										aria-checked={selected}
-										className={`nb-ai-prow${selected ? " selected" : ""}`}
-										onClick={() => props.onProviderChange(p.id)}
-										data-testid={`ai-provider-option-${p.id}`}
-									>
-										<ProviderLogo id={p.id} />
-										<span className="nb-ai-prow-name">{p.label}</span>
-										{p.id === "openrouter" && <span className="nb-ai-prow-tag">默认</span>}
-									</button>
-								);
-							})}
+						<div className="nb-ai-master-list">
+							<div className="nb-ai-master-grp">模型供应商</div>
+							<div role="radiogroup" aria-label="AI 模型供应商" style={{ display: "contents" }}>
+								{AI_PROVIDERS.map((p) => {
+									const selected = activePane === "provider" && values.provider === p.id;
+									return (
+										<button
+											key={p.id}
+											type="button"
+											role="radio"
+											aria-checked={selected}
+											className={`nb-ai-prow${selected ? " selected" : ""}`}
+											onClick={() => {
+												setActivePane("provider");
+												props.onProviderChange(p.id);
+											}}
+											data-testid={`ai-provider-option-${p.id}`}
+										>
+											<ProviderLogo id={p.id} />
+											<span className="nb-ai-prow-name">{p.label}</span>
+											{p.id === "openrouter" && <span className="nb-ai-prow-tag">默认</span>}
+										</button>
+									);
+								})}
+							</div>
+							<div className="nb-ai-master-grp">联网搜索</div>
+							<button
+								type="button"
+								className={`nb-ai-prow${activePane === "websearch" ? " selected" : ""}`}
+								aria-current={activePane === "websearch"}
+								onClick={() => setActivePane("websearch")}
+								data-testid="ai-websearch-entry"
+							>
+								<span
+									className="nb-ai-prow-logo"
+									style={{ background: "rgba(14,165,233,0.12)", color: "#0ea5e9" }}
+									aria-hidden="true"
+								>
+									<Icons.globe size={15} />
+								</span>
+								<span className="nb-ai-prow-name">Web 搜索</span>
+							</button>
 						</div>
 						<div
 							className="nb-ai-savehint"
@@ -136,8 +161,11 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 						</div>
 					</div>
 
-					{/* Detail: selected provider settings */}
+					{/* Detail: AI model provider settings, or the standalone web
+					    search settings — switched by the master-list selection. */}
 					<div className="nb-ai-detail">
+						{activePane === "provider" ? (
+						<>
 						<div className="nb-ai-detail-head">
 							<div className="title" data-testid="ai-detail-title">{info.label}</div>
 							<div className="sub" data-testid="ai-provider-hint">{info.hint}</div>
@@ -240,9 +268,33 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 						</div>
 
 						<div className="field">
-							<label className="field-label" htmlFor="ai-web-search-provider">
-								Web 搜索（联网，可选）
-							</label>
+							<label className="field-label">连接测试</label>
+							<div className="nb-ai-test">
+								<button
+									type="button"
+									className="btn btn-secondary nb-ai-test-btn"
+									onClick={props.onTestConnection}
+									disabled={testStatus === "testing"}
+									data-testid="ai-test-connection"
+								>
+									<Icons.bolt size={14} />
+									{testStatus === "testing" ? "测试中…" : "测试连接"}
+								</button>
+								<TestStatusLine status={testStatus} result={testResult} />
+							</div>
+						</div>
+						</>
+						) : (
+						<>
+						<div className="nb-ai-detail-head">
+							<div className="title" data-testid="ai-detail-title">Web 搜索</div>
+							<div className="sub">
+								为 AI 回答配置联网搜索供应商，独立于上方模型供应商。
+							</div>
+						</div>
+
+						<div className="field">
+							<label className="field-label" htmlFor="ai-web-search-provider">搜索供应商</label>
 							<select
 								id="ai-web-search-provider"
 								className="input"
@@ -254,6 +306,10 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 									<option key={p.id} value={p.id}>{p.label}</option>
 								))}
 							</select>
+						</div>
+
+						<div className="field">
+							<label className="field-label" htmlFor="ai-web-search-key">API Key</label>
 							<div className="nb-ai-key-wrap">
 								<input
 									id="ai-web-search-key"
@@ -281,27 +337,10 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 									<Icons.eye size={15} />
 								</button>
 							</div>
-							<p className="nb-ai-subhint">
-								用于 AI 回答时联网搜索，与上方模型供应商无关。{webSearchInfo.hint}
-							</p>
+							<p className="nb-ai-subhint">{webSearchInfo.hint}</p>
 						</div>
-
-						<div className="field">
-							<label className="field-label">连接测试</label>
-							<div className="nb-ai-test">
-								<button
-									type="button"
-									className="btn btn-secondary nb-ai-test-btn"
-									onClick={props.onTestConnection}
-									disabled={testStatus === "testing"}
-									data-testid="ai-test-connection"
-								>
-									<Icons.bolt size={14} />
-									{testStatus === "testing" ? "测试中…" : "测试连接"}
-								</button>
-								<TestStatusLine status={testStatus} result={testResult} />
-							</div>
-						</div>
+						</>
+						)}
 
 						{error && (
 							<div className="field-error" role="alert" data-testid="ai-settings-error">
