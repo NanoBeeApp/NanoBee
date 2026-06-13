@@ -150,15 +150,17 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 								<span className="nb-ai-prow-name">Web 搜索</span>
 							</button>
 						</div>
-						<div
-							className="nb-ai-savehint"
-							data-state={saveState}
-							data-testid="ai-settings-savehint"
-							role="status"
-						>
-							<span className="dot" aria-hidden="true" />
-							{saveText}
-						</div>
+						{saveText && (
+							<div
+								className="nb-ai-savehint"
+								data-state={saveState}
+								data-testid="ai-settings-savehint"
+								role="status"
+							>
+								<span className="dot" aria-hidden="true" />
+								{saveText}
+							</div>
+						)}
 					</div>
 
 					{/* Detail: AI model provider settings, or the standalone web

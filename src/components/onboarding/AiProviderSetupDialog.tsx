@@ -51,7 +51,7 @@ function saveStateText(state: SaveState, invalidMsg: string | null): string {
 		case "invalid":
 			return invalidMsg ?? "请补全必填项";
 		default:
-			return "修改后自动保存";
+			return "";
 	}
 }
 

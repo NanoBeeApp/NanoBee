@@ -64,3 +64,7 @@ the pure `AiProviderSetupForm`.
 ### 2026-06-13 — Web 搜索供应商选择 + 即时保存接线
 - **出发点**：支持多家 Web 搜索供应商（Tavily / Brave / Serper / Exa）。
 - **关键决策**：`initialValues` 读取 `settings.webSearchProvider`（默认 tavily）；`toSaveInput` 带上 `webSearchProvider`；`hasStoredWebSearchKey` 改为「仅当存储的供应商与当前所选一致」才算有 key（与 AI provider key 一致语义）；切换 Web 搜索供应商时清空已输入的 key（属于旧供应商），交由自动保存防抖落库。
+
+### 2026-06-13 — 移除空闲态「修改后自动保存」文案
+- **出发点**：用户要求去掉空闲态提示「修改后自动保存」。
+- **改动**：`saveStateText` 的 idle 默认分支返回空串；表单仅在 `saveText` 非空时渲染 `.nb-ai-savehint`（连圆点一起隐藏），保存中/已保存/失败/校验态仍正常显示。
