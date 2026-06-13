@@ -12,7 +12,12 @@
   overflow: hidden;
 }
 
-/* ---------- Top strip ---------- */
+/* ---------- Top strip ----------
+   The global FloatingControls (app.css `.nb-float`, z-index 25) overlay a
+   notification bell at top-right (always) and an expand-sidebar button at
+   top-left (only while the sidebar is collapsed). This bar sits below them
+   (z-index 5), so its content must be inset to clear those 34px floating
+   buttons — otherwise the title / "新研究" action collide with them. */
 .rc-topbar {
   position: absolute;
   top: 0;
@@ -22,11 +27,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 18px;
+  /* right: clear the floating notification bell (right:14px + 34px wide). */
+  padding: 0 58px 0 18px;
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
   z-index: 5;
+}
+/* left: clear the floating expand-sidebar button, which only exists while the
+   sidebar is collapsed (left:12px + 34px wide). */
+.nb-app.side-collapsed .rc-topbar {
+  padding-left: 56px;
 }
 .rc-topbar-title {
   font-weight: 650;
