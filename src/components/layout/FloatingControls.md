@@ -1,13 +1,20 @@
 # src/components/layout/FloatingControls.tsx
 
 ## Responsibility
-Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) expand-sidebar, plus back-to-chat on the Today page; top-right notification bell.
+Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) expand-sidebar, plus back-to-chat on the Today page; top-right notification bell. While collapsed it also renders a wide left-edge reveal zone (`.nb-edge-reveal`) — hovering the screen's left edge fades in a soft glow and clicking anywhere in the strip expands the sidebar without aiming for the small toggle.
 
 ## Dependencies
 - Upstream: store, icons
 - Downstream: App
 
 ## Change history
+
+### 2026-06-13 — left-edge reveal zone for the collapsed sidebar
+- **Motivation**: users had to aim precisely for the small top-left toggle to
+  reopen the sidebar.
+- **Goal**: hovering anywhere along the left screen edge shows a glow hinting at
+  the affordance, and clicking the (deliberately wide, 28px) hit area expands the
+  sidebar — no need to target the toggle button.
 
 ### 2026-06-13 — remove the read/unread feature
 - **Motivation**: user asked to drop read-state management entirely.

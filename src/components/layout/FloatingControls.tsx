@@ -16,16 +16,30 @@ export function FloatingControls() {
   return (
     <>
       {sideCollapsed && (
-        <div className="nb-float tl">
-          <button className="fbtn" title="展开边栏" onClick={() => setSideCollapsed(false)} data-testid="expand-sidebar">
-            <Icons.panelLeft size={16} />
+        <>
+          {/* Left-edge reveal zone: hovering the screen's left edge surfaces a
+              soft glow; clicking anywhere in the (intentionally wide) hit area
+              expands the sidebar — no need to aim for the small toggle button. */}
+          <button
+            className="nb-edge-reveal"
+            title="展开边栏"
+            aria-label="展开边栏"
+            onClick={() => setSideCollapsed(false)}
+            data-testid="edge-reveal-sidebar"
+          >
+            <span className="nb-edge-glow" />
           </button>
-          {view === 'today' && (
-            <button className="fbtn" title="返回聊天" onClick={backToChat} data-testid="back-to-chat">
-              <Icons.chat size={16} />
+          <div className="nb-float tl">
+            <button className="fbtn" title="展开边栏" onClick={() => setSideCollapsed(false)} data-testid="expand-sidebar">
+              <Icons.panelLeft size={16} />
             </button>
-          )}
-        </div>
+            {view === 'today' && (
+              <button className="fbtn" title="返回聊天" onClick={backToChat} data-testid="back-to-chat">
+                <Icons.chat size={16} />
+              </button>
+            )}
+          </div>
+        </>
       )}
       <div className="nb-float tr">
         <button className="fbtn" title="通知" onClick={() => setNotifOpen(!notifOpen)} data-testid="notification-bell">

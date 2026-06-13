@@ -32,6 +32,14 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .fbtn { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: var(--ink-3); background: rgba(255,255,255,0.85); backdrop-filter: saturate(140%) blur(10px); border: 1px solid var(--border); box-shadow: var(--sh-1); opacity: 0.85; position: relative; transition: all var(--dur-1) var(--ease-out); }
 .fbtn:hover { color: var(--ink); opacity: 1; background: #fff; border-color: var(--border-2); }
 
+/* left-edge reveal zone (only rendered when the sidebar is collapsed):
+   a wide invisible hit area along the screen's left edge; hovering it fades in
+   a soft vertical glow, and clicking anywhere in the strip expands the sidebar. */
+.nb-edge-reveal { position: fixed; left: 0; top: 0; height: 100vh; width: 28px; z-index: 24; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.nb-edge-glow { position: absolute; left: 0; top: 0; height: 100%; width: 100%; pointer-events: none; opacity: 0; transition: opacity var(--dur-1) var(--ease-out); background: linear-gradient(90deg, rgba(99,91,255,0.18) 0%, rgba(99,91,255,0.09) 35%, rgba(99,91,255,0) 100%); box-shadow: inset 3px 0 12px -2px rgba(99,91,255,0.32); }
+.nb-edge-reveal:hover .nb-edge-glow,
+.nb-edge-reveal:focus-visible .nb-edge-glow { opacity: 1; }
+
 /* ============ SIDEBAR ============ */
 .nb-side {
   background: var(--bg);
@@ -424,20 +432,20 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-modal-body { padding: 16px 24px 4px; display: flex; flex-direction: column; gap: 14px; }
 .nb-modal-foot { padding: 14px 24px 20px; display: flex; justify-content: flex-end; gap: 10px; }
 /* ===== AI provider settings — master-detail dialog ===== */
-.nb-modal-ai { width: min(760px, 100%); display: flex; flex-direction: column; max-height: min(580px, calc(100vh - 48px)); overflow: hidden; }
+.nb-modal-ai { position: relative; width: min(760px, 100%); display: flex; flex-direction: column; height: min(620px, calc(100vh - 32px)); max-height: calc(100vh - 32px); overflow: hidden; }
 
-.nb-ai-head { display: flex; align-items: flex-start; gap: 12px; padding: 20px 24px 16px; }
-.nb-ai-head-text { flex: 1; min-width: 0; }
-.nb-ai-head .title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
-.nb-ai-head .sub { margin-top: 5px; font-size: 13px; color: var(--ink-3); line-height: 1.55; }
-.nb-ai-close { width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; display: grid; place-items: center; color: var(--ink-4); transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+/* No header bar — float the close so the form area spans the full modal height */
+.nb-ai-close { position: absolute; top: 12px; right: 12px; z-index: 3; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; color: var(--ink-4); background: var(--surface); transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
 .nb-ai-close:hover { background: var(--surface-3); color: var(--ink-2); }
 
 /* Two columns: master (provider list) left, detail right, distinguished by bg */
 .nb-ai-split { display: grid; grid-template-columns: 216px minmax(0, 1fr); flex: 1; min-height: 0; }
 
-.nb-ai-master { background: var(--surface-2); padding: 10px 10px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.nb-ai-master { background: var(--surface-2); padding: 10px 10px 12px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
 .nb-ai-master-label { padding: 8px 10px 6px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.nb-ai-master-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.nb-ai-actions { display: flex; flex-direction: column; gap: 8px; padding: 12px 6px 4px; margin-top: auto; }
+.nb-ai-actions .btn { width: 100%; }
 .nb-ai-prow { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; text-align: left; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
 .nb-ai-prow:hover { background: var(--surface-3); }
 .nb-ai-prow.selected { background: var(--surface); }
@@ -486,8 +494,8 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 
 @media (max-width: 560px) {
 	.nb-ai-split { grid-template-columns: 1fr; }
-	.nb-ai-master { flex-direction: row; flex-wrap: wrap; gap: 6px; max-height: 132px; }
-	.nb-ai-master-label { width: 100%; }
+	.nb-ai-master-list { flex-direction: row; flex-wrap: wrap; gap: 6px; max-height: 120px; }
+	.nb-ai-actions { flex-direction: row; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; scroll-behavior: auto !important; } }
