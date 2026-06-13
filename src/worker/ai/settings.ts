@@ -8,9 +8,12 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import {
 	DEFAULT_AI_PROVIDER,
+	DEFAULT_WEB_SEARCH_PROVIDER,
 	getProviderInfo,
+	getWebSearchProviderInfo,
 	type AiProtocol,
 	type AiProviderId,
+	type WebSearchProviderId,
 } from "../../lib/ai-providers";
 import type { Env } from "../api-worker";
 import { decryptSecret, encryptSecret } from "./crypto";
@@ -21,6 +24,7 @@ interface SettingsRow {
 	model: string;
 	api_key_enc: string | null;
 	web_search_key_enc: string | null;
+	web_search_provider: string;
 }
 
 /** What the settings API returns to the client (never the raw key). */
@@ -30,6 +34,7 @@ export interface UserAiSettings {
 	model: string;
 	hasApiKey: boolean;
 	hasWebSearchKey: boolean;
+	webSearchProvider: WebSearchProviderId;
 }
 
 /** Fully-resolved config the chat pipeline uses to call the model. */
@@ -49,7 +54,7 @@ export async function getUserAiSettings(
 ): Promise<UserAiSettings | null> {
 	const row = await db
 		.prepare(
-			"SELECT provider, base_url, model, api_key_enc, web_search_key_enc FROM user_ai_settings WHERE user_id = ?",
+			"SELECT provider, base_url, model, api_key_enc, web_search_key_enc, web_search_provider FROM user_ai_settings WHERE user_id = ?",
 		)
 		.bind(userId)
 		.first<SettingsRow>();
@@ -60,6 +65,7 @@ export async function getUserAiSettings(
 		model: row.model,
 		hasApiKey: row.api_key_enc !== null,
 		hasWebSearchKey: row.web_search_key_enc !== null,
+		webSearchProvider: getWebSearchProviderInfo(row.web_search_provider).id,
 	};
 }
 
@@ -91,8 +97,10 @@ export interface SaveAiSettingsInput {
 	model: string;
 	/** undefined = keep the stored key, "" = clear it, string = replace it. */
 	apiKey?: string;
-	/** Tavily key for web search; same keep/clear/replace semantics. */
+	/** Web-search key; same keep/clear/replace semantics as apiKey. */
 	webSearchKey?: string;
+	/** Chosen web-search provider; defaults to the previous value when omitted. */
+	webSearchProvider?: WebSearchProviderId;
 }
 
 /**
@@ -121,42 +129,51 @@ export async function saveUserAiSettings(
 ): Promise<void> {
 	const aiKey = await keyUpsert(input.apiKey, "api_key_enc", env);
 	const wsKey = await keyUpsert(input.webSearchKey, "web_search_key_enc", env);
+	// undefined => keep the stored provider on conflict (default for new rows).
+	const wsProvider = input.webSearchProvider ?? DEFAULT_WEB_SEARCH_PROVIDER;
+	const wsProviderClause =
+		input.webSearchProvider === undefined ? "web_search_provider" : "excluded.web_search_provider";
 
 	await env.DB.prepare(
-		`INSERT INTO user_ai_settings (user_id, provider, base_url, model, api_key_enc, web_search_key_enc)
-		 VALUES (?, ?, ?, ?, ?, ?)
+		`INSERT INTO user_ai_settings (user_id, provider, base_url, model, api_key_enc, web_search_key_enc, web_search_provider)
+		 VALUES (?, ?, ?, ?, ?, ?, ?)
 		 ON CONFLICT(user_id) DO UPDATE SET
 		   provider = excluded.provider,
 		   base_url = excluded.base_url,
 		   model = excluded.model,
 		   api_key_enc = ${aiKey.clause},
 		   web_search_key_enc = ${wsKey.clause},
+		   web_search_provider = ${wsProviderClause},
 		   updated_at = unixepoch()`,
 	)
-		.bind(userId, input.provider, input.baseUrl, input.model, aiKey.value, wsKey.value)
+		.bind(userId, input.provider, input.baseUrl, input.model, aiKey.value, wsKey.value, wsProvider)
 		.run();
 }
 
 /**
- * The web-search (Tavily) key for a request: the user's own stored key when
- * present, otherwise NanoBee's built-in default (TAVILY_API_KEY binding).
+ * The web-search credential for a request: the user's own stored provider + key
+ * when present, otherwise NanoBee's built-in default (Tavily via the
+ * TAVILY_API_KEY binding). The caller injects the key under the returned
+ * provider's secret-param name (`<provider>_api_key`) in the data-hub source.
  */
 export async function resolveWebSearchKey(
 	env: Env,
 	userId: string | null,
-): Promise<string | null> {
+): Promise<{ provider: WebSearchProviderId; key: string } | null> {
 	if (userId) {
 		const row = await env.DB.prepare(
-			"SELECT web_search_key_enc FROM user_ai_settings WHERE user_id = ?",
+			"SELECT web_search_key_enc, web_search_provider FROM user_ai_settings WHERE user_id = ?",
 		)
 			.bind(userId)
-			.first<{ web_search_key_enc: string | null }>();
+			.first<{ web_search_key_enc: string | null; web_search_provider: string }>();
 		if (row?.web_search_key_enc && env.AUTH_SECRET) {
 			const key = await decryptSecret(row.web_search_key_enc, env.AUTH_SECRET);
-			if (key) return key;
+			if (key) return { provider: getWebSearchProviderInfo(row.web_search_provider).id, key };
 		}
 	}
-	return env.TAVILY_API_KEY ?? null;
+	// Built-in fallback is Tavily-only.
+	const key = env.TAVILY_API_KEY ?? null;
+	return key ? { provider: DEFAULT_WEB_SEARCH_PROVIDER, key } : null;
 }
 
 /** Backend default config (OpenRouter + DeepSeek V4 Flash, built-in key). */

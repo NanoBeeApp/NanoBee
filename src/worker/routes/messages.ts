@@ -12,11 +12,14 @@ import { z } from "zod";
 import type { Env } from "../api-worker";
 import type { AgentTrace } from "../../lib/agent-trace";
 import { resolveAiConfig, resolveWebSearchKey } from "../ai/settings";
+import { webSearchSecretParam } from "../../lib/ai-providers";
 import { runAgentLoop } from "../agent/loop";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
 import { ensureSeeded } from "../db/seed";
 import { genReply } from "../reply";
+import { ANON_OWNER } from "../artifacts/repo";
+import type { ArtifactRef } from "../../artifacts/types";
 
 const ID_PATTERN = /^[a-z]+_[A-Za-z0-9_-]{4,40}$/;
 
@@ -43,12 +46,24 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 			const token = getSessionToken(c);
 			const user = token ? await getUserBySessionToken(c.env.DB, token) : null;
 			const aiConfig = await resolveAiConfig(c.env, user?.id ?? null);
-			// Per-request secrets for agent tools (user's own Tavily key, else
-			// the built-in default), injected server-side — never model-visible.
-			const webSearchKey = await resolveWebSearchKey(c.env, user?.id ?? null);
+			// Per-request secrets for agent tools (user's own web-search key for
+			// their chosen provider, else the built-in Tavily default), injected
+			// server-side under `<provider>_api_key` — never model-visible.
+			const webSearch = await resolveWebSearchKey(c.env, user?.id ?? null);
 			const secrets: Record<string, string> = {};
-			if (webSearchKey) secrets.tavily_api_key = webSearchKey;
-			const agentCtx = { secrets };
+			if (webSearch) secrets[webSearchSecretParam(webSearch.provider)] = webSearch.key;
+			// Artifact context: lets the agent create card-deck artifacts from this
+			// chat. Created refs accumulate in `createdArtifacts` and are attached to
+			// the AI reply so the chat shows a clickable artifact card.
+			const createdArtifacts: ArtifactRef[] = [];
+			const agentCtx = {
+				secrets,
+				artifacts: {
+					owner: user?.id ?? ANON_OWNER,
+					chatId: body.chatId,
+					created: createdArtifacts,
+				},
+			};
 
 			// Ask the configured model to write the reply text; on any failure
 			// fall back to the rule-based copy so chat never breaks.
@@ -98,7 +113,13 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 			const topicId = body.ctxTopicId ?? reply.topicId;
 			// The execution trace rides inside the persisted payload so the
 			// debug modal can show how the answer was produced, even after reload.
-			const aiMessage = { ...reply.msg, ...(trace ? { trace } : {}) };
+			// Any artifacts created this turn ride along too, so the chat message
+			// renders a clickable reference and survives reload.
+			const aiMessage = {
+				...reply.msg,
+				...(trace ? { trace } : {}),
+				...(createdArtifacts.length ? { artifacts: createdArtifacts } : {}),
+			};
 
 			const userMessage = { id: body.userMessageId, role: "user" as const, text: body.text };
 

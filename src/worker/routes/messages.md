@@ -91,3 +91,15 @@ it and returns it.
   live response.
 - **Goal**: spread `run.trace` into the persisted/returned AI message
   payload (`TracedAiMessage`); absent on rule-based fallback replies.
+
+### 2026-06-13 — artifact creation context
+- **Motivation**: a chat message can now generate card-deck artifacts via the
+  agent's create_card_artifact tool.
+- **Goal**: pass `artifacts: { owner, chatId, created }` in the agent context;
+  after the run, spread any `created` refs into the persisted/returned AI
+  message so the chat shows clickable artifact cards.
+
+### 2026-06-13 — web search secret keyed by provider
+- **Change**: the per-request web-search key is now injected under
+  `<provider>_api_key` (from `resolveWebSearchKey`'s `{provider,key}`), not
+  hardcoded `tavily_api_key`, so Brave/Serper/Exa keys reach the data-hub source.

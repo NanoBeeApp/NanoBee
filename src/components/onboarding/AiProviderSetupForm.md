@@ -66,3 +66,8 @@ Completely stateless — all values and callbacks come from
 - **出发点**：用户要求 ① provider 列表用各家真实彩色 logo 替换灰色首字母徽标；② 去掉 master 栏底部的「保存 / 取消」按钮。
 - **目标**：provider 行展示官方品牌 logo（彩色），并把显式提交动作替换为一条「修改后自动保存」状态行。
 - **关键决策**：① 首字母徽标 `.nb-ai-prow-badge` 改为 `ProviderLogo`（`icons/provider-logos.tsx`，品牌色 tile + 官方单路径 mark，Gemini/Mistral 保留渐变，无单路径的几家用品牌色字母兜底）；② 删除 `.nb-ai-actions` 整块（保存/先用默认配置/取消），底部改放 `.nb-ai-savehint` 自动保存状态（idle/saving/saved/error/invalid 五态，对应文案与圆点色由 `data-state` 驱动）；③ 关闭按钮恒显（不再只在非首次时显示），因为自动保存让弹窗随时可安全关闭；④ 移除 `isFirstSetup`/`saving`/`onSubmit`/`onSkip` props，新增 `saveState`/`saveText`。
+
+### 2026-06-13 — 多供应商 Web 搜索设置
+- **出发点**：原 Web 搜索字段只有 Tavily 一个 Key 输入框，用户要求支持多家搜索供应商。
+- **目标**：把单一 Tavily 字段改为「Web 搜索（联网，可选）」分区——供应商下拉（Tavily / Brave / Serper / Exa）+ 对应 Key 输入框，hint 与 placeholder 随所选供应商变化。
+- **关键决策**：`AiSetupFormValues` 增加 `webSearchProvider`；`onFieldChange` 字段联合类型加入 `webSearchProvider`；保持纯渲染，供应商目录来自 `lib/ai-providers` 的 `WEB_SEARCH_PROVIDERS`。

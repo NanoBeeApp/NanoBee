@@ -4,7 +4,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AiProviderId } from "./ai-providers";
+import type { AiProviderId, WebSearchProviderId } from "./ai-providers";
 import { apiClient } from "./api-client";
 
 export interface AiSettings {
@@ -13,6 +13,7 @@ export interface AiSettings {
 	model: string;
 	hasApiKey: boolean;
 	hasWebSearchKey: boolean;
+	webSearchProvider: WebSearchProviderId;
 }
 
 export interface AiSettingsResponse {
@@ -46,8 +47,10 @@ export interface SaveAiSettingsInput {
 	apiKey?: string;
 	baseUrl?: string;
 	model?: string;
-	/** Tavily web-search key; same keep/clear/replace semantics as apiKey. */
+	/** Web-search key; same keep/clear/replace semantics as apiKey. */
 	webSearchKey?: string;
+	/** Chosen web-search provider (Tavily / Brave / Serper / Exa). */
+	webSearchProvider?: WebSearchProviderId;
 }
 
 export interface FetchModelsInput {

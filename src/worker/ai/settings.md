@@ -56,3 +56,10 @@ user's saved settings when present, otherwise the backend default
 - **Key decision**: key-column upsert plumbing extracted into `keyUpsert` so
   both encrypted keys share one code path; the web-search key is
   provider-independent and survives provider switches.
+
+### 2026-06-13 — web search provider column
+- **Motivation**: persist which web-search provider a stored key belongs to.
+- **Change**: `UserAiSettings`/`SaveAiSettingsInput` gained `webSearchProvider`;
+  reads/writes the new `web_search_provider` column (migration 0009).
+  `resolveWebSearchKey` now returns `{ provider, key }` (built-in fallback is
+  Tavily) so callers inject under the right `<provider>_api_key` name.

@@ -47,3 +47,11 @@ and the frontend (setup dialog UI), so the two can never disagree.
   resolve settings; duplicating the list on both sides would drift.
 - **Key decision**: keep it dependency-free pure data under `src/lib/` so the
   worker bundle can import it without pulling in client code.
+
+### 2026-06-13 — web search provider catalog
+- **Motivation**: web search was Tavily-only; users asked to choose a provider.
+- **Change**: added `WebSearchProviderId`, `WEB_SEARCH_PROVIDERS` (Tavily / Brave
+  / Serper / Exa), `DEFAULT_WEB_SEARCH_PROVIDER`, `WEB_SEARCH_PROVIDER_IDS`,
+  `getWebSearchProviderInfo`, and `webSearchSecretParam` (`<id>_api_key`).
+- **Key decision**: ids match the data-hub websearch source's secret-param
+  names exactly, so the worker can inject the chosen key without a mapping.

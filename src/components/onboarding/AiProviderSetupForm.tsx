@@ -7,7 +7,14 @@
 import { useState } from "react";
 import { Icons } from "../../icons/icons";
 import { ProviderLogo } from "../../icons/provider-logos";
-import { AI_PROVIDERS, type AiProviderId, type AiProviderInfo } from "../../lib/ai-providers";
+import {
+	AI_PROVIDERS,
+	getWebSearchProviderInfo,
+	WEB_SEARCH_PROVIDERS,
+	type AiProviderId,
+	type AiProviderInfo,
+	type WebSearchProviderId,
+} from "../../lib/ai-providers";
 import type { TestConnectionResult } from "../../lib/useAiSettings";
 
 export interface AiSetupFormValues {
@@ -15,7 +22,9 @@ export interface AiSetupFormValues {
 	apiKey: string;
 	baseUrl: string;
 	model: string;
-	/** Tavily key for the web-search tool (provider-independent). */
+	/** Chosen web-search provider (Tavily / Brave / Serper / Exa). */
+	webSearchProvider: WebSearchProviderId;
+	/** API key for the chosen web-search provider. */
 	webSearchKey: string;
 }
 
@@ -44,7 +53,7 @@ export interface AiProviderSetupFormProps {
 	saveText: string;
 	onProviderChange: (id: AiProviderId) => void;
 	onFieldChange: (
-		field: "apiKey" | "baseUrl" | "model" | "webSearchKey",
+		field: "apiKey" | "baseUrl" | "model" | "webSearchKey" | "webSearchProvider",
 		value: string,
 	) => void;
 	onFetchModels: () => void;
@@ -57,6 +66,7 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 	const { models, modelsLoading, modelsError, testStatus, testResult, saveState, saveText } = props;
 	const [showKey, setShowKey] = useState(false);
 	const [showWebSearchKey, setShowWebSearchKey] = useState(false);
+	const webSearchInfo = getWebSearchProviderInfo(values.webSearchProvider);
 
 	// A model is "from the list" only when it matches a fetched id; otherwise the
 	// select shows the placeholder and the text input carries the manual value.
@@ -230,9 +240,20 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 						</div>
 
 						<div className="field">
-							<label className="field-label" htmlFor="ai-web-search-key">
-								Web 搜索 API Key（Tavily，可选）
+							<label className="field-label" htmlFor="ai-web-search-provider">
+								Web 搜索（联网，可选）
 							</label>
+							<select
+								id="ai-web-search-provider"
+								className="input"
+								value={values.webSearchProvider}
+								onChange={(e) => props.onFieldChange("webSearchProvider", e.target.value)}
+								data-testid="ai-web-search-provider-select"
+							>
+								{WEB_SEARCH_PROVIDERS.map((p) => (
+									<option key={p.id} value={p.id}>{p.label}</option>
+								))}
+							</select>
 							<div className="nb-ai-key-wrap">
 								<input
 									id="ai-web-search-key"
@@ -241,7 +262,11 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 									autoComplete="new-password"
 									value={values.webSearchKey}
 									placeholder={
-										hasStoredWebSearchKey ? "已保存，留空保持不变" : "可留空，使用内置默认 Key"
+										hasStoredWebSearchKey
+											? "已保存，留空保持不变"
+											: webSearchInfo.id === "tavily"
+												? "可留空，使用内置默认 Key"
+												: webSearchInfo.keyPlaceholder
 									}
 									onChange={(e) => props.onFieldChange("webSearchKey", e.target.value)}
 									data-testid="ai-web-search-key-input"
@@ -257,7 +282,7 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 								</button>
 							</div>
 							<p className="nb-ai-subhint">
-								用于 AI 回答时联网搜索，与上方供应商无关；在 tavily.com 免费申请。
+								用于 AI 回答时联网搜索，与上方模型供应商无关。{webSearchInfo.hint}
 							</p>
 						</div>
 

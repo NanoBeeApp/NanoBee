@@ -187,3 +187,67 @@ export const AI_PROVIDER_IDS = AI_PROVIDERS.map((p) => p.id) as [
 export function getProviderInfo(id: string): AiProviderInfo {
 	return AI_PROVIDERS.find((p) => p.id === id) ?? AI_PROVIDERS[0];
 }
+
+// ---------------------------------------------------------------------------
+// Web search providers
+//
+// Independent of the AI provider above. The chosen provider's key is injected
+// server-side into the data-hub `websearch` source as `<id>_api_key`, which is
+// the exact secret-param name that source declares. Keep these ids in sync with
+// data-hub's websearch source.
+// ---------------------------------------------------------------------------
+
+export type WebSearchProviderId = "tavily" | "brave" | "serper" | "exa";
+
+export interface WebSearchProviderInfo {
+	id: WebSearchProviderId;
+	label: string;
+	/** Placeholder hinting at the key format. */
+	keyPlaceholder: string;
+	/** One-line helper (UI copy, zh-CN). */
+	hint: string;
+}
+
+export const WEB_SEARCH_PROVIDERS: WebSearchProviderInfo[] = [
+	{
+		id: "tavily",
+		label: "Tavily",
+		keyPlaceholder: "tvly-...",
+		hint: "默认推荐，留空则使用 NanoBee 内置额度；在 tavily.com 免费申请。",
+	},
+	{
+		id: "brave",
+		label: "Brave Search",
+		keyPlaceholder: "BSA...",
+		hint: "Brave Search API，需要 brave.com/search/api 的订阅 Key。",
+	},
+	{
+		id: "serper",
+		label: "Serper（Google）",
+		keyPlaceholder: "输入 Serper API Key",
+		hint: "Serper 提供 Google 搜索结果，在 serper.dev 免费申请。",
+	},
+	{
+		id: "exa",
+		label: "Exa",
+		keyPlaceholder: "输入 Exa API Key",
+		hint: "Exa 语义搜索，在 exa.ai 申请 API Key。",
+	},
+];
+
+/** Built-in default web-search provider (NanoBee ships a Tavily fallback key). */
+export const DEFAULT_WEB_SEARCH_PROVIDER: WebSearchProviderId = "tavily";
+
+export const WEB_SEARCH_PROVIDER_IDS = WEB_SEARCH_PROVIDERS.map((p) => p.id) as [
+	WebSearchProviderId,
+	...WebSearchProviderId[],
+];
+
+export function getWebSearchProviderInfo(id: string): WebSearchProviderInfo {
+	return WEB_SEARCH_PROVIDERS.find((p) => p.id === id) ?? WEB_SEARCH_PROVIDERS[0];
+}
+
+/** Secret-param name the data-hub websearch source expects for a provider. */
+export function webSearchSecretParam(id: WebSearchProviderId): string {
+	return `${id}_api_key`;
+}

@@ -4,7 +4,12 @@
 // state + validation and delegates rendering to AiProviderSetupForm.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getProviderInfo, type AiProviderId } from "../../lib/ai-providers";
+import {
+	DEFAULT_WEB_SEARCH_PROVIDER,
+	getProviderInfo,
+	type AiProviderId,
+	type WebSearchProviderId,
+} from "../../lib/ai-providers";
 import { useAuthUser } from "../../lib/useAuth";
 import {
 	useAiSettings,
@@ -58,6 +63,7 @@ function initialValues(settings: AiSettings | null): AiSetupFormValues {
 		apiKey: "",
 		baseUrl: settings?.baseUrl || info.defaultBaseUrl,
 		model: settings?.model || info.defaultModel,
+		webSearchProvider: settings?.webSearchProvider ?? DEFAULT_WEB_SEARCH_PROVIDER,
 		webSearchKey: "",
 	};
 }
@@ -81,6 +87,7 @@ function toSaveInput(
 		model: model === info.defaultModel ? "" : model,
 		// Blank input keeps a stored key; otherwise it means "no own key".
 		apiKey: apiKey !== "" ? apiKey : hasStoredKey ? undefined : "",
+		webSearchProvider: values.webSearchProvider,
 		webSearchKey:
 			webSearchKey !== "" ? webSearchKey : hasStoredWebSearchKey ? undefined : "",
 	};
@@ -150,8 +157,12 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 	const hasStoredKey = Boolean(
 		props.settings?.hasApiKey && props.settings.provider === values.provider,
 	);
-	// The web-search key is provider-independent — switching providers keeps it.
-	const hasStoredWebSearchKey = Boolean(props.settings?.hasWebSearchKey);
+	// The stored web-search key belongs to its provider — only treat it as
+	// "on file" while that provider is still selected.
+	const hasStoredWebSearchKey = Boolean(
+		props.settings?.hasWebSearchKey &&
+			props.settings.webSearchProvider === values.webSearchProvider,
+	);
 
 	// A usable key exists when the user typed one, a key is on file for this
 	// provider, or the provider rides on NanoBee's built-in key (OpenRouter).
@@ -307,7 +318,13 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 					setTestStatus("idle");
 					setTestResult(null);
 				}
-				setValues((v) => ({ ...v, [field]: value }));
+				setValues((v) =>
+					field === "webSearchProvider"
+						? // The typed key belonged to the old provider — clear it so the
+						  // new provider starts blank (stored-key keep/clear stays correct).
+						  { ...v, webSearchProvider: value as WebSearchProviderId, webSearchKey: "" }
+						: { ...v, [field]: value },
+				);
 			}}
 			onFetchModels={() => void runFetchModels(values.provider, values.apiKey, values.baseUrl)}
 			onTestConnection={() => void handleTestConnection()}

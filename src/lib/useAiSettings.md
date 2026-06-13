@@ -48,3 +48,7 @@ settings entry.
 - **Motivation**: the settings dialog gains a Tavily key input.
 - **Goal**: `AiSettings.hasWebSearchKey`; `SaveAiSettingsInput.webSearchKey`
   with the same keep/clear/replace semantics as `apiKey`.
+
+### 2026-06-13 — web search provider field
+- **Change**: `AiSettings` and `SaveAiSettingsInput` gained `webSearchProvider`
+  (Tavily / Brave / Serper / Exa) alongside the existing web-search key.

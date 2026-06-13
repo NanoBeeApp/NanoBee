@@ -12,6 +12,7 @@ import {
 	AI_PROVIDER_IDS,
 	DEFAULT_AI_PROVIDER,
 	getProviderInfo,
+	WEB_SEARCH_PROVIDER_IDS,
 	type AiProviderInfo,
 } from "../../lib/ai-providers";
 import type { Env } from "../api-worker";
@@ -59,9 +60,11 @@ const putSchema = z.object({
 		.optional()
 		.default(""),
 	model: z.string().max(FIELD_MAX).optional().default(""),
-	// Tavily web-search key; same keep/clear/replace semantics as apiKey.
-	// Independent of the AI provider, so switching providers keeps it.
+	// Web-search key; same keep/clear/replace semantics as apiKey. The key
+	// belongs to the chosen web-search provider below.
 	webSearchKey: z.string().max(FIELD_MAX).optional(),
+	// Chosen web-search provider (Tavily / Brave / Serper / Exa).
+	webSearchProvider: z.enum(WEB_SEARCH_PROVIDER_IDS).optional(),
 });
 
 const modelsSchema = z.object({
@@ -134,13 +137,27 @@ export const aiSettingsRoutes = new Hono<{ Bindings: Env }>()
 			}
 		}
 
+		// The stored web-search key belongs to the provider it was entered for.
+		// Switching web-search providers without a new key invalidates it rather
+		// than reusing it against a different API.
+		let webSearchKey = body.webSearchKey?.trim();
+		if (
+			webSearchKey === undefined &&
+			body.webSearchProvider !== undefined &&
+			existing &&
+			existing.webSearchProvider !== body.webSearchProvider
+		) {
+			webSearchKey = "";
+		}
+
 		try {
 			await saveUserAiSettings(c.env, user.id, {
 				provider: info.id,
 				baseUrl,
 				model,
 				apiKey,
-				webSearchKey: body.webSearchKey?.trim(),
+				webSearchKey,
+				webSearchProvider: body.webSearchProvider,
 			});
 		} catch (error) {
 			console.error("[API] PUT /api/ai/settings failed:", String(error));
