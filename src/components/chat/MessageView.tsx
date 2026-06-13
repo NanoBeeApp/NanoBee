@@ -7,7 +7,8 @@ import type { ChatMessage } from '../../types';
 import type { TracedAiMessage } from '../../lib/agent-trace';
 import { Icon, Icons } from '../../icons/icons';
 import { AgentTraceModal } from './AgentTraceModal';
-import { InlineSegments } from './InlineSegments';
+import { Markdown } from '../common/Markdown';
+import { parasToMarkdown } from '../../lib/paras-to-markdown';
 import { ArtifactRefCard } from './ArtifactRefCard';
 
 interface MessageViewProps {
@@ -28,10 +29,14 @@ export function MessageView({ m }: MessageViewProps) {
 
   const trace = (m as TracedAiMessage).trace;
 
+  // AI replies are markdown: prefer the raw `md` (LLM output); otherwise
+  // serialize the legacy structured paragraphs. One render path via <Markdown>.
   const body = (
-    <div className="nb-body nb-selectable" data-ai-text="1">
-      {m.paras.map((p, i) => <p key={i}><InlineSegments segs={p} /></p>)}
-    </div>
+    <Markdown
+      className="nb-body nb-selectable"
+      data-ai-text="1"
+      content={m.md ?? parasToMarkdown(m.paras)}
+    />
   );
 
   if (m.role === 'proactive') {

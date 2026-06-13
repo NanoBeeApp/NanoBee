@@ -44,3 +44,10 @@ All interfaces/types listed above plus `IconName`.
   references so the chat links to the Artifacts page and survives reload.
 - **Goal**: optional `artifacts?: ArtifactRef[]` on `AiMessage` (from
   `artifacts/types`).
+
+### 2026-06-13 — `AiMessage.md` (markdown chat rendering)
+- **Motivation**: chat now renders through the shared `<Markdown>` component
+  (Curve-style react-markdown). LLM replies are raw markdown, so the message
+  needs to carry that source instead of only the pre-split `paras`.
+- **Goal**: optional `md?: string` on `AiMessage`, preferred by `MessageView`;
+  when absent, `paras` is serialized via `lib/paras-to-markdown`.

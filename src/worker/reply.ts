@@ -51,6 +51,9 @@ export function genReply(
 		topicId,
 		msg: {
 			id: genId("m"), role: "ai",
+			// LLM output is markdown — carry it verbatim so MessageView renders it
+			// through <Markdown>. `paras` stays as a structured fallback.
+			...(llm ? { md: llm.text } : {}),
 			paras,
 			...(llm ? { model: llm.model } : {}),
 		},

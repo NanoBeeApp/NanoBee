@@ -99,6 +99,11 @@ export interface AiMessage {
   id: string;
   /** 'proactive' marks AI-initiated messages (rendered with amber framing). */
   role: 'ai' | 'proactive';
+  /**
+   * Raw markdown body, preferred by MessageView when present (LLM replies are
+   * markdown). When absent, `paras` is serialized to markdown as a fallback.
+   */
+  md?: string;
   paras: Paragraph[];
   icon?: IconName;
   title?: string;

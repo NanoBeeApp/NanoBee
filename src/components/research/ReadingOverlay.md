@@ -9,7 +9,7 @@ backdrop.
 - `ReadingOverlay()` — reads the active node from the store; null when none.
 
 ## Dependencies
-- Upstream: `store/useResearchStore.ts`, `icons/icons.tsx`, `MarkdownLite.tsx`.
+- Upstream: `store/useResearchStore.ts`, `icons/icons.tsx`, `common/Markdown.tsx`.
 - Downstream: `components/research/ResearchView.tsx`.
 
 ## Key implementation notes
@@ -21,6 +21,15 @@ backdrop.
 - Shows loading / failed / root-hint states.
 
 ## Change history
+
+### 2026-06-13 — Switch to the shared `<Markdown>` component
+- **Motivation**: chat and reading should share one markdown renderer
+  (Curve-style react-markdown), replacing the bespoke `MarkdownLite`.
+- **Goal**: render `<Markdown className="rc-prose" onTermClick={…}>`; the
+  deep-dive-on-bold interaction is preserved via the component's optional
+  `onTermClick` (bold → `.rc-term` button). `MarkdownLite` was deleted.
+- **Key decision**: `.rc-prose` now only sets prose CSS variables; `.markdown-body`
+  owns element styling. Kept the `research-article-body` testid.
 
 ### 2026-06-13 — Centered modal (was right-docked drawer)
 - **Motivation**: The port had made reading a right-docked drawer; the user

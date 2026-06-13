@@ -47,3 +47,11 @@ attached until those features actually ship.
   real instead of canned.
 - **Key decision**: the client keeps the rendering code for extras/suggest, so
   re-enabling is a server-side change only.
+
+### 2026-06-13 — carry raw markdown (`msg.md`)
+- **Motivation**: the client now renders AI replies through the shared
+  `<Markdown>` component, and LLM output is markdown. Splitting it into `paras`
+  (`textToParas`) destroyed list/heading structure.
+- **Goal**: when `llm` is present, set `msg.md = llm.text` (verbatim markdown).
+  `paras` is still populated as a structured fallback, but `MessageView` prefers
+  `md`.

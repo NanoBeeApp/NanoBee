@@ -7,7 +7,7 @@
 
 import { useResearchStore } from "../../store/useResearchStore";
 import { Icons } from "../../icons/icons";
-import { MarkdownLite } from "./MarkdownLite";
+import { Markdown } from "../common/Markdown";
 
 export function ReadingOverlay() {
   const activeNodeId = useResearchStore((s) => s.activeNodeId);
@@ -64,7 +64,9 @@ export function ReadingOverlay() {
           )}
 
           {!loading && !failed && node.content && (
-            <MarkdownLite
+            <Markdown
+              className="rc-prose"
+              data-testid="research-article-body"
               content={node.content}
               onTermClick={(term) => growChild(node.id, { focusTerm: term })}
             />

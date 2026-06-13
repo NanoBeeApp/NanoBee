@@ -456,14 +456,15 @@
 }
 
 /* ---------- Prose ---------- */
+/* Reading body = a .markdown-body context (see components/common/Markdown.css).
+   .rc-prose only supplies the reading prose context via CSS variables;
+   .markdown-body owns every element's styling. */
 .rc-prose {
-  font-size: 15.5px;
-  line-height: 1.78;
-  color: var(--ink-2);
+  --md-fs: 15.5px;
+  --md-lh: 1.78;
+  --md-fg: var(--ink-2);
+  --md-gap: 16px;
 }
-.rc-prose p { margin: 0 0 16px; }
-.rc-prose ul { margin: 0 0 16px; padding-left: 22px; }
-.rc-prose li { margin-bottom: 6px; }
 .rc-term {
   display: inline;
   color: var(--brand-2);
