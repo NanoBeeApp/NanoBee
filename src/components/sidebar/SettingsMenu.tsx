@@ -1,6 +1,6 @@
-// Sidebar footer settings button: sits at the right edge of the footer and
-// opens a popover menu. Hosts the AI provider settings entry and the native
-// app download links (iOS / Mac); future utility entries also belong here.
+// Settings button: lives in the floating top-right bar and opens a popover
+// menu. Hosts the AI provider settings entry and the native app download
+// links (iOS / Mac); future utility entries also belong here.
 
 import { useState } from "react";
 import { Icons } from "../../icons/icons";
@@ -12,9 +12,9 @@ export function SettingsMenu() {
 	const setAiSetupOpen = useAppStore((s) => s.setAiSetupOpen);
 
 	return (
-		<>
+		<div className="nb-corner-ctrl">
 			<button
-				className="nb-settings-trigger"
+				className="fbtn"
 				title="设置"
 				aria-haspopup="menu"
 				aria-expanded={open}
@@ -63,6 +63,6 @@ export function SettingsMenu() {
 					</div>
 				</>
 			)}
-		</>
+		</div>
 	);
 }

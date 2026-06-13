@@ -1,14 +1,16 @@
 // Floating corner controls — the design intentionally has no fixed header to
 // maximize the content area. Top-left (only when the sidebar is collapsed):
 // expand sidebar, plus back-to-chat while reading the Today page;
-// top-right: notification bell.
+// top-right: notification bell, settings menu and the account avatar.
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
+import { AccountFoot } from '../sidebar/AccountFoot';
 
 export function FloatingControls() {
   const view = useAppStore((s) => s.view);
   const sideCollapsed = useAppStore((s) => s.sideCollapsed);
   const setSideCollapsed = useAppStore((s) => s.setSideCollapsed);
+  const peekSidebar = useAppStore((s) => s.peekSidebar);
   const notifOpen = useAppStore((s) => s.notifOpen);
   const setNotifOpen = useAppStore((s) => s.setNotifOpen);
   const backToChat = useAppStore((s) => s.backToChat);
@@ -19,18 +21,20 @@ export function FloatingControls() {
         <>
           {/* Left-edge reveal zone: hovering the screen's left edge surfaces a
               soft glow; clicking anywhere in the (intentionally wide) hit area
-              expands the sidebar — no need to aim for the small toggle button. */}
+              *peeks* the sidebar open temporarily (it overlays the content and
+              auto-closes when the pointer leaves). To pin it open persistently,
+              use the panel-toggle icon below instead. */}
           <button
             className="nb-edge-reveal"
-            title="展开边栏"
-            aria-label="展开边栏"
-            onClick={() => setSideCollapsed(false)}
+            title="临时展开边栏"
+            aria-label="临时展开边栏"
+            onClick={peekSidebar}
             data-testid="edge-reveal-sidebar"
           >
             <span className="nb-edge-glow" />
           </button>
           <div className="nb-float tl">
-            <button className="fbtn" title="展开边栏" onClick={() => setSideCollapsed(false)} data-testid="expand-sidebar">
+            <button className="fbtn" title="固定展开边栏" onClick={() => setSideCollapsed(false)} data-testid="expand-sidebar">
               <Icons.panelLeft size={16} />
             </button>
             {view === 'today' && (
@@ -45,6 +49,7 @@ export function FloatingControls() {
         <button className="fbtn" title="通知" onClick={() => setNotifOpen(!notifOpen)} data-testid="notification-bell">
           <Icons.bell size={16} />
         </button>
+        <AccountFoot />
       </div>
     </>
   );

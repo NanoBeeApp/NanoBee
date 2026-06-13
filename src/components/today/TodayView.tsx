@@ -21,6 +21,8 @@ export function TodayView() {
   const openUpdateInChat = useAppStore((s) => s.openUpdateInChat);
   const setQuickCtx = useAppStore((s) => s.setQuickCtx);
   const filter = useAppStore((s) => s.todayFilter);
+  const focusItemId = useAppStore((s) => s.focusItemId);
+  const focusItemTick = useAppStore((s) => s.focusItemTick);
 
   const [viewMode, setViewMode] = useState<ViewMode>('timeline');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -65,6 +67,18 @@ export function TodayView() {
       if (raf) cancelAnimationFrame(raf);
     };
   }, [viewMode, filter, updates, setQuickCtx]);
+
+  // Sidebar TodayNavList click → scroll the matching item into view. The tick
+  // is in the deps so clicking the same item twice re-scrolls; the rAF lets a
+  // just-cleared filter render the target first.
+  useEffect(() => {
+    if (!focusItemId) return;
+    const raf = requestAnimationFrame(() => {
+      const el = scrollRef.current?.querySelector(`[data-cid="${CSS.escape(focusItemId)}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [focusItemId, focusItemTick]);
 
   return (
     <div className="nb-today" ref={scrollRef} data-testid="today-reading-page">

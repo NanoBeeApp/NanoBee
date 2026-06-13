@@ -39,3 +39,4 @@ build
 
 # TypeScript incremental build artifact
 tsconfig.tsbuildinfo
+screenshots

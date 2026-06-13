@@ -19,6 +19,15 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ## Change history
 
+### 2026-06-13 — temporary sidebar peek state (`sidePeek`)
+- **Motivation**: the collapsed sidebar only supported a persistent expand; the
+  user wanted the left-edge reveal to open it *temporarily* and auto-close on
+  pointer leave, while the panel icon keeps it pinned.
+- **Goal**: model the two open modes separately without coupling them.
+- **Change**: added `sidePeek` boolean plus `peekSidebar()` (sets peek only when
+  collapsed) and `endPeek()` (clears peek). `setSideCollapsed` now also clears
+  `sidePeek`, so pinning open or collapsing always ends a peek.
+
 ### 2026-06-13 — remove the read/unread feature
 - **Motivation**: user asked to drop read-state management entirely (unread
   badges, mark-as-read flows, the "全部读完了" summary).
@@ -68,3 +77,12 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
   belongs in the app store.
 - **Goal**: `aiSetupOpen` + `setAiSetupOpen` consumed by
   `AiProviderSetupDialog` and triggered from `AccountFoot`.
+
+### 2026-06-13 — Artifacts state (replaces the standalone cards view)
+- **Motivation**: card generation moved from a standalone page to a chat
+  trigger; the generated decks are collected on a new Artifacts page.
+- **Goal**: `view: 'artifacts'` (was `'cards'`), `openArtifacts(id?)` /
+  `loadArtifacts` / `selectArtifact` / `deleteArtifact`, and `artifacts` /
+  `selectedArtifactId` / `artifactsLoading` state. `deliverMessage` now returns
+  the reply's `artifacts`; `send`/`sendQuick` refresh the list + toast when a
+  reply produced one.

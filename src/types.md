@@ -37,3 +37,10 @@ All interfaces/types listed above plus `IconName`.
 ### 2026-06-12 — extended `IconName` with `gear`
 - **Motivation**: the sidebar footer download button became a settings
   button and needs a gear icon.
+
+### 2026-06-13 — `AiMessage.artifacts`
+- **Motivation**: a chat reply can now produce card-deck artifacts (via the
+  agent's create_card_artifact tool); the message must carry clickable
+  references so the chat links to the Artifacts page and survives reload.
+- **Goal**: optional `artifacts?: ArtifactRef[]` on `AiMessage` (from
+  `artifacts/types`).

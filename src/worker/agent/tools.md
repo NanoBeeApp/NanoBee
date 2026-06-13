@@ -32,3 +32,11 @@ toolset open-ended: nothing upstream hardcodes a tool name.
   without ever showing them to the model.
 - **Goal**: `AgentContext { secrets }` threaded through `collectAgentTools`
   into providers; keyed by secret param name (e.g. `tavily_api_key`).
+
+### 2026-06-13 — artifact context + per-tool timeout
+- **Motivation**: chat must be able to generate card-deck artifacts, and an
+  LLM-backed tool needs longer than the default 20s tool timeout.
+- **Goal**: `AgentContext.artifacts { owner, chatId?, created }` threaded in;
+  `collectAgentTools` now also includes `cardArtifactTools(ctx)` (only when the
+  context is present). `AgentTool` gains an optional `timeoutMs` the loop honors
+  per tool.

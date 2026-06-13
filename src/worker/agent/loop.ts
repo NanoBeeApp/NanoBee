@@ -82,7 +82,7 @@ async function executeToolCall(
 	try {
 		const output = await withTimeout(
 			tool.execute(call.arguments, env),
-			CONFIG.AGENT.TOOL_TIMEOUT_MS,
+			tool.timeoutMs ?? CONFIG.AGENT.TOOL_TIMEOUT_MS,
 			call.name,
 		);
 		console.log("[Agent] tool '%s' ok (%d chars)", call.name, output.length);

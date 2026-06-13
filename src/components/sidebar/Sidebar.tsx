@@ -1,12 +1,16 @@
-// Left rail: brand, new-chat button, the "今日事项" inbox entry, the "任务"
-// entry (opens the full-page task center) with an active-task count, and the
-// chat lists (history/topics switch) — shown on every view so any chat is one
-// click away no matter which page is open.
+// Left rail: brand, new-chat button, and the page nav grid (聊天 / 今日事项 /
+// 任务 / Artifacts / 研究画布). The scroll area below is context-aware: it shows
+// the list that belongs to the current page — chats on the chat view, today's
+// items on 今日事项, tasks on 任务, decks on Artifacts, projects on 研究画布.
+// The "聊天" tile is how you return to the chat view from any other page.
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
-import { AccountFoot } from './AccountFoot';
 import { ChatHistoryList } from './ChatHistoryList';
 import { TopicGroupList } from './TopicGroupList';
+import { TodayNavList } from './TodayNavList';
+import { TasksNavList } from './TasksNavList';
+import { ArtifactsNavList } from './ArtifactsNavList';
+import { ResearchNavList } from './ResearchNavList';
 
 export function Sidebar() {
   const view = useAppStore((s) => s.view);
@@ -19,18 +23,22 @@ export function Sidebar() {
   const tasks = useAppStore((s) => s.tasks);
   const selectChat = useAppStore((s) => s.selectChat);
   const newChat = useAppStore((s) => s.newChat);
+  const openChat = useAppStore((s) => s.openChat);
   const openToday = useAppStore((s) => s.openToday);
   const openTasks = useAppStore((s) => s.openTasks);
-  const openCards = useAppStore((s) => s.openCards);
+  const openArtifacts = useAppStore((s) => s.openArtifacts);
   const openResearch = useAppStore((s) => s.openResearch);
   const toggleTopic = useAppStore((s) => s.toggleTopic);
   const setSideCollapsed = useAppStore((s) => s.setSideCollapsed);
+  const endPeek = useAppStore((s) => s.endPeek);
 
   const isChatView = view === 'chat';
   const activeTaskCount = tasks.filter((t) => t.status === 'active').length;
 
   return (
-    <aside className="nb-side" data-testid="app-sidebar">
+    // onMouseLeave only matters while peeking (endPeek is a no-op otherwise):
+    // moving the pointer off the temporarily-opened sidebar auto-collapses it.
+    <aside className="nb-side" data-testid="app-sidebar" onMouseLeave={endPeek}>
       <div className="nb-side-top">
         <div className="nb-brand">
           <div className="glyph">
@@ -53,6 +61,12 @@ export function Sidebar() {
         </button>
 
         <div className="nb-nav-grid" data-testid="sidebar-nav-grid">
+          <button className={`nb-nav-tile wide${isChatView ? ' active' : ''}`} onClick={openChat}
+            data-testid="chat-entry">
+            <span className="ic"><Icons.chat size={16} /></span>
+            <span className="label">聊天</span>
+          </button>
+
           <button className={`nb-nav-tile${view === 'today' ? ' active' : ''}`} onClick={openToday}
             data-testid="today-inbox-entry">
             <span className="ic"><Icons.news size={16} /></span>
@@ -66,10 +80,10 @@ export function Sidebar() {
             {activeTaskCount > 0 && <span className="count" data-testid="tasks-active-count">{activeTaskCount}</span>}
           </button>
 
-          <button className={`nb-nav-tile${view === 'cards' ? ' active' : ''}`} onClick={openCards}
-            data-testid="cards-entry">
+          <button className={`nb-nav-tile${view === 'artifacts' ? ' active' : ''}`} onClick={() => openArtifacts()}
+            data-testid="artifacts-entry">
             <span className="ic"><Icons.grid size={16} /></span>
-            <span className="label">动态卡片</span>
+            <span className="label">Artifacts</span>
           </button>
 
           <button className={`nb-nav-tile${view === 'research' ? ' active' : ''}`} onClick={openResearch}
@@ -79,24 +93,35 @@ export function Sidebar() {
           </button>
         </div>
 
-        <div className="nb-switch" data-testid="sidebar-view-switch">
-          <button className={sidebarMode === 'history' ? 'active' : ''} onClick={() => setSidebarMode('history')}>聊天记录</button>
-          <button className={sidebarMode === 'topics' ? 'active' : ''} onClick={() => setSidebarMode('topics')}>话题分组</button>
-        </div>
-      </div>
-
-      <div className="nb-side-scroll" data-testid="sidebar-scroll-area">
-        {sidebarMode === 'history' ? (
-          <ChatHistoryList activeChatId={activeChatId} isChatView={isChatView}
-            chats={chats} sessions={Object.values(sessionMeta)} onSelectChat={selectChat} />
-        ) : (
-          <TopicGroupList activeChatId={activeChatId} isChatView={isChatView}
-            openTopics={openTopics} chats={chats} tasks={tasks}
-            onSelectChat={selectChat} onToggleTopic={toggleTopic} />
+        {/* The history/topics switch only makes sense for the chat list. */}
+        {isChatView && (
+          <div className="nb-switch" data-testid="sidebar-view-switch">
+            <button className={sidebarMode === 'history' ? 'active' : ''} onClick={() => setSidebarMode('history')}>聊天记录</button>
+            <button className={sidebarMode === 'topics' ? 'active' : ''} onClick={() => setSidebarMode('topics')}>话题分组</button>
+          </div>
         )}
       </div>
 
-      <AccountFoot />
+      <div className="nb-side-scroll" data-testid="sidebar-scroll-area">
+        {isChatView ? (
+          sidebarMode === 'history' ? (
+            <ChatHistoryList activeChatId={activeChatId} isChatView={isChatView}
+              chats={chats} sessions={Object.values(sessionMeta)} onSelectChat={selectChat} />
+          ) : (
+            <TopicGroupList activeChatId={activeChatId} isChatView={isChatView}
+              openTopics={openTopics} chats={chats} tasks={tasks}
+              onSelectChat={selectChat} onToggleTopic={toggleTopic} />
+          )
+        ) : view === 'today' ? (
+          <TodayNavList />
+        ) : view === 'tasks' ? (
+          <TasksNavList />
+        ) : view === 'artifacts' ? (
+          <ArtifactsNavList />
+        ) : view === 'research' ? (
+          <ResearchNavList />
+        ) : null}
+      </div>
     </aside>
   );
 }

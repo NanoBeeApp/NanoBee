@@ -1,4 +1,5 @@
 // Shared domain types for the NanoBee app.
+import type { ArtifactRef } from './artifacts/types';
 
 /** A topic ("话题") groups conversations and tasks around one user concern. */
 export interface Topic {
@@ -103,6 +104,8 @@ export interface AiMessage {
   title?: string;
   time?: string;
   model?: string;
+  /** Artifacts (card decks) the agent generated while producing this reply. */
+  artifacts?: ArtifactRef[];
 }
 
 export type ChatMessage = UserMessage | AiMessage;

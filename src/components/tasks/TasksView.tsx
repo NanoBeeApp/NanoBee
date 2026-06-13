@@ -1,7 +1,7 @@
 // Full-page task center — replaces the old right rail. Opened from the
 // sidebar "任务" entry: topic filter chips, the gold live-monitor card,
 // task cards in a two-column grid, and an empty-state nudge.
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { TOPICS, topicShortName } from '../../data/topics';
 import { Icons } from '../../icons/icons';
@@ -14,9 +14,25 @@ export function TasksView() {
   const tasks = useAppStore((s) => s.tasks);
   const toggleTask = useAppStore((s) => s.toggleTask);
   const justAddedTaskId = useAppStore((s) => s.justAddedTaskId);
-  const [filter, setFilter] = useState('all');
+  const focusItemId = useAppStore((s) => s.focusItemId);
+  const focusItemTick = useAppStore((s) => s.focusItemTick);
+  const filter = useAppStore((s) => s.tasksFilter);
+  const setFilter = useAppStore((s) => s.setTasksFilter);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const list = filter === 'all' ? tasks : tasks.filter((t) => t.topicId === filter);
+
+  // Sidebar TasksNavList click → scroll the matching task card into view. The
+  // sidebar clears the filter before calling focusItem, so the target is in the
+  // DOM; the tick is in the deps so clicking the same task twice re-scrolls.
+  useEffect(() => {
+    if (!focusItemId) return;
+    const raf = requestAnimationFrame(() => {
+      const el = scrollRef.current?.querySelector(`[data-cid="${CSS.escape(focusItemId)}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [focusItemId, focusItemTick]);
   const activeCount = tasks.filter((t) => t.status === 'active').length;
   const pausedCount = tasks.length - activeCount;
   const showMonitor = filter === MONITOR_TOPIC_ID;
@@ -29,7 +45,7 @@ export function TasksView() {
   ];
 
   return (
-    <div className="nb-taskspage" data-testid="tasks-page">
+    <div className="nb-taskspage" ref={scrollRef} data-testid="tasks-page">
       <div className="nb-taskspage-inner">
         <div className="nb-taskspage-kicker">自动任务 · NanoBee 替你盯着</div>
         <div className="nb-taskspage-head">
@@ -80,7 +96,8 @@ export function TasksView() {
         {list.length > 0 && (
           <div className="nb-tasks-grid" data-testid="tasks-list">
             {list.map((k) => (
-              <div key={k.id} style={justAddedTaskId === k.id ? { animation: 'nbtoast 0.4s var(--ease-out)' } : undefined}>
+              <div key={k.id} data-cid={k.id}
+                style={justAddedTaskId === k.id ? { animation: 'nbtoast 0.4s var(--ease-out)' } : undefined}>
                 <TaskCard k={k} onToggle={toggleTask} />
               </div>
             ))}

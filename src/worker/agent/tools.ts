@@ -15,6 +15,8 @@
 
 import type { AiToolDef } from "../ai/client";
 import type { Env } from "../api-worker";
+import type { ArtifactRef } from "../../artifacts/types";
+import { cardArtifactTools } from "./card-artifact-tools";
 import { datahubTools } from "./datahub-tools";
 import { mcpTools } from "./mcp";
 import { skillTools } from "./skills";
@@ -22,6 +24,12 @@ import { skillTools } from "./skills";
 export interface AgentTool extends AiToolDef {
 	/** Run the tool; the returned string is fed back to the model verbatim. */
 	execute(args: Record<string, unknown>, env: Env): Promise<string>;
+	/**
+	 * Per-tool execution timeout. Defaults to CONFIG.AGENT.TOOL_TIMEOUT_MS.
+	 * LLM-backed tools (e.g. card-deck generation) are far slower than a data
+	 * fetch and set a larger value so they are not cut off mid-generation.
+	 */
+	timeoutMs?: number;
 }
 
 /**
@@ -31,6 +39,17 @@ export interface AgentTool extends AiToolDef {
  */
 export interface AgentContext {
 	secrets: Record<string, string>;
+	/**
+	 * Artifact-creation context. When present, the agent gains a
+	 * `create_card_artifact` tool that generates a card deck and persists it as
+	 * an artifact; each created artifact's reference is pushed onto `created` so
+	 * the request handler can attach it to the AI reply after the run.
+	 */
+	artifacts?: {
+		owner: string;
+		chatId?: string;
+		created: ArtifactRef[];
+	};
 }
 
 export const EMPTY_AGENT_CONTEXT: AgentContext = { secrets: {} };
@@ -57,10 +76,13 @@ export async function collectAgentTools(
 		}),
 	]);
 
+	// Built-in artifact tools (only when the request supplies artifact context).
+	const artifacts = cardArtifactTools(ctx);
+
 	// First provider wins on a name collision so a remote server cannot
 	// shadow a built-in skill or hub source.
 	const byName = new Map<string, AgentTool>();
-	for (const tool of [...hub, ...skills, ...mcp]) {
+	for (const tool of [...artifacts, ...hub, ...skills, ...mcp]) {
 		if (!byName.has(tool.name)) byName.set(tool.name, tool);
 		else console.warn("[Agent] duplicate tool name skipped:", tool.name);
 	}

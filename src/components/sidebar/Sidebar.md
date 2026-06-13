@@ -9,6 +9,15 @@ Left rail: brand row with collapse button, "新对话" (⌘N), the amber "今日
 
 ## Change history
 
+### 2026-06-13 — auto-close the temporary peek on pointer leave
+- **Motivation**: the new edge-reveal "peek" opens the sidebar as a temporary
+  overlay; it needs to close itself once the user moves away, otherwise it would
+  linger like a pinned sidebar.
+- **Goal**: the rail collapses again as soon as the pointer leaves it (unless it
+  was pinned open via the panel icon).
+- **Change**: added `onMouseLeave={endPeek}` to the `<aside>`. `endPeek` is a
+  no-op when not peeking, so it is safe to attach unconditionally.
+
 ### 2026-06-13 — Arc-style two-column nav grid
 - **Motivation**: the four navigation entries (今日事项 / 任务 / 动态卡片 /
   研究画布) were stacked as full-width rows, eating vertical space and pushing
@@ -61,3 +70,9 @@ Left rail: brand row with collapse button, "新对话" (⌘N), the amber "今日
 - **Goal**: on the Today page the body swaps to `TodayNav` (reading progress,
   unread/topic filters, quick actions) and the history/topics switch hides —
   chat lists are not relevant while reading.
+
+### 2026-06-13 — Artifacts nav entry
+- **Motivation**: the standalone "动态卡片" page was replaced by the
+  chat-triggered Artifacts page.
+- **Goal**: the nav tile now opens the Artifacts view (`openArtifacts()`,
+  testid `artifacts-entry`, label "Artifacts") instead of the cards view.

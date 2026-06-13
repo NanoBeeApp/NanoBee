@@ -12,9 +12,19 @@ App shell: two-column grid (sidebar | center) with a collapsible sidebar, chat/t
 
 ## Key notes
 - The sidebar stays on every view and is user-collapsible (`side-collapsed` drives explicit grid-column sizing in app.css; prototype fixed a 0-width chat bug this way).
+- When collapsed, the sidebar can be *peeked* temporarily: `side-peek` (added only when `sideCollapsed && sidePeek`) floats the rail over the content as a fixed overlay instead of hiding it.
 - Center view routing: 'today' → TodayView, 'tasks' → TasksView, otherwise ChatView.
 
 ## Change history
+
+### 2026-06-13 — temporary sidebar peek (`side-peek` class)
+- **Motivation**: the collapsed sidebar only had a permanent expand; the user
+  wanted a hover/click "peek" that opens it temporarily and auto-closes.
+- **Goal**: distinguish a temporary overlay peek from a pinned-open sidebar.
+- **Change**: the root className now appends `side-peek` when
+  `sideCollapsed && sidePeek`; app.css renders the rail as a fixed overlay in
+  that state.
+
 
 ### 2026-06-12 — created
 - **Motivation**: implement the approved NanoBee design (chat home + Today reading page + global quick chat) from the Claude Design handoff bundle.
@@ -44,3 +54,9 @@ App shell: two-column grid (sidebar | center) with a collapsible sidebar, chat/t
 ### 2026-06-12 — mount AiProviderSetupDialog
 - **Motivation**: the first-login AI provider setup must overlay every view,
   so it joins the global overlay layers in the app shell.
+
+### 2026-06-13 — route the Artifacts view
+- **Motivation**: the standalone cards page was replaced by a chat-triggered
+  Artifacts page.
+- **Goal**: render `ArtifactsView` for `view === 'artifacts'` (was `CardsView`
+  for `'cards'`).

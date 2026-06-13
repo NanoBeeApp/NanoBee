@@ -1,13 +1,23 @@
 # src/components/layout/FloatingControls.tsx
 
 ## Responsibility
-Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) expand-sidebar, plus back-to-chat on the Today page; top-right notification bell. While collapsed it also renders a wide left-edge reveal zone (`.nb-edge-reveal`) — hovering the screen's left edge fades in a soft glow and clicking anywhere in the strip expands the sidebar without aiming for the small toggle.
+Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) the panel-toggle that *pins* the sidebar open, plus back-to-chat on the Today page; top-right notification bell. While collapsed it also renders a wide left-edge reveal zone (`.nb-edge-reveal`) — hovering the screen's left edge fades in a soft glow and clicking anywhere in the strip *peeks* the sidebar open temporarily (overlay that auto-closes on pointer leave), distinct from the panel icon which pins it.
 
 ## Dependencies
 - Upstream: store, icons
 - Downstream: App
 
 ## Change history
+
+### 2026-06-13 — edge reveal peeks temporarily, panel icon pins
+- **Motivation**: clicking the left-edge glow expanded the sidebar permanently,
+  same as the panel icon — there was no lightweight "just take a quick look"
+  affordance, so users had to re-collapse afterwards.
+- **Goal**: split the two triggers. The wide edge strip now calls `peekSidebar()`
+  → a temporary overlay that auto-closes when the pointer leaves the rail; only
+  the dedicated panel-toggle icon (`setSideCollapsed(false)`) pins it open.
+- **Change**: edge-reveal `onClick` → `peekSidebar`; titles updated to
+  「临时展开边栏」(edge) vs「固定展开边栏」(icon).
 
 ### 2026-06-13 — left-edge reveal zone for the collapsed sidebar
 - **Motivation**: users had to aim precisely for the small top-left toggle to

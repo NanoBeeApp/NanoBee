@@ -29,3 +29,9 @@ Renders one chat message: user bubble / AI reply (minimal "NanoBee" role row, ri
 - **Goal**: messages whose payload carries `trace` render an「执行过程」
   pill in the role row (testid `agent-trace-open-button`) that toggles
   `AgentTraceModal`; the open/close flag is local UI state.
+
+### 2026-06-13 — inline artifact references
+- **Motivation**: replies that generate card-deck artifacts should link to them
+  from the chat.
+- **Goal**: when `m.artifacts` is non-empty, render `ArtifactRefCard` under the
+  body (clickable cards that open the Artifacts page).

@@ -10,6 +10,7 @@ import typographyCss from "@/styles/tokens/typography.css?url";
 import effectsCss from "@/styles/tokens/effects.css?url";
 import baseCss from "@/styles/base.css?url";
 import appCss from "@/styles/app.css?url";
+import cardsCss from "@/styles/cards.css?url";
 
 export const Route = createRootRoute({
 	head: () => ({
@@ -31,6 +32,7 @@ export const Route = createRootRoute({
 			{ rel: "stylesheet", href: effectsCss },
 			{ rel: "stylesheet", href: baseCss },
 			{ rel: "stylesheet", href: appCss },
+			{ rel: "stylesheet", href: cardsCss },
 		],
 	}),
 	shellComponent: RootDocument,

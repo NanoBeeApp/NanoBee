@@ -45,3 +45,9 @@ MCP calls and decides on its own when it has enough to answer.
   `TRACE_MAX_OUTPUT_CHARS`, ok flag, per-call duration) plus run metadata
   (provider/model/toolset/total duration). `executeToolCall` now returns the
   full call record; `toolsUsed` is derived from the trace.
+
+### 2026-06-13 — per-tool execution timeout
+- **Motivation**: LLM-backed tools (card-deck generation, ~20-40s) were cut off
+  by the global 20s tool timeout.
+- **Goal**: `executeToolCall` uses `tool.timeoutMs ?? CONFIG.AGENT.TOOL_TIMEOUT_MS`,
+  so a slow tool can opt into a longer ceiling without raising it for all.

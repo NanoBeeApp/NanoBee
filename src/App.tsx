@@ -10,7 +10,7 @@ import { Sidebar } from './components/sidebar/Sidebar';
 import { ChatView } from './components/chat/ChatView';
 import { TodayView } from './components/today/TodayView';
 import { TasksView } from './components/tasks/TasksView';
-import { CardsView } from './components/cards/CardsView';
+import { ArtifactsView } from './components/artifacts/ArtifactsView';
 import { ResearchView } from './components/research/ResearchView';
 import { FloatingControls } from './components/layout/FloatingControls';
 import { NotificationDropdown } from './components/notifications/NotificationDropdown';
@@ -22,6 +22,7 @@ import { AiProviderSetupDialog } from './components/onboarding/AiProviderSetupDi
 export default function App() {
   const view = useAppStore((s) => s.view);
   const sideCollapsed = useAppStore((s) => s.sideCollapsed);
+  const sidePeek = useAppStore((s) => s.sidePeek);
   const notifOpen = useAppStore((s) => s.notifOpen);
   const newChat = useAppStore((s) => s.newChat);
   const bootstrap = useAppStore((s) => s.bootstrap);
@@ -45,7 +46,7 @@ export default function App() {
 
   return (
     <div
-      className={`nb-app${sideCollapsed ? ' side-collapsed' : ''}`}
+      className={`nb-app${sideCollapsed ? ' side-collapsed' : ''}${sideCollapsed && sidePeek ? ' side-peek' : ''}`}
       data-testid="nanobee-app">
       <Sidebar />
 
@@ -55,8 +56,8 @@ export default function App() {
           <TodayView />
         ) : view === 'tasks' ? (
           <TasksView />
-        ) : view === 'cards' ? (
-          <CardsView />
+        ) : view === 'artifacts' ? (
+          <ArtifactsView />
         ) : view === 'research' ? (
           <ResearchView />
         ) : (

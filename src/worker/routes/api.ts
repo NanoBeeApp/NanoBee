@@ -8,9 +8,9 @@
 import { Hono } from "hono";
 import type { Env } from "../api-worker";
 import { aiSettingsRoutes } from "./ai-settings";
+import { artifactRoutes } from "./artifacts";
 import { authRoutes } from "./auth";
 import { bootstrapRoutes } from "./bootstrap";
-import { cardRoutes } from "./cards";
 import { messageRoutes } from "./messages";
 import { researchRoutes } from "./research";
 import { taskRoutes } from "./tasks";
@@ -18,9 +18,9 @@ import { taskRoutes } from "./tasks";
 export const apiRoutes = new Hono<{ Bindings: Env }>()
 	// NanoBee app endpoints (chained for typed RPC inference)
 	.route("/ai", aiSettingsRoutes)
+	.route("/artifacts", artifactRoutes)
 	.route("/auth", authRoutes)
 	.route("/bootstrap", bootstrapRoutes)
-	.route("/cards", cardRoutes)
 	.route("/messages", messageRoutes)
 	.route("/research", researchRoutes)
 	.route("/tasks", taskRoutes)

@@ -8,6 +8,7 @@ import type { TracedAiMessage } from '../../lib/agent-trace';
 import { Icon, Icons } from '../../icons/icons';
 import { AgentTraceModal } from './AgentTraceModal';
 import { InlineSegments } from './InlineSegments';
+import { ArtifactRefCard } from './ArtifactRefCard';
 
 interface MessageViewProps {
   m: ChatMessage;
@@ -69,6 +70,7 @@ export function MessageView({ m }: MessageViewProps) {
         )}
       </div>
       {body}
+      {m.artifacts && m.artifacts.length > 0 && <ArtifactRefCard refs={m.artifacts} />}
       {trace && traceOpen && (
         <AgentTraceModal trace={trace} onClose={() => setTraceOpen(false)} />
       )}

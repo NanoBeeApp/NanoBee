@@ -14,6 +14,7 @@ import type {
   AiMessage, ChatMessage, ChatMeta, SessionMeta, Task, TaskSuggestion, Toast,
   UpdateItem, ViewingContext,
 } from '../types';
+import type { Artifact, ArtifactRef } from '../artifacts/types';
 import { apiClient } from '../lib/api-client';
 import { UPDATE_TO_CHAT } from '../data/updates';
 import { nextId } from '../data/ids';
@@ -24,7 +25,7 @@ const TOAST_DURATION_MS = 3600;
 const JUST_ADDED_FLASH_MS = 700;
 const TITLE_MAX_CHARS = 22;
 
-export type View = 'chat' | 'today' | 'tasks' | 'cards' | 'research';
+export type View = 'chat' | 'today' | 'tasks' | 'artifacts' | 'research';
 export type SidebarMode = 'history' | 'topics';
 
 /** Server payload of GET /api/bootstrap. */
@@ -48,9 +49,20 @@ interface AppState {
   updates: UpdateItem[];
   /** Today-page filter: 'all' | a topic id. Shared by the sidebar nav and the reading surface. */
   todayFilter: string;
+  /** Tasks-page topic filter: 'all' | a topic id. Lifted to the store so the
+   *  sidebar can clear it before jumping to a task on another topic. */
+  tasksFilter: string;
+  /** Id of the center item a sidebar list asked to scroll to (Today / Tasks pages). */
+  focusItemId: string | null;
+  /** Bumped on every focusItem() call so repeat clicks on the same id re-trigger the scroll. */
+  focusItemTick: number;
   openTopics: string[];
   notifOpen: boolean;
+  /** Persistent collapse state of the sidebar (toggled by the panel icon). */
   sideCollapsed: boolean;
+  /** Temporary "peek": the sidebar is shown as an overlay while collapsed
+   *  (triggered by the left-edge reveal) and auto-closes on mouse leave. */
+  sidePeek: boolean;
   pending: boolean;
   toasts: Toast[];
   justAddedTaskId: string | null;
@@ -61,6 +73,10 @@ interface AppState {
   quickCtx: ViewingContext | null;
   /** AI provider setup dialog opened manually from the account menu. */
   aiSetupOpen: boolean;
+  // artifacts (card decks generated from chat)
+  artifacts: Artifact[];
+  selectedArtifactId: string | null;
+  artifactsLoading: boolean;
 
   // server sync
   bootstrap: () => Promise<void>;
@@ -68,15 +84,29 @@ interface AppState {
   // navigation
   setSidebarMode: (m: SidebarMode) => void;
   setSideCollapsed: (v: boolean) => void;
+  /** Open the sidebar temporarily (overlay peek) without changing the
+   *  persistent collapse state. No-op when already pinned open. */
+  peekSidebar: () => void;
+  /** End a temporary peek (called when the pointer leaves the sidebar). */
+  endPeek: () => void;
   setNotifOpen: (v: boolean) => void;
   toggleTopic: (id: string) => void;
   selectChat: (id: string) => void;
   newChat: () => void;
+  /** Return to the chat view keeping the current conversation (the sidebar "聊天" tile). */
+  openChat: () => void;
   openToday: () => void;
   openTasks: () => void;
-  openCards: () => void;
   openResearch: () => void;
+  /** Ask the active center page (Today / Tasks) to scroll its matching item into view. */
+  focusItem: (id: string) => void;
+  // artifacts
+  openArtifacts: (id?: string) => void;
+  loadArtifacts: () => Promise<void>;
+  selectArtifact: (id: string) => void;
+  deleteArtifact: (id: string) => void;
   setTodayFilter: (f: string) => void;
+  setTasksFilter: (f: string) => void;
   backToChat: () => void;
   openUpdateInChat: (u: UpdateItem) => void;
 
@@ -119,7 +149,7 @@ async function deliverMessage(
     chatId: string; userMessageId: string; title?: string;
     text: string; ctxTitle?: string | null; ctxTopicId?: string | null;
   },
-): Promise<{ topicId: string } | null> {
+): Promise<{ topicId: string; artifacts?: ArtifactRef[] } | null> {
   const [res] = await Promise.all([
     apiClient.messages.$post({ json: args }),
     delay(MIN_THINKING_MS),
@@ -135,7 +165,7 @@ async function deliverMessage(
       : st.sessionMeta,
     convos: { ...st.convos, [args.chatId]: [...(st.convos[args.chatId] ?? []), data.aiMessage] },
   }));
-  return { topicId: data.topicId };
+  return { topicId: data.topicId, artifacts: data.aiMessage.artifacts };
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -150,9 +180,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   createdTaskIds: [],
   updates: [],
   todayFilter: 'all',
+  tasksFilter: 'all',
+  focusItemId: null,
+  focusItemTick: 0,
   openTopics: [],
   notifOpen: false,
   sideCollapsed: false,
+  sidePeek: false,
   pending: false,
   toasts: [],
   justAddedTaskId: null,
@@ -161,6 +195,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   quickPending: false,
   quickCtx: null,
   aiSetupOpen: false,
+  artifacts: [],
+  selectedArtifactId: null,
+  artifactsLoading: false,
 
   bootstrap: async () => {
     try {
@@ -185,7 +222,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setSidebarMode: (sidebarMode) => set({ sidebarMode }),
-  setSideCollapsed: (sideCollapsed) => set({ sideCollapsed }),
+  // Pinning or collapsing always ends any temporary peek.
+  setSideCollapsed: (sideCollapsed) => set({ sideCollapsed, sidePeek: false }),
+  peekSidebar: () => { if (get().sideCollapsed) set({ sidePeek: true }); },
+  endPeek: () => { if (get().sidePeek) set({ sidePeek: false }); },
   setNotifOpen: (notifOpen) => set({ notifOpen }),
 
   toggleTopic: (id) => set((s) => ({
@@ -207,15 +247,75 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   newChat: () => set({ activeChatId: null, activeTopicId: null, view: 'chat', notifOpen: false, quickCtx: null }),
 
+  // The sidebar "聊天" tile: just switch back to the chat view, keeping whatever
+  // conversation is active (unlike newChat, which clears it).
+  openChat: () => set({ view: 'chat', notifOpen: false }),
+
   openToday: () => set({ view: 'today', notifOpen: false }),
 
   openTasks: () => set({ view: 'tasks', notifOpen: false }),
 
-  openCards: () => set({ view: 'cards', notifOpen: false }),
-
   openResearch: () => set({ view: 'research', notifOpen: false }),
 
+  focusItem: (id) => set((s) => ({ focusItemId: id, focusItemTick: s.focusItemTick + 1 })),
+
+  // Open the Artifacts page; optionally focus a specific artifact. Always
+  // refreshes the list so a just-created artifact shows up.
+  openArtifacts: (id) => {
+    set((s) => ({
+      view: 'artifacts',
+      notifOpen: false,
+      selectedArtifactId: id ?? s.selectedArtifactId,
+    }));
+    void get().loadArtifacts();
+  },
+
+  loadArtifacts: async () => {
+    set({ artifactsLoading: true });
+    try {
+      const res = await apiClient.artifacts.$get();
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { artifacts: Artifact[] };
+      console.log('[artifacts] loaded:', `${data.artifacts.length} artifacts`);
+      set((s) => ({
+        artifacts: data.artifacts,
+        artifactsLoading: false,
+        // Default the selection to the newest artifact when none is chosen.
+        selectedArtifactId:
+          s.selectedArtifactId && data.artifacts.some((a) => a.id === s.selectedArtifactId)
+            ? s.selectedArtifactId
+            : (data.artifacts[0]?.id ?? null),
+      }));
+    } catch (error) {
+      console.error('[artifacts] load failed:', String(error));
+      set({ artifactsLoading: false });
+    }
+  },
+
+  selectArtifact: (id) => set({ selectedArtifactId: id }),
+
+  deleteArtifact: async (id) => {
+    const prev = get().artifacts;
+    set((s) => {
+      const remaining = s.artifacts.filter((a) => a.id !== id);
+      return {
+        artifacts: remaining,
+        selectedArtifactId: s.selectedArtifactId === id ? (remaining[0]?.id ?? null) : s.selectedArtifactId,
+      };
+    });
+    try {
+      const res = await apiClient.artifacts[':id'].$delete({ param: { id } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (error) {
+      console.error('[artifacts] delete failed:', String(error));
+      set({ artifacts: prev });
+      get().toast('删除失败，请重试');
+    }
+  },
+
   setTodayFilter: (todayFilter) => set({ todayFilter }),
+
+  setTasksFilter: (tasksFilter) => set({ tasksFilter }),
 
   // Leaving the Today page clears the "viewing" context.
   backToChat: () => set({ view: 'chat', quickCtx: null }),
@@ -255,6 +355,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
     if (result) {
       set({ activeTopicId: result.topicId, pending: false });
+      // A reply that produced card artifacts: refresh the Artifacts page list
+      // so the new deck is there, and nudge the user toward it.
+      if (result.artifacts?.length) {
+        void get().loadArtifacts();
+        get().toast(`已生成卡片 · ${result.artifacts[0].title}`);
+      }
     } else {
       set({ pending: false });
       get().toast('发送失败，请稍后重试');
@@ -290,7 +396,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       return null;
     });
     set({ quickPending: false });
-    if (!result) get().toast('发送失败，请稍后重试');
+    if (!result) {
+      get().toast('发送失败，请稍后重试');
+    } else if (result.artifacts?.length) {
+      void get().loadArtifacts();
+      get().toast(`已生成卡片 · ${result.artifacts[0].title}`);
+    }
   },
 
   setQuickOpen: (quickOpen) => set({ quickOpen }),

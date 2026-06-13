@@ -19,11 +19,27 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 #root { height: 100vh; }
 
 /* ---- App grid: sidebar | center ---- */
-.nb-app { --nb-side-w: 280px; display: grid; grid-template-columns: var(--nb-side-w) minmax(0, 1fr); height: 100vh; background: var(--bg); }
+.nb-app { --nb-side-w-open: 280px; --nb-side-w: var(--nb-side-w-open); display: grid; grid-template-columns: var(--nb-side-w) minmax(0, 1fr); height: 100vh; background: var(--bg); }
 .nb-app.side-collapsed { --nb-side-w: 0px; }
-.nb-app.side-collapsed .nb-side { display: none; }
+/* Collapsed hides the rail entirely — unless it is temporarily peeking, where
+   it floats over the content as an overlay (see .side-peek below). */
+.nb-app.side-collapsed:not(.side-peek) .nb-side { display: none; }
 .nb-side { grid-column: 1; }
 .nb-chat { grid-column: 2; }
+
+/* Temporary peek: the sidebar is pulled out of the (collapsed) grid and shown
+   as a fixed overlay above the full-width content, with a drop shadow and a
+   slide-in. It auto-closes on pointer leave (handled in Sidebar.tsx). */
+.nb-app.side-peek .nb-side {
+  position: fixed; left: 0; top: 0; z-index: 30;
+  width: var(--nb-side-w-open); height: 100vh;
+  box-shadow: var(--sh-4);
+  animation: nb-peek-in var(--dur-2) var(--ease-out);
+}
+@keyframes nb-peek-in {
+  from { transform: translateX(-100%); opacity: 0.4; }
+  to { transform: translateX(0); opacity: 1; }
+}
 
 /* floating corner controls (replace the fixed header) */
 .nb-float { position: absolute; top: 12px; z-index: 25; display: flex; gap: 6px; }
@@ -84,6 +100,9 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-nav-tile.active { border-color: var(--nb-amber); box-shadow: 0 0 0 3px rgba(217,139,43,0.14); }
 .nb-nav-tile .ic { display: inline-flex; color: var(--nb-amber); }
 .nb-nav-tile .label { white-space: nowrap; }
+/* The "聊天" tile spans both columns as a compact horizontal row: it is the
+   primary view + the way back to chat from any page, so it leads the grid. */
+.nb-nav-tile.wide { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 10px; min-height: 0; padding: 10px 13px; }
 .nb-nav-tile .count {
   position: absolute; top: 9px; right: 9px;
   min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px;
@@ -108,6 +127,10 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-item .sub { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 .nb-item .tdot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; }
 .nb-item .star { color: var(--nb-amber); flex-shrink: 0; }
+/* Leading icon for the per-page nav lists (today / tasks / artifacts / research). */
+.nb-item-ic { display: inline-flex; flex-shrink: 0; color: var(--ink-4); }
+/* Empty-state line shared by every per-page sidebar list. */
+.nb-side-empty { padding: 18px 12px; font-size: 12.5px; color: var(--ink-4); text-align: center; }
 
 /* Topic group card */
 .nb-topic { border-radius: 11px; margin-bottom: 6px; overflow: hidden; border: 1px solid transparent; transition: border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out); }
@@ -125,16 +148,16 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-sub-item.active { background: var(--surface-2); color: var(--ink); font-weight: 600; }
 .nb-sub-label { flex:1; min-width:0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.nb-side-foot { border-top: 1px solid var(--border); padding: 10px; position: relative; display: flex; align-items: center; gap: 4px; }
-.nb-side-foot .nb-login-entry { flex: 1; }
-
-/* avatar-only account trigger + popover menu */
-.nb-account-trigger { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: none; border-radius: 999px; background: transparent; cursor: pointer; transition: background var(--dur-1) var(--ease-out); }
-.nb-account-trigger:hover { background: var(--surface-3); }
-.nb-account-pop, .nb-settings-pop { position: absolute; bottom: calc(100% + 6px); left: 10px; width: 224px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--sh-4); overflow: hidden; z-index: 60; animation: nbtoast 0.22s var(--ease-out); }
-.nb-settings-pop { left: auto; right: 10px; width: 176px; }
-.nb-settings-trigger { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: none; border-radius: 999px; background: transparent; color: var(--ink-3); cursor: pointer; margin-left: auto; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
-.nb-settings-trigger:hover { background: var(--surface-3); color: var(--ink); }
+/* Top-right corner account + settings controls (live in the floating bar) */
+.nb-corner-account { display: inline-flex; align-items: center; gap: 6px; }
+.nb-corner-ctrl { position: relative; display: inline-flex; }
+/* The avatar button reuses the floating-button (.fbtn) chrome but stays fully
+   opaque (it is an identity marker) and lets the round avatar fill it. */
+.nb-account-trigger { padding: 0; opacity: 1; overflow: hidden; }
+.nb-account-trigger .avatar { width: 26px; height: 26px; }
+/* Menus open downward and align to their trigger's right edge. */
+.nb-account-pop, .nb-settings-pop { position: absolute; top: calc(100% + 8px); right: 0; width: 224px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--sh-4); overflow: hidden; z-index: 60; animation: nbtoast 0.22s var(--ease-out); }
+.nb-settings-pop { width: 200px; }
 .nb-account-id { display: flex; align-items: center; gap: 9px; padding: 11px 12px; }
 .nb-account-id .meta { flex: 1; min-width: 0; }
 .nb-account-id .title { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -402,8 +425,6 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-auth-verify-hint b { word-break: break-all; }
 .nb-auth-code-input { font-family: var(--font-mono); font-size: 18px; letter-spacing: 6px; text-align: center; }
 .nb-auth-foot { font-size: 12px; color: var(--ink-4); margin: 0; }
-.nb-login-entry { text-decoration: none; color: inherit; }
-.nb-login-entry:hover { background: var(--surface-2); }
 
 /* ---------- AI provider setup dialog (first login + account menu) ---------- */
 .nb-modal-scrim { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(15,17,23,0.32); animation: nbtoast 0.2s var(--ease-out); }

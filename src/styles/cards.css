@@ -1,161 +1,190 @@
-/* Dynamic Card view styles. White page background (UI rule); chrome stays slim
-   so the deck gets the room. Cards here are the actual content units (a card
-   feature), so a light card treatment is intentional — differentiation leans on
-   background/spacing over heavy borders. */
+/* Dynamic Card + Artifacts styles. White page backgrounds (UI rule); chrome
+   stays slim so decks get the room. Cards here are the actual content units (a
+   card feature), so a light card treatment is intentional. */
 
-.nb-cards {
+/* --- Artifacts page (master/detail) --------------------------------------- */
+
+.nb-artifacts {
   height: 100%;
+  display: flex;
   background: var(--bg);
   overflow: hidden;
 }
 
-.nb-cards-scroll {
-  height: 100%;
+.nb-arti-list {
+  width: 268px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 14px 16px 24px;
+  background: var(--surface-2);
   overflow-y: auto;
-  padding: 28px 32px 56px;
-  max-width: 1080px;
-  margin: 0 auto;
 }
 
-/* --- Header / composer ----------------------------------------------------- */
-
-.nb-cards-head {
-  margin-bottom: 24px;
+.nb-arti-list-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
-.nb-cards-title-row {
-  margin-bottom: 16px;
-}
-
-.nb-cards-title {
-  font-size: 22px;
+.nb-arti-title {
+  font-size: 19px;
   font-weight: 680;
   letter-spacing: -0.01em;
   color: var(--ink);
-  margin: 0 0 4px;
-}
-
-.nb-cards-subtitle {
-  font-size: 13.5px;
-  color: var(--ink-3);
   margin: 0;
 }
 
-.nb-cards-kinds {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.nb-cards-kind {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--ink-2);
-  font-size: 13px;
-  font-weight: 560;
-  cursor: pointer;
-  transition: background 0.15s var(--ease-out), color 0.15s var(--ease-out);
-}
-
-.nb-cards-kind:hover {
-  background: var(--surface-3);
-}
-
-.nb-cards-kind.active {
-  background: var(--brand-soft);
-  color: var(--brand-2);
-}
-
-.nb-cards-compose {
-  display: flex;
-  gap: 10px;
-  align-items: stretch;
-}
-
-.nb-cards-input {
-  flex: 1;
-  height: 42px;
-  padding: 0 14px;
-  border-radius: 10px;
-  background: var(--surface-2);
-  font-size: 14px;
-  color: var(--ink);
-  transition: background 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
-}
-
-.nb-cards-input::placeholder { color: var(--ink-4); }
-
-.nb-cards-input:focus {
-  background: var(--surface);
-  box-shadow: 0 0 0 3px var(--ring);
-}
-
-.nb-cards-generate {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 42px;
-  padding: 0 18px;
-  border-radius: 10px;
-  background: var(--brand-2);
-  color: #fff;
-  font-size: 13.5px;
+.nb-arti-count {
+  font-size: 12px;
   font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 0.15s var(--ease-out), opacity 0.15s var(--ease-out);
-}
-
-.nb-cards-generate:hover { background: var(--brand-2-hover); }
-.nb-cards-generate:disabled { opacity: 0.65; cursor: default; }
-.nb-cards-generate svg { animation: none; }
-.nb-cards-generate:disabled svg { animation: nbspin 1.1s linear infinite; }
-
-.nb-cards-hint {
-  margin: 10px 2px 0;
-  font-size: 12.5px;
   color: var(--ink-4);
 }
 
-/* --- Body states ----------------------------------------------------------- */
-
-.nb-cards-error {
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: var(--danger-soft);
-  color: var(--danger);
-  font-size: 13px;
-  margin-bottom: 16px;
+.nb-arti-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-4);
+  margin: 4px 0 14px;
 }
 
-.nb-cards-loading,
-.nb-cards-empty {
+.nb-arti-empty-list {
+  font-size: 12.5px;
+  color: var(--ink-4);
+  padding: 12px 4px;
+}
+
+.nb-arti-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nb-arti-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 11px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.14s var(--ease-out);
+}
+
+.nb-arti-item:hover { background: var(--surface-3); }
+
+.nb-arti-item.active { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+
+.nb-arti-item-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  color: var(--brand-2);
+}
+
+.nb-arti-item-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.nb-arti-item-title {
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nb-arti-item-meta { font-size: 11.5px; color: var(--ink-4); }
+
+.nb-arti-detail { flex: 1; overflow: hidden; }
+
+.nb-arti-detail-scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding: 28px 32px 56px;
+  max-width: 920px;
+  /* The deck list now lives in the sidebar, so the detail fills the whole
+     center surface — center the reading column instead of left-pinning it. */
+  margin: 0 auto;
+}
+
+.nb-arti-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.nb-arti-delete {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--ink-4);
+  cursor: pointer;
+  transition: background 0.14s var(--ease-out), color 0.14s var(--ease-out);
+}
+
+.nb-arti-delete:hover { background: var(--danger-soft); color: var(--danger); }
+
+.nb-arti-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 80px 20px;
+  gap: 8px;
+  height: 100%;
   color: var(--ink-4);
   text-align: center;
 }
 
-.nb-cards-loading { color: var(--brand-2); }
-.nb-cards-loading svg { animation: nbspin 1.1s linear infinite; }
-.nb-cards-loading span { font-size: 13.5px; color: var(--ink-3); }
-.nb-cards-empty p { margin: 0; font-size: 13.5px; }
+.nb-arti-empty p { margin: 0; font-size: 13.5px; color: var(--ink-3); }
+.nb-arti-empty-sub { font-size: 12.5px !important; color: var(--ink-4) !important; }
 
-/* --- Deck heading ---------------------------------------------------------- */
+/* --- Inline chat artifact reference --------------------------------------- */
 
-.nb-deck-head {
-  margin-bottom: 18px;
+.nb-artiref-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+.nb-artiref {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  max-width: 420px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+  transition: box-shadow 0.16s var(--ease-out), border-color 0.16s var(--ease-out);
 }
+
+.nb-artiref:hover {
+  border-color: var(--brand-2);
+  box-shadow: 0 4px 16px -8px rgba(99, 91, 255, 0.4);
+}
+
+.nb-artiref-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--brand-soft);
+  color: var(--brand-2);
+}
+
+.nb-artiref-main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.nb-artiref-title { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.nb-artiref-meta { font-size: 12px; color: var(--ink-4); }
+.nb-artiref > svg { color: var(--ink-4); flex-shrink: 0; }
+
+/* --- Deck heading (shared by the artifact detail) ------------------------- */
 
 .nb-deck-title {
   font-size: 17px;
@@ -164,19 +193,15 @@
   margin: 0 0 3px;
 }
 
-.nb-deck-subtitle {
-  font-size: 13px;
-  color: var(--ink-3);
-  margin: 0;
-}
+.nb-deck-subtitle { font-size: 13px; color: var(--ink-3); margin: 0; }
 
 .nb-deck-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 14px;
 }
 
-/* --- Word card ------------------------------------------------------------- */
+/* --- Word card ------------------------------------------------------------ */
 
 .nb-wordcard {
   display: flex;
@@ -202,11 +227,7 @@
   flex-wrap: wrap;
 }
 
-.nb-wordcard-headline {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
+.nb-wordcard-headline { display: flex; align-items: baseline; gap: 8px; }
 
 .nb-wordcard-word {
   font-size: 21px;
@@ -216,32 +237,11 @@
   margin: 0;
 }
 
-.nb-wordcard-pos {
-  font-size: 12px;
-  font-style: italic;
-  font-weight: 560;
-  color: var(--brand-2);
-}
+.nb-wordcard-pos { font-size: 12px; font-style: italic; font-weight: 560; color: var(--brand-2); }
+.nb-wordcard-phonetic { font-size: 13px; color: var(--ink-3); }
 
-.nb-wordcard-phonetic {
-  font-size: 13px;
-  color: var(--ink-3);
-  font-variant: none;
-}
-
-.nb-wordcard-translation {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--ink);
-  margin: 0;
-}
-
-.nb-wordcard-definition {
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--ink-3);
-  margin: 0;
-}
+.nb-wordcard-translation { font-size: 15px; font-weight: 600; color: var(--ink); margin: 0; }
+.nb-wordcard-definition { font-size: 13px; line-height: 1.55; color: var(--ink-3); margin: 0; }
 
 .nb-wordcard-example {
   display: flex;
@@ -252,33 +252,11 @@
   margin-top: 2px;
 }
 
-.nb-wordcard-example-mark {
-  flex-shrink: 0;
-  color: var(--ink-4);
-  padding-top: 2px;
-}
+.nb-wordcard-example-mark { flex-shrink: 0; color: var(--ink-4); padding-top: 2px; }
+.nb-wordcard-example-en { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); margin: 0; }
+.nb-wordcard-example-zh { font-size: 12.5px; line-height: 1.5; color: var(--ink-4); margin: 4px 0 0; }
 
-.nb-wordcard-example-en {
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: var(--ink-2);
-  margin: 0;
-}
-
-.nb-wordcard-example-zh {
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--ink-4);
-  margin: 4px 0 0;
-}
-
-.nb-wordcard-synonyms {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 2px;
-}
-
+.nb-wordcard-synonyms { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
 .nb-wordcard-syn {
   font-size: 12px;
   padding: 3px 9px;
@@ -299,10 +277,8 @@
 
 .nb-wordcard-mnemonic svg { flex-shrink: 0; margin-top: 2px; }
 
-@keyframes nbspin { to { transform: rotate(360deg); } }
-
-@media (max-width: 560px) {
-  .nb-cards-scroll { padding: 20px 16px 40px; }
-  .nb-cards-compose { flex-direction: column; }
+@media (max-width: 720px) {
+  .nb-arti-list { width: 200px; padding-left: 14px; }
+  .nb-arti-detail-scroll { padding: 20px 16px 40px; }
   .nb-deck-grid { grid-template-columns: 1fr; }
 }

@@ -1,6 +1,7 @@
-// Sidebar footer account area: shows an avatar-only button when signed in
-// (click opens a popover menu with identity info and logout), or a
-// login/register entry when signed out.
+// Top-right corner account control: an avatar-only button when signed in
+// (click opens a popover menu with identity info and logout), or a login/
+// register icon button when signed out. Sits in the floating top-right bar
+// alongside the settings menu and the notification bell.
 
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -26,22 +27,22 @@ export function AccountFoot() {
 	const setAiSetupOpen = useAppStore((s) => s.setAiSetupOpen);
 	const [menuOpen, setMenuOpen] = useState(false);
 
+	// While auth resolves, still surface the settings control so the bar shape
+	// stays stable and settings remain reachable.
 	if (isLoading) {
-		return <div className="nb-side-foot" data-testid="account-area" />;
+		return (
+			<div className="nb-corner-account" data-testid="account-area">
+				<SettingsMenu />
+			</div>
+		);
 	}
 
 	if (!user) {
 		return (
-			<div className="nb-side-foot" data-testid="account-area">
-				<Link to="/login" className="nb-item nb-login-entry" data-testid="login-entry">
-					<span className="avatar avatar-sm" style={{ background: 'var(--brand-soft)', color: 'var(--brand-2)' }}>
-						<Icons.bee size={14} sw={1.6} />
-					</span>
-					<div className="meta">
-						<div className="title">登录 / 注册</div>
-						<div className="sub">同步你的对话与任务</div>
-					</div>
-					<span style={{ color: 'var(--ink-4)' }}><Icons.chevR size={15} /></span>
+			<div className="nb-corner-account" data-testid="account-area">
+				<SettingsMenu />
+				<Link to="/login" className="fbtn" title="登录 / 注册" data-testid="login-entry">
+					<Icons.bee size={16} sw={1.6} />
 				</Link>
 			</div>
 		);
@@ -50,52 +51,54 @@ export function AccountFoot() {
 	const displayName = user.name || user.email.split('@')[0];
 
 	return (
-		<div className="nb-side-foot" data-testid="account-area">
-			<button
-				className="nb-account-trigger"
-				title={displayName}
-				aria-haspopup="menu"
-				aria-expanded={menuOpen}
-				onClick={() => setMenuOpen((open) => !open)}
-				data-testid="account-menu-trigger"
-			>
-				<Avatar className="avatar" image={user.image} name={displayName} />
-			</button>
-
+		<div className="nb-corner-account" data-testid="account-area">
 			<SettingsMenu />
 
-			{menuOpen && (
-				<>
-					<div className="nb-scrim" onClick={() => setMenuOpen(false)} />
-					<div className="nb-account-pop" data-testid="account-menu">
-						<div className="nb-account-id">
-							<Avatar className="avatar" image={user.image} name={displayName} />
-							<div className="meta">
-								<div className="title">{displayName}</div>
-								<div className="sub" title={user.email}>{user.email}</div>
+			<div className="nb-corner-ctrl">
+				<button
+					className="fbtn nb-account-trigger"
+					title={displayName}
+					aria-haspopup="menu"
+					aria-expanded={menuOpen}
+					onClick={() => setMenuOpen((open) => !open)}
+					data-testid="account-menu-trigger"
+				>
+					<Avatar className="avatar" image={user.image} name={displayName} />
+				</button>
+
+				{menuOpen && (
+					<>
+						<div className="nb-scrim" onClick={() => setMenuOpen(false)} />
+						<div className="nb-account-pop" data-testid="account-menu">
+							<div className="nb-account-id">
+								<Avatar className="avatar" image={user.image} name={displayName} />
+								<div className="meta">
+									<div className="title">{displayName}</div>
+									<div className="sub" title={user.email}>{user.email}</div>
+								</div>
 							</div>
+							<div className="nb-account-sep" />
+							<button
+								className="nb-account-action"
+								onClick={() => { setMenuOpen(false); setAiSetupOpen(true); }}
+								data-testid="ai-settings-entry"
+							>
+								<Icons.spark size={15} />
+								AI 模型设置
+							</button>
+							<button
+								className="nb-account-action"
+								onClick={() => { setMenuOpen(false); logout.mutate(); }}
+								disabled={logout.isPending}
+								data-testid="logout-button"
+							>
+								<Icons.logout size={15} />
+								退出登录
+							</button>
 						</div>
-						<div className="nb-account-sep" />
-						<button
-							className="nb-account-action"
-							onClick={() => { setMenuOpen(false); setAiSetupOpen(true); }}
-							data-testid="ai-settings-entry"
-						>
-							<Icons.spark size={15} />
-							AI 模型设置
-						</button>
-						<button
-							className="nb-account-action"
-							onClick={() => { setMenuOpen(false); logout.mutate(); }}
-							disabled={logout.isPending}
-							data-testid="logout-button"
-						>
-							<Icons.logout size={15} />
-							退出登录
-						</button>
-					</div>
-				</>
-			)}
+					</>
+				)}
+			</div>
 		</div>
 	);
 }

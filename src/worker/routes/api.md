@@ -65,3 +65,9 @@ plus the smoke-test `hello` endpoint.
 - **Motivation**: the AI provider settings feature adds its own route module.
 - **Goal**: `aiSettingsRoutes` mounted at `/ai` (kept in the RPC chain so the
   typed client sees `apiClient.ai.settings`).
+
+### 2026-06-13 — mount /artifacts, drop /cards
+- **Motivation**: card generation moved to a chat agent tool; the standalone
+  `/cards/generate` endpoint is superseded, and the Artifacts page needs
+  list/get/delete endpoints.
+- **Goal**: `artifactRoutes` mounted at `/artifacts`; `cardRoutes` removed.
