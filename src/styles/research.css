@@ -79,27 +79,89 @@
   transform-origin: 0 0;
   will-change: transform;
 }
-.rc-edges {
-  position: absolute;
-  top: 0;
-  left: 0;
-  overflow: visible;
-  width: 1px;
-  height: 1px;
-  pointer-events: none;
+
+/* ---------- Outline (hierarchical view) ---------- */
+.rc-outline {
+  display: flex;
+  flex-direction: column;
 }
-.rc-edges path {
-  stroke: var(--border-2);
-  stroke-width: 1.5;
+/* Research-topic banner: a quiet heading, not a card. Clickable to reopen the
+   root's follow-up questions. */
+.rc-outline-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  text-align: left;
+  margin-bottom: 30px;
+  background: transparent;
+}
+.rc-outline-banner-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.rc-outline-banner-title {
+  font-size: 30px;
+  font-weight: 740;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.rc-outline-banner:hover .rc-outline-banner-title {
+  color: var(--brand-2);
+}
+.rc-outline-rootloading {
+  margin-bottom: 28px;
+}
+.rc-outline-rootloading .rc-node {
+  width: 100%;
+}
+
+/* Top-level outline items stack vertically; each item indents its own children
+   beneath a vertical rail. */
+.rc-branches {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.rc-branch {
+  display: flex;
+  flex-direction: column;
+}
+.rc-rail {
+  display: flex;
+  margin-top: 16px;
+  margin-left: 30px;
+  gap: 18px;
+  position: relative;
+}
+/* Background-color gradient (not borders) carries depth; the rail is the only
+   line, kept at the lightest border token so it never competes for attention. */
+.rc-rail-line {
+  width: 2px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  background: var(--border);
+  align-self: stretch;
+}
+.rc-rail-children {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex: 1;
+  min-width: 0;
 }
 
 /* ---------- Node cards ---------- */
 .rc-node {
-  position: absolute;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 13px 15px;
+  width: 100%;
+  padding: 15px 18px;
   border-radius: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -107,6 +169,10 @@
   text-align: left;
   transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
+/* Depth is read through a subtle cool-tone background step (not heavier
+   borders), so nesting stays legible without visual noise. */
+.rc-node.depth-2 { background: var(--surface-2); }
+.rc-node.depth-3 { background: var(--surface-3); }
 .rc-node:hover {
   border-color: var(--border-2);
   box-shadow: 0 2px 4px rgba(15, 17, 23, 0.06), 0 8px 22px rgba(15, 17, 23, 0.08);
@@ -140,6 +206,10 @@
   color: var(--ink);
 }
 .rc-node.is-root .rc-node-title { font-size: 16px; }
+/* Title scales down with depth to reinforce the outline hierarchy. */
+.rc-node.depth-1 .rc-node-title { font-size: 16px; }
+.rc-node.depth-2 .rc-node-title { font-size: 14.5px; }
+.rc-node.depth-3 .rc-node-title { font-size: 13.5px; }
 .rc-node-brief {
   font-size: 12.5px;
   line-height: 1.5;

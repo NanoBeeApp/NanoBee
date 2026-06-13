@@ -1,16 +1,19 @@
-// The infinite research canvas: a pan/zoom viewport rendering the node tree as
-// absolutely-positioned cards plus an SVG edge layer (parent → child links).
+// The research canvas: a pan/zoom viewport that renders the node tree as a
+// nested outline (hierarchical view) — a research-topic banner followed by the
+// outline items, each indented under its parent along a vertical rail. This is
+// the default and only canvas layout, ported from Curve's OutlineTree/NodeBranch
+// (NOT a top-down tidy-tree diagram).
 //
 // Interaction invariants ported from Curve:
 //  - enters at a comfortable reading scale (not fit-all-to-one-screen),
-//  - drag background to pan, wheel to zoom around the cursor.
-// Transform lives in local state (perf); the node coordinates come from the
-// store's tidy-tree layout.
+//  - drag the background to pan, wheel/pinch to zoom around the cursor.
+// Structure comes purely from each node's parentId + the store's `order`; there
+// are no per-node coordinates — the browser lays the outline out in normal flow.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
 import { ResearchNodeCard } from "./ResearchNodeCard";
-import { NODE_H, NODE_W } from "./layout";
+import type { ResearchNode } from "../../research/types";
 
 interface Transform {
   tx: number;
@@ -20,7 +23,23 @@ interface Transform {
 
 const MIN_SCALE = 0.4;
 const MAX_SCALE = 1.6;
-const INITIAL_SCALE = 0.9;
+const INITIAL_SCALE = 1;
+// Fixed-width outline column (world units). Kept narrow enough to read like an
+// article column; per-depth cards shrink further via CSS max-width.
+const OUTLINE_WIDTH = 760;
+
+/** Parent id → ordered child ids, derived from the flat node map + `order`. */
+function buildChildrenMap(
+  nodes: Record<string, ResearchNode>,
+  order: string[],
+): Record<string, string[]> {
+  const childrenOf: Record<string, string[]> = {};
+  for (const id of order) {
+    const parentId = nodes[id]?.parentId;
+    if (parentId) (childrenOf[parentId] ??= []).push(id);
+  }
+  return childrenOf;
+}
 
 export function ResearchCanvas() {
   const nodes = useResearchStore((s) => s.nodes);
@@ -33,30 +52,31 @@ export function ResearchCanvas() {
   const centeredFor = useRef<string>("");
   const pan = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
 
-  // Center content twice per project: once on the bare root ("seed") and once
-  // when the full outline first lands ("tree"). Growing children afterwards
-  // keeps the same "tree" key, so the view does not jump on every follow-up.
+  const rootId = order[0];
+  const root = rootId ? nodes[rootId] : null;
+  const childrenOf = useMemo(() => buildChildrenMap(nodes, order), [nodes, order]);
+
+  // Horizontally center the fixed-width outline column. Re-center twice per
+  // project: once on the bare root ("seed") and once when the full outline first
+  // lands ("tree"); growing children afterwards keeps the same key so the view
+  // doesn't jump on every follow-up.
   useEffect(() => {
-    const root = order[0];
-    if (!root) return;
-    const key = `${root}:${order.length <= 1 ? "seed" : "tree"}`;
+    if (!rootId) return;
+    const key = `${rootId}:${order.length <= 1 ? "seed" : "tree"}`;
     if (centeredFor.current === key) return;
     const vp = viewportRef.current;
     if (!vp) return;
-    const xs = order.map((id) => nodes[id]?.x ?? 0);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs) + NODE_W;
-    const contentW = (maxX - minX) * INITIAL_SCALE;
-    const tx = (vp.clientWidth - contentW) / 2 - minX * INITIAL_SCALE;
-    const ty = 48;
+    const tx = (vp.clientWidth - OUTLINE_WIDTH * INITIAL_SCALE) / 2;
     centeredFor.current = key;
-    setT({ tx, ty, scale: INITIAL_SCALE });
-  }, [order, nodes]);
+    setT({ tx: Math.max(24, tx), ty: 40, scale: INITIAL_SCALE });
+  }, [rootId, order.length]);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
-      // Only pan when the background (not a card) is grabbed.
-      if ((e.target as HTMLElement).closest(".rc-node")) return;
+      // Only pan when the bare background is grabbed — never when starting on an
+      // interactive element (a node card or the topic banner), so their clicks
+      // aren't swallowed by a pan/pointer-capture.
+      if ((e.target as HTMLElement).closest(".rc-node, .rc-outline-banner")) return;
       pan.current = { x: e.clientX, y: e.clientY, tx: t.tx, ty: t.ty };
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     },
@@ -82,28 +102,21 @@ export function ResearchCanvas() {
     const rect = vp.getBoundingClientRect();
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
-    setT((prev) => {
-      const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-      const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev.scale * factor));
-      const k = scale / prev.scale;
-      // Keep the point under the cursor fixed while zooming.
-      return { scale, tx: cx - (cx - prev.tx) * k, ty: cy - (cy - prev.ty) * k };
-    });
+    // ctrl/meta (or pinch) → zoom around the cursor; otherwise pan vertically.
+    if (e.ctrlKey || e.metaKey) {
+      setT((prev) => {
+        const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+        const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev.scale * factor));
+        const k = scale / prev.scale;
+        return { scale, tx: cx - (cx - prev.tx) * k, ty: cy - (cy - prev.ty) * k };
+      });
+      return;
+    }
+    setT((prev) => ({ ...prev, tx: prev.tx - e.deltaX, ty: prev.ty - e.deltaY }));
   }, []);
 
-  const edges = order
-    .map((id) => nodes[id])
-    .filter((n) => n && n.parentId && nodes[n.parentId])
-    .map((n) => {
-      const p = nodes[n!.parentId!];
-      return {
-        id: n!.id,
-        x1: p.x + NODE_W / 2,
-        y1: p.y + NODE_H,
-        x2: n!.x + NODE_W / 2,
-        y2: n!.y,
-      };
-    });
+  if (!root) return null;
+  const rootLoading = root.status === "loading";
 
   return (
     <div
@@ -118,28 +131,74 @@ export function ResearchCanvas() {
       <div
         className="rc-world"
         style={{ transform: `translate(${t.tx}px, ${t.ty}px) scale(${t.scale})` }}>
-        <svg className="rc-edges" aria-hidden="true">
-          {edges.map((e) => (
-            <path
-              key={e.id}
-              d={`M ${e.x1} ${e.y1} C ${e.x1} ${e.y1 + 48}, ${e.x2} ${e.y2 - 48}, ${e.x2} ${e.y2}`}
-              fill="none"
-            />
-          ))}
-        </svg>
-        {order.map((id) => {
-          const node = nodes[id];
-          if (!node) return null;
-          return (
-            <ResearchNodeCard
-              key={id}
-              node={node}
-              active={id === activeNodeId}
-              onOpen={openNode}
-            />
-          );
-        })}
+        <div className="rc-outline" style={{ width: OUTLINE_WIDTH }}>
+          <button
+            type="button"
+            className="rc-outline-banner"
+            onClick={() => openNode(root.id)}
+            data-testid="research-banner"
+            title={root.title}>
+            <span className="rc-outline-banner-label">研究方向</span>
+            <span className="rc-outline-banner-title">{root.title}</span>
+          </button>
+
+          {rootLoading && (
+            <div className="rc-outline-rootloading">
+              <ResearchNodeCard node={root} active={false} onOpen={openNode} />
+            </div>
+          )}
+
+          <div className="rc-branches">
+            {(childrenOf[root.id] ?? []).map((cid) => (
+              <NodeBranch
+                key={cid}
+                id={cid}
+                nodes={nodes}
+                childrenOf={childrenOf}
+                activeNodeId={activeNodeId}
+                onOpen={openNode}
+              />
+            ))}
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
+
+interface BranchProps {
+  id: string;
+  nodes: Record<string, ResearchNode>;
+  childrenOf: Record<string, string[]>;
+  activeNodeId: string | null;
+  onOpen: (id: string) => void;
+}
+
+/** One outline node + its indented children, joined by a vertical rail. */
+function NodeBranch({ id, nodes, childrenOf, activeNodeId, onOpen }: BranchProps) {
+  const node = nodes[id];
+  if (!node) return null;
+  const kids = childrenOf[id] ?? [];
+  return (
+    <div className="rc-branch" data-depth={node.depth}>
+      <ResearchNodeCard node={node} active={id === activeNodeId} onOpen={onOpen} />
+      {kids.length > 0 && (
+        <div className="rc-rail">
+          <div className="rc-rail-line" aria-hidden="true" />
+          <div className="rc-rail-children">
+            {kids.map((cid) => (
+              <NodeBranch
+                key={cid}
+                id={cid}
+                nodes={nodes}
+                childrenOf={childrenOf}
+                activeNodeId={activeNodeId}
+                onOpen={onOpen}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

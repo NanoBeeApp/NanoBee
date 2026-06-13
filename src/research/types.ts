@@ -62,8 +62,9 @@ export type ResearchNodeStatus = "idle" | "loading" | "ready" | "failed";
 
 /**
  * One knowledge node on the canvas. The root node carries the research topic;
- * concept nodes carry generated articles. Layout coordinates (`x`/`y`) are
- * computed on the client and persisted so the canvas restores exactly.
+ * concept nodes carry generated articles. The canvas renders nodes as a nested
+ * outline (hierarchical view), so structure comes entirely from `parentId` +
+ * `depth` + the snapshot `order` — there are no per-node layout coordinates.
  */
 export interface ResearchNode {
   id: string;
@@ -85,9 +86,6 @@ export interface ResearchNode {
   needsContent?: boolean;
   /** The follow-up question / focus term this node grew from. */
   sourceQuestion?: string;
-  /** Canvas layout position. */
-  x: number;
-  y: number;
 }
 
 /** A full research project snapshot — what gets saved to / loaded from D1. */
@@ -96,7 +94,7 @@ export interface ResearchSnapshot {
   title: string;
   topic: string;
   nodes: Record<string, ResearchNode>;
-  /** Node id render order (roots first), keeps layout stable. */
+  /** Node id render order (root first); fixes sibling order in the outline. */
   order: string[];
   updatedAt: string;
 }

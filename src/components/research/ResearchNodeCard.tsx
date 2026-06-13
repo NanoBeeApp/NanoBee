@@ -1,9 +1,9 @@
-// One knowledge node rendered as a card on the canvas. Pure presentational
+// One knowledge node rendered as a card in the outline. Pure presentational
 // component: it receives a node + handlers and renders title / brief / status.
-// Positioning is done by the parent canvas (absolute, from node.x/node.y).
+// Layout is normal document flow — the parent canvas nests cards under a
+// vertical rail; this card never positions itself.
 
 import { Icons } from "../../icons/icons";
-import { NODE_W } from "./layout";
 import type { ResearchNode } from "../../research/types";
 
 interface Props {
@@ -21,7 +21,6 @@ export function ResearchNodeCard({ node, active, onOpen }: Props) {
       className={`rc-node depth-${Math.min(node.depth, 3)}${node.isRoot ? " is-root" : ""}${
         active ? " is-active" : ""
       }${failed ? " is-failed" : ""}`}
-      style={{ left: node.x, top: node.y, width: NODE_W }}
       onClick={() => onOpen(node.id)}
       data-testid={`research-node-${node.id}`}
       title={node.title}>

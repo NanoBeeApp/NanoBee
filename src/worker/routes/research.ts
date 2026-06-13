@@ -60,8 +60,6 @@ const nodeSchema = z.object({
   isRoot: z.boolean().optional(),
   needsContent: z.boolean().optional(),
   sourceQuestion: z.string().optional(),
-  x: z.number(),
-  y: z.number(),
 });
 
 const snapshotSchema = z.object({

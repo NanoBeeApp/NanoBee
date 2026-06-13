@@ -9,7 +9,6 @@
 import { create } from "zustand";
 import { apiClient } from "../lib/api-client";
 import { nextId } from "../data/ids";
-import { layoutNodes } from "../components/research/layout";
 import type {
   ResearchGenerationResult,
   ResearchNode,
@@ -62,25 +61,12 @@ function outlineToNodes(
       tags: item.tags,
       status: "ready",
       needsContent: true,
-      x: 0,
-      y: 0,
     };
     order.push(id);
     if (item.children?.length) {
       outlineToNodes(item.children, id, depth + 1, nodes, order);
     }
   }
-}
-
-/** Apply tidy-tree layout, writing x/y back onto the nodes. */
-function relayout(state: { nodes: Record<string, ResearchNode>; order: string[] }) {
-  const pos = layoutNodes(state.nodes, state.order);
-  const nodes: Record<string, ResearchNode> = {};
-  for (const id of state.order) {
-    const p = pos[id] ?? { x: 0, y: 0 };
-    nodes[id] = { ...state.nodes[id], x: p.x, y: p.y };
-  }
-  return nodes;
 }
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
@@ -163,8 +149,6 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         title: topic,
         status: "loading",
         isRoot: true,
-        x: 0,
-        y: 0,
       };
       set({
         phase: "canvas",
@@ -198,7 +182,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       };
       const order = [rootId];
       outlineToNodes(result.outline, rootId, 1, nodes, order);
-      set({ nodes: relayout({ nodes, order }), order, generating: false });
+      set({ nodes, order, generating: false });
       schedulePersist();
     },
 
@@ -255,14 +239,12 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         title: label,
         status: "loading",
         sourceQuestion: opts.question ?? opts.focusTerm,
-        x: 0,
-        y: 0,
       };
-      set((s) => {
-        const order = [...s.order, childId];
-        const nodes = relayout({ nodes: { ...s.nodes, [childId]: child }, order });
-        return { nodes, order, activeNodeId: childId };
-      });
+      set((s) => ({
+        nodes: { ...s.nodes, [childId]: child },
+        order: [...s.order, childId],
+        activeNodeId: childId,
+      }));
 
       const context = [get().topic, parent.brief, parent.summary, parent.content?.slice(0, 1200)]
         .filter(Boolean)

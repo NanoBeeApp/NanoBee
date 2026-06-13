@@ -9,7 +9,7 @@ worker (AI generation + D1 persistence) and the client (canvas + store).
 - `ResearchOutlineItem` — node of the generated outline tree.
 - `ResearchGenerationResult` — validated AI output (`content`, exactly 3
   `questions`, optional `summary` / `outline` / `tags`, provider metadata).
-- `ResearchNode` — one knowledge node on the canvas (incl. layout `x`/`y`).
+- `ResearchNode` — one knowledge node (structure via `parentId` + `depth`).
 - `ResearchSnapshot` — a full project (nodes + order), the D1 persistence shape.
 - `ResearchProjectMeta` — sidebar list entry.
 
@@ -22,10 +22,18 @@ worker (AI generation + D1 persistence) and the client (canvas + store).
 - Ported and trimmed from WindSeed Curve's `core/research` + `core/ai` types.
 - Follow-up questions are fixed at exactly three (product invariant — every AI
   generation must offer three next steps).
-- Layout coordinates live on the node and are persisted so the canvas restores
-  exactly; the snapshot is stored as one JSON blob per project (MVP).
+- Nodes carry no layout coordinates: the canvas renders a nested outline whose
+  structure comes from `parentId` + `depth` + the snapshot `order`. The snapshot
+  is stored as one JSON blob per project (MVP).
 
 ## Change history
+
+### 2026-06-13 — Drop layout coordinates from ResearchNode
+- **Motivation**: The canvas became a nested-outline hierarchical view (Curve's
+  default) instead of an absolute tidy-tree, so `x`/`y` were dead fields.
+- **Goal**: Make the type reflect that structure derives from `parentId`/`order`.
+- **Key decision**: Removed `x`/`y`; old JSON snapshots that still carry them are
+  harmless (ignored on load, stripped by the worker schema on save).
 
 ### 2026-06-13 — Created
 - **Motivation**: Merge WindSeed Curve's core Research Canvas into NanoBee as a

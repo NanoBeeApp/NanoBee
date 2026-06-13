@@ -1,5 +1,5 @@
 // D1 persistence for research projects. Each project is stored as one JSON
-// snapshot blob (nodes + layout) keyed by id and scoped to an owner bucket
+// snapshot blob (nodes + order) keyed by id and scoped to an owner bucket
 // (the signed-in user id, or "anon" for signed-out visitors). This mirrors
 // Curve's snapshot save/load API with a simpler one-row-per-project storage.
 
