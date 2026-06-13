@@ -1,14 +1,14 @@
 # src/components/today/TimelineCard.tsx
 
 ## Responsibility
-Tweet-style timeline row (Today default view): round topic-color avatar, NanoBee + time header, full body, optional trend sparkline, icon-only action row. Rendered as a flat list separated only by hairline dividers; unread items are marked solely by a small amber dot.
+Tweet-style timeline row (Today default view): round topic-color avatar, NanoBee + time header, full body, optional trend sparkline. Rendered as a flat list separated only by hairline dividers.
 
 ## Dependencies
 - Upstream: types, icons, Sparkline
 - Downstream: TodayView
 
 ## Key notes
-- data-cid / data-rid attributes feed the viewing-context tracker and scroll-past auto-read observer in TodayView.
+- The data-cid attribute feeds the viewing-context tracker in TodayView.
 
 ## Change history
 
@@ -30,6 +30,10 @@ Tweet-style timeline row (Today default view): round topic-color avatar, NanoBee
 ### 2026-06-13 — drop the source line
 - **Motivation**: user asked to remove the "来源 · …" source attribution line from each row — it added a trailing line of low-value metadata to the quiet feed.
 - **Change**: removed the `item.source` `.src-line` render from the timeline row. The source is still carried on the item data and shown in the list/card views via ReadBody; only the timeline drops it.
+
+### 2026-06-13 — remove the read/unread feature
+- **Motivation**: user asked to drop read-state management entirely (no unread dots, no mark-as-read).
+- **Change**: removed the unread/read CSS classes, the amber `tl-dot` and the `data-rid` auto-read anchor; the props interface no longer extends `ReadItemActions`.
 
 ### 2026-06-12 — drop the row-level click handler
 - **Motivation**: user followed up with "不要整行点击" — the timeline should be a purely read-only feed with no row interaction.

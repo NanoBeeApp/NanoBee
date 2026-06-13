@@ -9,5 +9,9 @@ Initial proactive updates (Today page reading items + bell dropdown), and UPDATE
 
 ## Change history
 
+### 2026-06-13 — remove the read/unread feature
+- **Motivation**: user asked to drop read-state management entirely.
+- **Change**: seed items no longer carry an `unread` flag.
+
 ### 2026-06-12 — created
 - **Motivation**: design handoff demo content; bodies are structured (paragraphs + bullet lists) so the three Today views can all render the same data.

@@ -4,7 +4,7 @@ import type { UpdateItem } from '../types';
 
 export const INITIAL_UPDATES: UpdateItem[] = [
   {
-    id: 'u1', topicId: 'gold', icon: 'trend', color: '#1a7f55', tone: 'up', unread: true,
+    id: 'u1', topicId: 'gold', icon: 'trend', color: '#1a7f55', tone: 'up',
     title: '金价大幅上涨 +2.8%', time: '今天 09:14', group: '今天',
     summary: '现货黄金突破 $2,412/oz，单日涨幅 2.8%，是近三周最大涨幅。主因避险情绪升温与美元走弱。',
     body: [
@@ -15,7 +15,7 @@ export const INITIAL_UPDATES: UpdateItem[] = [
     source: '世界黄金协会 · DXY · 美债 10Y',
   },
   {
-    id: 'u2', topicId: 'gold', icon: 'spark', color: '#d4a64a', tone: 'info', unread: true,
+    id: 'u2', topicId: 'gold', icon: 'spark', color: '#d4a64a', tone: 'info',
     title: '黄金趋势可能反转', time: '今天 09:15', group: '今天',
     summary: '过去 5 个交易日下跌趋势被打破，短期动能转为上行。要不要我帮你盯住 $2,450 这个关口？',
     body: [
@@ -25,7 +25,7 @@ export const INITIAL_UPDATES: UpdateItem[] = [
     source: '基于你的「金价异动提醒」任务',
   },
   {
-    id: 'u7', topicId: 'edu', icon: 'clock', color: '#635bff', tone: 'info', unread: true,
+    id: 'u7', topicId: 'edu', icon: 'clock', color: '#635bff', tone: 'info',
     title: '待办 · 今晚 20:00 陪孩子复习数学', time: '今天 20:00', group: '今天',
     summary: '你设置的复习提醒：明天数学单元测，5 道第三章易错题已备好。',
     body: [
@@ -35,7 +35,7 @@ export const INITIAL_UPDATES: UpdateItem[] = [
     source: '来自任务「今晚陪孩子复习数学」',
   },
   {
-    id: 'u3', topicId: 'edu', icon: 'book', color: '#635bff', tone: 'info', unread: false,
+    id: 'u3', topicId: 'edu', icon: 'book', color: '#635bff', tone: 'info',
     title: '明天有数学单元测', time: '今天 07:30', group: '今天',
     summary: '从班级群和校历检测到：明天上午第二节数学单元测，范围是第三章。已为你准备 5 道易错题。',
     body: [
@@ -45,7 +45,7 @@ export const INITIAL_UPDATES: UpdateItem[] = [
     source: '班级群 · 校历 · 练习记录',
   },
   {
-    id: 'u4', topicId: 'brief', icon: 'news', color: '#ff6a3d', tone: 'info', unread: false,
+    id: 'u4', topicId: 'brief', icon: 'news', color: '#ff6a3d', tone: 'info',
     title: '今日早报已就绪', time: '今天 07:30', group: '今天',
     summary: '5 条要闻 · 其中 2 条与你关注的科技、地产相关。点开查看 90 秒速读版。',
     body: [
@@ -54,7 +54,7 @@ export const INITIAL_UPDATES: UpdateItem[] = [
     source: '每日早报任务 · 07:30 自动生成',
   },
   {
-    id: 'u5', topicId: 'gold', icon: 'trendDown', color: '#c4362b', tone: 'down', unread: false,
+    id: 'u5', topicId: 'gold', icon: 'trendDown', color: '#c4362b', tone: 'down',
     title: '金价回调 -1.6%', time: '昨天 21:40', group: '本周',
     summary: '隔夜美联储官员鹰派发言，金价自高点回落 1.6%。整体仍在上行通道内。',
     body: [
@@ -63,7 +63,7 @@ export const INITIAL_UPDATES: UpdateItem[] = [
     source: '金价异动提醒 · 自动触发',
   },
   {
-    id: 'u6', topicId: 'health', icon: 'heart', color: '#1a7f55', tone: 'info', unread: false,
+    id: 'u6', topicId: 'health', icon: 'heart', color: '#1a7f55', tone: 'info',
     title: '本周步数低于目标', time: '周一 20:00', group: '本周',
     summary: '上周日均 4,210 步，低于你设定的 8,000 步目标。要调整提醒时间或目标吗？',
     body: [

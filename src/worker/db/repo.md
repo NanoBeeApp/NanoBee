@@ -16,12 +16,17 @@ the JSON-payload (de)serialization so route handlers stay thin.
 - Downstream: `routes/bootstrap.ts`, `routes/tasks.ts`
 
 ## Notes
-- Hot/query fields (ids, topic, status, unread, group) are real columns; rich
+- Hot/query fields (ids, topic, status, group) are real columns; rich
   display content lives in a `payload` JSON column — see migration 0002.
 - `listConversations` loads all messages in one query; fine at demo scale,
   paginate per chat when conversations grow.
 
 ## Change history
+
+### 2026-06-13 — remove the read/unread feature
+- **Motivation**: user asked to drop read-state management entirely.
+- **Change**: `listUpdates` no longer selects or maps the `unread` column
+  (dropped by migration 0006).
 
 ### 2026-06-12 — created
 - **Motivation**: the first D1 endpoints inlined SQL in the route file; with

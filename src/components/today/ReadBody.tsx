@@ -1,19 +1,18 @@
 // Expanded body of a Today item: paragraphs, bullet lists, source line and
-// the "open chat / toggle read" action row. Shared by list and card views.
+// the "open chat" action row. Shared by list and card views.
 import type { UpdateItem } from '../../types';
 import { topicById, topicShortName } from '../../data/topics';
 import { Icons } from '../../icons/icons';
 
 export interface ReadItemActions {
   onOpenChat: (item: UpdateItem) => void;
-  onToggleRead: (id: string, read: boolean) => void;
 }
 
 interface ReadBodyProps extends ReadItemActions {
   item: UpdateItem;
 }
 
-export function ReadBody({ item, onOpenChat, onToggleRead }: ReadBodyProps) {
+export function ReadBody({ item, onOpenChat }: ReadBodyProps) {
   const t = topicById(item.topicId);
   return (
     <div className="nb-read-body">
@@ -27,11 +26,6 @@ export function ReadBody({ item, onOpenChat, onToggleRead }: ReadBodyProps) {
           onClick={(e) => { e.stopPropagation(); onOpenChat(item); }}
           data-testid={`open-chat-from-item-${item.id}`}>
           <Icons.chat size={13} /> 打开对话
-        </button>
-        <button className="btn btn-ghost btn-sm"
-          onClick={(e) => { e.stopPropagation(); onToggleRead(item.id, item.unread); }}
-          data-testid={`toggle-read-item-${item.id}`}>
-          {item.unread ? '标为已读' : '标为未读'}
         </button>
         {t && (
           <span style={{ marginLeft: 'auto' }}>

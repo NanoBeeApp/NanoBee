@@ -16,6 +16,10 @@ All interfaces/types listed above plus `IconName`.
 
 ## Change history
 
+### 2026-06-13 — remove the read/unread feature
+- **Motivation**: user asked to drop read-state management entirely.
+- **Change**: `UpdateItem` lost its `unread` flag.
+
 ### 2026-06-12 — created
 - **Motivation**: the prototype passed untyped JS objects; porting to strict TS needed a precise model of message/task/update shapes.
 

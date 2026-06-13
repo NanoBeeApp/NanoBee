@@ -122,7 +122,7 @@ interface BootstrapBody {
 	chats: { id: string; topicId: string; title: string }[];
 	conversations: Record<string, { id: string; role: string }[]>;
 	tasks: { id: string; status: string; next: string }[];
-	updates: { id: string; unread: boolean }[];
+	updates: { id: string }[];
 }
 
 async function getBootstrap(): Promise<BootstrapBody> {
@@ -230,49 +230,5 @@ describe("tasks (D1)", () => {
 	it("POST /api/tasks/:id/toggle returns 404 for an unknown id", async () => {
 		const res = await fetch(`${BASE_URL}/api/tasks/t_nope/toggle`, { method: "POST" });
 		expect(res.status).toBe(404);
-	});
-});
-
-describe("updates (D1)", () => {
-	it("POST /api/updates/:id/read flips one read flag", async () => {
-		const setRead = async (read: boolean) => {
-			const res = await fetch(`${BASE_URL}/api/updates/u1/read`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ read }),
-			});
-			expect(res.status).toBe(200);
-		};
-		await setRead(true);
-		let boot = await getBootstrap();
-		expect(boot.updates.find((u) => u.id === "u1")?.unread).toBe(false);
-		// Restore the demo's initial unread state.
-		await setRead(false);
-		boot = await getBootstrap();
-		expect(boot.updates.find((u) => u.id === "u1")?.unread).toBe(true);
-	});
-
-	it("POST /api/updates/:id/read returns 404 for an unknown id", async () => {
-		const res = await fetch(`${BASE_URL}/api/updates/u_nope/read`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ read: true }),
-		});
-		expect(res.status).toBe(404);
-	});
-
-	it("POST /api/updates/read-all marks everything read", async () => {
-		const res = await fetch(`${BASE_URL}/api/updates/read-all`, { method: "POST" });
-		expect(res.status).toBe(200);
-		const boot = await getBootstrap();
-		expect(boot.updates.every((u) => !u.unread)).toBe(true);
-		// Restore u1/u2/u7 so the demo badge state survives the test run.
-		for (const id of ["u1", "u2", "u7"]) {
-			await fetch(`${BASE_URL}/api/updates/${id}/read`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ read: false }),
-			});
-		}
 	});
 });

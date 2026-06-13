@@ -1,10 +1,10 @@
 # src/store/useAppStore.ts
 
 ## Responsibility
-Global zustand store: navigation (view, active chat/topic, collapse states), chats + conversations + session metadata, tasks, proactive updates (read state), global quick chat and toasts. Owns all server sync: loads persisted state via `bootstrap()` and persists every mutation through the typed RPC client.
+Global zustand store: navigation (view, active chat/topic, collapse states), chats + conversations + session metadata, tasks, proactive updates, global quick chat and toasts. Owns all server sync: loads persisted state via `bootstrap()` and persists every mutation through the typed RPC client.
 
 ## Key exports
-- `useAppStore` hook, `selectUnreadCount` selector, `View` / `SidebarMode` types
+- `useAppStore` hook, `View` / `SidebarMode` types
 
 ## Dependencies
 - Upstream: zustand, lib/api-client (Hono RPC), data layer (UPDATE_TO_CHAT mapping + nextId)
@@ -12,12 +12,19 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ## Key notes
 - Data flow: the store starts empty (new-user state, EmptyState renders); `bootstrap()` fills it with `GET /api/bootstrap`. On fetch failure the store stays empty and shows a retry toast.
-- Mutations are optimistic: send/sendQuick append the user message immediately (ids generated client-side so D1 stores exactly what was rendered); createTask/toggleTask/markRead/markAllRead roll back and toast on API failure.
+- Mutations are optimistic: send/sendQuick append the user message immediately (ids generated client-side so D1 stores exactly what was rendered); createTask/toggleTask roll back and toast on API failure.
 - `deliverMessage()` is the shared send pipeline (main chat + quick chat) — POST /api/messages returns the server-generated AI reply; a 600ms minimum delay keeps the thinking indicator visible.
 - Design defaults locked from the prototype's tweak exploration: sidebar = history view, proactive = emphasized amber card, monitor card on.
 - Leaving the Today page (backToChat / openUpdateInChat / openQuickInChat / newChat / selectChat) clears the "viewing" context so the quick chat never carries a stale chip.
 
 ## Change history
+
+### 2026-06-13 — remove the read/unread feature
+- **Motivation**: user asked to drop read-state management entirely (unread
+  badges, mark-as-read flows, the "全部读完了" summary).
+- **Change**: deleted `markRead` / `markAllRead` and the `selectUnreadCount`
+  selector; `openUpdateInChat` no longer marks anything read; `todayFilter`
+  lost its 'unread' value ('all' | topic id).
 
 ### 2026-06-12 — created
 - **Motivation**: the prototype kept all state in one React component; a store keeps the same single source of truth while letting components subscribe granularly.

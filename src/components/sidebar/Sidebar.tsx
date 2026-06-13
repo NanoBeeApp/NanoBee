@@ -1,8 +1,8 @@
-// Left rail: brand, new-chat button, "今日事项" inbox entry with unread count,
-// the "任务" entry (opens the full-page task center) with an active-task
-// count, and a context-aware body — history/topics switch in chat view, the
-// Today reading nav (progress + filters + actions) on the Today page.
-import { useAppStore, selectUnreadCount } from '../../store/useAppStore';
+// Left rail: brand, new-chat button, the "今日事项" inbox entry, the "任务"
+// entry (opens the full-page task center) with an active-task count, and a
+// context-aware body — history/topics switch in chat view, the Today reading
+// nav (filters + actions) on the Today page.
+import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
 import { AccountFoot } from './AccountFoot';
 import { ChatHistoryList } from './ChatHistoryList';
@@ -18,7 +18,6 @@ export function Sidebar() {
   const sessionMeta = useAppStore((s) => s.sessionMeta);
   const openTopics = useAppStore((s) => s.openTopics);
   const tasks = useAppStore((s) => s.tasks);
-  const unreadCount = useAppStore(selectUnreadCount);
   const selectChat = useAppStore((s) => s.selectChat);
   const newChat = useAppStore((s) => s.newChat);
   const openToday = useAppStore((s) => s.openToday);
@@ -57,7 +56,6 @@ export function Sidebar() {
           data-testid="today-inbox-entry">
           <Icons.news size={15} />
           今日事项
-          {unreadCount > 0 && <span className="count" data-testid="today-unread-count">{unreadCount}</span>}
         </button>
 
         <button className={`nb-tasks-entry${view === 'tasks' ? ' active' : ''}`} onClick={openTasks}

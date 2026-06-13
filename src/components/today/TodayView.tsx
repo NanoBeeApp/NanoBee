@@ -1,14 +1,12 @@
-// "今日事项" reading surface (Inoreader-style): timeline / list / card views,
-// expand-to-read, scroll-past auto-read and mark-all-read. Filtering lives in
-// the store (`todayFilter`) and is driven by the
-// sidebar's TodayNav; the toolbar only shows a clearable chip for the active
-// filter. Reports the item currently in view so the global quick chat can be
-// context-aware.
+// "今日事项" reading surface (Inoreader-style): timeline / list / card views
+// with expand-to-read. Filtering lives in the store (`todayFilter`) and is
+// driven by the sidebar's TodayNav; the toolbar only shows a clearable chip
+// for the active filter. Reports the item currently in view so the global
+// quick chat can be context-aware.
 import { useEffect, useRef, useState } from 'react';
-import { useAppStore, selectUnreadCount } from '../../store/useAppStore';
+import { useAppStore } from '../../store/useAppStore';
 import { topicById, topicShortName } from '../../data/topics';
 import { Icons } from '../../icons/icons';
-import { Toggle } from '../common/Toggle';
 import { TimelineCard } from './TimelineCard';
 import { ReadRow } from './ReadRow';
 import { ReadCard } from './ReadCard';
@@ -18,33 +16,24 @@ type ViewMode = 'timeline' | 'list' | 'card';
 const GROUPS = ['今天', '本周'] as const;
 /** An item counts as "currently being viewed" once its bottom edge passes this offset. */
 const VIEWING_TOP_OFFSET = 100;
-/** An item scrolled this far above the viewport top is auto-marked as read. */
-const AUTOREAD_TOP_MARGIN = 40;
 
 export function TodayView() {
   const updates = useAppStore((s) => s.updates);
-  const markRead = useAppStore((s) => s.markRead);
-  const markAllRead = useAppStore((s) => s.markAllRead);
   const openUpdateInChat = useAppStore((s) => s.openUpdateInChat);
   const setQuickCtx = useAppStore((s) => s.setQuickCtx);
   const filter = useAppStore((s) => s.todayFilter);
   const setFilter = useAppStore((s) => s.setTodayFilter);
-  const unreadCount = useAppStore(selectUnreadCount);
 
   const [viewMode, setViewMode] = useState<ViewMode>('timeline');
-  const [autoRead, setAutoRead] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const reportedRef = useRef<string | null>(null);
 
-  const filtered = updates.filter((u) =>
-    filter === 'all' ? true : filter === 'unread' ? u.unread : u.topicId === filter);
+  const filtered = updates.filter((u) => (filter === 'all' ? true : u.topicId === filter));
 
   const toggleExpand = (id: string) => {
     setExpanded((e) => (e === id ? null : id));
-    const it = updates.find((u) => u.id === id);
-    if (it?.unread) markRead(id, true); // opening an item marks it read
   };
 
   // Context awareness: report the first visible item as "currently viewing".
@@ -79,27 +68,9 @@ export function TodayView() {
     };
   }, [viewMode, filter, updates, setQuickCtx]);
 
-  // Scroll-past auto-read: mark items read once they scroll out above.
-  useEffect(() => {
-    if (!autoRead) return;
-    const root = scrollRef.current;
-    if (!root) return;
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((en) => {
-        const topEdge = en.rootBounds ? en.rootBounds.top + AUTOREAD_TOP_MARGIN : VIEWING_TOP_OFFSET;
-        if (!en.isIntersecting && en.boundingClientRect.bottom < topEdge) {
-          const id = en.target.getAttribute('data-rid');
-          if (id) markRead(id, true);
-        }
-      });
-    }, { root, threshold: 0 });
-    root.querySelectorAll('[data-rid]').forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, [autoRead, viewMode, filter, updates, markRead]);
-
   // Label of the active filter (filtering itself happens in the sidebar nav).
   const filterTopic = topicById(filter);
-  const filterLabel = filter === 'unread' ? '未读' : filterTopic ? topicShortName(filterTopic) : null;
+  const filterLabel = filterTopic ? topicShortName(filterTopic) : null;
 
   return (
     <div className="nb-today" ref={scrollRef} data-testid="today-reading-page">
@@ -107,9 +78,6 @@ export function TodayView() {
         <div className="nb-today-date">06月12日 · 周五 · NanoBee 已为你整理</div>
         <div className="nb-today-top">
           <h1>今天需要你关心的事</h1>
-          <span className="doneline" data-testid="today-unread-summary">
-            {unreadCount > 0 ? `还有 ${unreadCount} 件未读` : '全部读完了'}
-          </span>
         </div>
 
         <div className="nb-read-toolbar" data-testid="today-toolbar">
@@ -121,10 +89,6 @@ export function TodayView() {
             </button>
           )}
           <span className="nb-tool-ics">
-            <button className="btn btn-ghost btn-icon btn-sm" title="全部标为已读" onClick={markAllRead}
-              disabled={unreadCount === 0} data-testid="mark-all-read">
-              <Icons.check size={15} />
-            </button>
             <span className="nb-viewseg" data-testid="today-view-switch">
               <button className={viewMode === 'timeline' ? 'active' : ''} title="时间线"
                 onClick={() => setViewMode('timeline')} data-testid="today-view-timeline"><Icons.feed size={14} /></button>
@@ -142,14 +106,6 @@ export function TodayView() {
                 <>
                   <div className="nb-scrim" onClick={() => setMenuOpen(false)} />
                   <div className="nb-mini-menu" data-testid="today-more-menu-popover">
-                    <div className="mrow">
-                      <span>滑过自动已读</span>
-                      <Toggle checked={autoRead} onChange={setAutoRead} testId="auto-read-toggle" />
-                    </div>
-                    <div className={`mrow btnrow${unreadCount === 0 ? ' off' : ''}`}
-                      onClick={() => { if (unreadCount > 0) markAllRead(); setMenuOpen(false); }}>
-                      全部标为已读
-                    </div>
                     <div className="mrow btnrow" onClick={() => { setExpanded(null); setMenuOpen(false); }}>
                       收起全部展开
                     </div>
@@ -163,7 +119,7 @@ export function TodayView() {
         {filtered.length === 0 && (
           <div className="nb-alldone" data-testid="today-all-done">
             <div className="big"><Icons.check size={28} /></div>
-            <h3>都看完了</h3>
+            <h3>这里暂时是空的</h3>
             <p>有新的重要动态时，我会第一时间放到这里并通知你。</p>
           </div>
         )}
@@ -177,21 +133,21 @@ export function TodayView() {
               {viewMode === 'timeline' ? (
                 <div>
                   {items.map((u) => (
-                    <TimelineCard key={u.id} item={u} onOpenChat={openUpdateInChat} onToggleRead={markRead} />
+                    <TimelineCard key={u.id} item={u} />
                   ))}
                 </div>
               ) : viewMode === 'list' ? (
                 <div className="nb-read-list">
                   {items.map((u) => (
                     <ReadRow key={u.id} item={u} expanded={expanded === u.id} onToggleExpand={toggleExpand}
-                      onOpenChat={openUpdateInChat} onToggleRead={markRead} />
+                      onOpenChat={openUpdateInChat} />
                   ))}
                 </div>
               ) : (
                 <div className="nb-read-grid">
                   {items.map((u) => (
                     <ReadCard key={u.id} item={u} expanded={expanded === u.id} onToggleExpand={toggleExpand}
-                      onOpenChat={openUpdateInChat} onToggleRead={markRead} />
+                      onOpenChat={openUpdateInChat} />
                   ))}
                 </div>
               )}

@@ -1,13 +1,17 @@
 # src/components/sidebar/Sidebar.tsx
 
 ## Responsibility
-Left rail: brand row with collapse button, "新对话" (⌘N), the amber "今日事项" inbox entry with unread count, the "任务" entry (opens the full-page task center) with an active-task count, and a context-aware body — history/topics switch + lists in chat view, the TodayNav reading nav on the Today page — plus the account footer.
+Left rail: brand row with collapse button, "新对话" (⌘N), the amber "今日事项" inbox entry, the "任务" entry (opens the full-page task center) with an active-task count, and a context-aware body — history/topics switch + lists in chat view, the TodayNav reading nav on the Today page — plus the account footer.
 
 ## Dependencies
 - Upstream: store, AccountFoot, ChatHistoryList, TopicGroupList, TodayNav, icons
 - Downstream: App
 
 ## Change history
+
+### 2026-06-13 — remove the read/unread feature
+- **Motivation**: user asked to drop read-state management entirely.
+- **Change**: the 今日事项 entry no longer shows an unread-count badge.
 
 ### 2026-06-12 — created
 - **Motivation**: design handoff; the inbox entry is intentionally amber — the "AI reaches you" soul of the product gets the accent color.

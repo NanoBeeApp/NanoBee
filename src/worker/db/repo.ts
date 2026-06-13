@@ -33,7 +33,6 @@ interface UpdateRow {
 	id: string;
 	topic_id: string;
 	grp: string;
-	unread: number;
 	payload: string;
 }
 
@@ -95,13 +94,12 @@ export async function getTask(db: D1Database, id: string): Promise<Task | null> 
 
 export async function listUpdates(db: D1Database): Promise<UpdateItem[]> {
 	const { results } = await db
-		.prepare("SELECT id, topic_id, grp, unread, payload FROM updates ORDER BY rowid ASC")
+		.prepare("SELECT id, topic_id, grp, payload FROM updates ORDER BY rowid ASC")
 		.all<UpdateRow>();
 	return results.map((r) => ({
-		...(JSON.parse(r.payload) as Omit<UpdateItem, "id" | "topicId" | "group" | "unread">),
+		...(JSON.parse(r.payload) as Omit<UpdateItem, "id" | "topicId" | "group">),
 		id: r.id,
 		topicId: r.topic_id,
 		group: r.grp as UpdateItem["group"],
-		unread: r.unread === 1,
 	}));
 }

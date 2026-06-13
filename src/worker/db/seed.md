@@ -27,6 +27,11 @@ unset so their databases start empty like a fresh user account.
 
 ## Change history
 
+### 2026-06-13 — remove the read/unread feature
+- **Motivation**: user asked to drop read-state management entirely.
+- **Change**: update rows are inserted without the `unread` column (dropped
+  by migration 0006).
+
 ### 2026-06-12 — created
 - **Motivation**: the first full-stack version still rendered mock data from
   the client bundle; nothing survived a reload. The MVP needs the same demo

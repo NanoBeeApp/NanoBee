@@ -2,7 +2,7 @@
 // maximize the content area. Top-left (only when the sidebar is collapsed):
 // expand sidebar, plus back-to-chat while reading the Today page;
 // top-right: notification bell.
-import { useAppStore, selectUnreadCount } from '../../store/useAppStore';
+import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
 
 export function FloatingControls() {
@@ -12,7 +12,6 @@ export function FloatingControls() {
   const notifOpen = useAppStore((s) => s.notifOpen);
   const setNotifOpen = useAppStore((s) => s.setNotifOpen);
   const backToChat = useAppStore((s) => s.backToChat);
-  const unread = useAppStore(selectUnreadCount);
 
   return (
     <>
@@ -20,7 +19,6 @@ export function FloatingControls() {
         <div className="nb-float tl">
           <button className="fbtn" title="展开边栏" onClick={() => setSideCollapsed(false)} data-testid="expand-sidebar">
             <Icons.panelLeft size={16} />
-            {unread > 0 && <span className="dotred" />}
           </button>
           {view === 'today' && (
             <button className="fbtn" title="返回聊天" onClick={backToChat} data-testid="back-to-chat">
@@ -31,7 +29,7 @@ export function FloatingControls() {
       )}
       <div className="nb-float tr">
         <button className="fbtn" title="通知" onClick={() => setNotifOpen(!notifOpen)} data-testid="notification-bell">
-          <Icons.bell size={16} />{unread > 0 && <span className="dotred" />}
+          <Icons.bell size={16} />
         </button>
       </div>
     </>

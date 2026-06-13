@@ -1,5 +1,4 @@
-// Grid card on the Today page; expands to full width with the complete body
-// (expanding marks the item as read).
+// Grid card on the Today page; expands to full width with the complete body.
 import type { UpdateItem } from '../../types';
 import { topicById, topicShortName } from '../../data/topics';
 import { Icon } from '../../icons/icons';
@@ -11,11 +10,10 @@ interface ReadCardProps extends ReadItemActions {
   onToggleExpand: (id: string) => void;
 }
 
-export function ReadCard({ item, expanded, onToggleExpand, onOpenChat, onToggleRead }: ReadCardProps) {
+export function ReadCard({ item, expanded, onToggleExpand, onOpenChat }: ReadCardProps) {
   const t = topicById(item.topicId);
   return (
-    <div className={`nb-read-card${item.unread ? ' unread' : ' read'}${expanded ? ' expanded' : ''}`}
-      data-rid={item.unread ? item.id : undefined} data-cid={item.id}
+    <div className={`nb-read-card${expanded ? ' expanded' : ''}`} data-cid={item.id}
       onClick={() => !expanded && onToggleExpand(item.id)}
       data-testid={`read-card-${item.id}`}>
       <div className="chead">
@@ -25,10 +23,9 @@ export function ReadCard({ item, expanded, onToggleExpand, onOpenChat, onToggleR
       </div>
       <div className="ctitle">{item.title}</div>
       {!expanded && <div className="csum">{item.summary}</div>}
-      {item.unread && !expanded && <span className="cdot" />}
       {expanded && (
         <>
-          <ReadBody item={item} onOpenChat={onOpenChat} onToggleRead={onToggleRead} />
+          <ReadBody item={item} onOpenChat={onOpenChat} />
           <button className="btn btn-ghost btn-sm" style={{ marginTop: 8 }}
             onClick={(e) => { e.stopPropagation(); onToggleExpand(item.id); }}
             data-testid={`collapse-read-card-${item.id}`}>

@@ -1,13 +1,17 @@
 # src/components/layout/FloatingControls.tsx
 
 ## Responsibility
-Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) expand-sidebar with unread dot, plus back-to-chat on the Today page; top-right notification bell.
+Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) expand-sidebar, plus back-to-chat on the Today page; top-right notification bell.
 
 ## Dependencies
 - Upstream: store, icons
 - Downstream: App
 
 ## Change history
+
+### 2026-06-13 — remove the read/unread feature
+- **Motivation**: user asked to drop read-state management entirely.
+- **Change**: removed the amber unread dots from the expand-sidebar button and the notification bell.
 
 ### 2026-06-12 — created
 - **Motivation**: user iteration "尽量让可视区域最大化…不要有固定的 header" — chrome becomes translucent corner buttons.

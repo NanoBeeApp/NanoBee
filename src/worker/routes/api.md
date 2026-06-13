@@ -2,8 +2,8 @@
 
 ## Responsibility
 Business API routes mounted under `/api`. Aggregates the NanoBee app
-endpoints (auth / bootstrap / messages / tasks / updates, one module per
-resource) plus the smoke-test `hello` endpoint.
+endpoints (auth / bootstrap / messages / tasks, one module per resource)
+plus the smoke-test `hello` endpoint.
 
 ## Core exports / API
 - `apiRoutes` — Hono sub-app with:
@@ -11,12 +11,11 @@ resource) plus the smoke-test `hello` endpoint.
   - `route /bootstrap` → see `bootstrap.ts`
   - `route /messages` → see `messages.ts`
   - `route /tasks` → see `tasks.ts`
-  - `route /updates` → see `updates.ts`
   - `GET /hello?name=` → `{ message, timestamp }`
 
 ## Dependencies
 - Upstream: `hono`, `../api-worker` (Env type), `./auth`, `./bootstrap`,
-  `./messages`, `./tasks`, `./updates`
+  `./messages`, `./tasks`
 - Downstream: `api-worker.ts` (mounts), `src/lib/api-client.ts` (types)
 
 ## Notes
@@ -30,6 +29,10 @@ resource) plus the smoke-test `hello` endpoint.
 3. `pnpm test:run` → all integration tests pass
 
 ## Change history
+
+### 2026-06-13 — /updates unmounted (read/unread feature removed)
+- **Motivation**: user asked to drop read-state management entirely; the
+  `updates.ts` module only carried mark-read endpoints, so it was deleted.
 
 ### 2026-06-12 — created
 - **Motivation**: template init with D1; the template's mock users endpoints

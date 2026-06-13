@@ -4,18 +4,20 @@
 Vitest integration tests for the Hono API worker: /health, /api/hello, the
 auth system (register / login / verify / session / OAuth error paths), and
 the NanoBee endpoints — bootstrap (seeded state), messages (create chat +
-persist both sides + reply), tasks (create / toggle / 404) and updates
-(read flag / read-all / 404).
+persist both sides + reply) and tasks (create / toggle / 404).
 
 ## Dependencies
 - Upstream: a running dev server (`pnpm db:migrate:local && pnpm dev`)
 - Run with `pnpm test:run` (override target via `API_BASE_URL`)
 
 ## Key notes
-- Tests write to the shared local D1; ids are timestamped to avoid collisions,
-  and update-tests restore the demo's initial unread state afterwards.
+- Tests write to the shared local D1; ids are timestamped to avoid collisions.
 
 ## Change history
+
+### 2026-06-13 — updates read-state tests removed
+- **Motivation**: the read/unread feature was removed (routes `/api/updates/*`
+  deleted, `unread` column dropped by migration 0006), so its tests went with it.
 
 ### 2026-06-12 — created
 - **Motivation**: full-stack template init with D1; needed an automated proof

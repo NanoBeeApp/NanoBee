@@ -63,11 +63,11 @@ export async function ensureSeeded(env: SeedEnv): Promise<void> {
 	}
 
 	const insUpdate = db.prepare(
-		"INSERT OR IGNORE INTO updates (id, topic_id, grp, unread, payload) VALUES (?, ?, ?, ?, ?)",
+		"INSERT OR IGNORE INTO updates (id, topic_id, grp, payload) VALUES (?, ?, ?, ?)",
 	);
 	for (const u of INITIAL_UPDATES) {
-		const { id, topicId, group, unread, ...rest } = u;
-		stmts.push(insUpdate.bind(id, topicId, group, unread ? 1 : 0, JSON.stringify(rest)));
+		const { id, topicId, group, ...rest } = u;
+		stmts.push(insUpdate.bind(id, topicId, group, JSON.stringify(rest)));
 	}
 
 	// D1 batches run as a single transaction — all-or-nothing.

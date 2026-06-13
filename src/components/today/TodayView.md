@@ -1,18 +1,21 @@
 # src/components/today/TodayView.tsx
 
 ## Responsibility
-"今日事项" reading surface: date header, a clearable active-filter chip (filtering itself is driven by the sidebar's TodayNav via the store), compact icon toolbar (mark-all-read, timeline/list/card switch, "more" menu with scroll-past auto-read toggle), grouped items (今天/本周) and the all-done state.
+"今日事项" reading surface: date header, a clearable active-filter chip (filtering itself is driven by the sidebar's TodayNav via the store), compact icon toolbar (timeline/list/card switch, "more" menu with collapse-all), grouped items (今天/本周) and the empty state.
 
 ## Dependencies
-- Upstream: store, topics, Toggle, TimelineCard, ReadRow, ReadCard
+- Upstream: store, topics, TimelineCard, ReadRow, ReadCard
 - Downstream: App
 
 ## Key notes
 - Context awareness: a scroll listener (rAF-throttled) reports the first visible [data-cid] item to the store as the quick-chat "正在看" context.
-- Scroll-past auto-read: an IntersectionObserver marks [data-rid] items read once they leave above the viewport (toggleable, default on).
 - Non-essential actions are folded into the ⋯ menu per the "maximize reading area, no fixed header" iteration.
 
 ## Change history
+
+### 2026-06-13 — remove the read/unread feature
+- **Motivation**: user asked to drop read-state management entirely (the "全部读完了 / 还有 N 件未读" summary and all mark-as-read flows).
+- **Change**: removed the unread summary line, the mark-all-read button and menu row, the scroll-past auto-read observer + toggle, the 'unread' filter branch and all `markRead` calls; the empty-state copy no longer implies reading progress.
 
 ### 2026-06-12 — removed the reading progress bar
 - **Motivation**: user asked to remove the reading-progress UI; the

@@ -46,7 +46,7 @@ interface AppState {
   tasks: Task[];
   createdTaskIds: string[];
   updates: UpdateItem[];
-  /** Today-page filter: 'all' | 'unread' | a topic id. Shared by the sidebar nav and the reading surface. */
+  /** Today-page filter: 'all' | a topic id. Shared by the sidebar nav and the reading surface. */
   todayFilter: string;
   openTopics: string[];
   notifOpen: boolean;
@@ -93,10 +93,6 @@ interface AppState {
   // tasks
   createTask: (data: TaskSuggestion) => void;
   toggleTask: (id: string) => void;
-
-  // read state
-  markRead: (id: string, read?: boolean) => void;
-  markAllRead: () => void;
 
   // toasts
   toast: (text: string) => void;
@@ -219,7 +215,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   backToChat: () => set({ view: 'chat', quickCtx: null }),
 
   openUpdateInChat: (u) => {
-    get().markRead(u.id);
     set({ notifOpen: false, quickCtx: null });
     get().selectChat(UPDATE_TO_CHAT[u.topicId] ?? 'c_gold_today');
   },
@@ -360,43 +355,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  markRead: async (id, read = true) => {
-    const prevUpdates = get().updates;
-    set((s) => ({
-      updates: s.updates.map((u) => (u.id === id ? { ...u, unread: !read } : u)),
-    }));
-    try {
-      const res = await apiClient.updates[':id'].read.$post({ param: { id }, json: { read } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    } catch (error) {
-      console.error('[markRead] persist failed:', String(error));
-      set({ updates: prevUpdates });
-      get().toast('同步已读状态失败');
-    }
-  },
-
-  markAllRead: async () => {
-    const prevUpdates = get().updates;
-    set((s) => ({ updates: s.updates.map((u) => ({ ...u, unread: false })) }));
-    get().toast('已全部标为已读');
-    try {
-      const res = await apiClient.updates['read-all'].$post();
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    } catch (error) {
-      console.error('[markAllRead] persist failed:', String(error));
-      set({ updates: prevUpdates });
-      get().toast('同步已读状态失败');
-    }
-  },
-
   toast: (text) => {
     const id = nextId('toast');
     set((s) => ({ toasts: [...s.toasts, { id, text }] }));
     setTimeout(() => set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) })), TOAST_DURATION_MS);
   },
 }));
-
-/** Number of unread proactive updates (drives badges across the UI). */
-export function selectUnreadCount(s: { updates: UpdateItem[] }): number {
-  return s.updates.filter((u) => u.unread).length;
-}

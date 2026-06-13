@@ -46,7 +46,6 @@ export interface UpdateItem {
   icon: IconName;
   color: string;
   tone: ResultTone;
-  unread: boolean;
   title: string;
   time: string;
   group: '今天' | '本周';
