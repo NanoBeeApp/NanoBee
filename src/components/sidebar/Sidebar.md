@@ -1,13 +1,24 @@
 # src/components/sidebar/Sidebar.tsx
 
 ## Responsibility
-Left rail: brand row with collapse button, "新对话" (⌘N), the amber "今日事项" inbox entry, the "任务" entry (opens the full-page task center) with an active-task count, and a context-aware body — history/topics switch + lists in chat view, the TodayNav reading nav on the Today page — plus the account footer.
+Left rail: brand row with collapse button, "新对话" (⌘N), the amber "今日事项" inbox entry, the "任务" entry (opens the full-page task center) with an active-task count, and the chat lists (history/topics switch) shown on every view, plus the account footer.
 
 ## Dependencies
-- Upstream: store, AccountFoot, ChatHistoryList, TopicGroupList, TodayNav, icons
+- Upstream: store, AccountFoot, ChatHistoryList, TopicGroupList, icons
 - Downstream: App
 
 ## Change history
+
+### 2026-06-13 — chat lists stay visible on the Today page (TodayNav removed)
+- **Motivation**: opening 今日事项 swapped the sidebar body for TodayNav, so the
+  chat lists vanished and the only obvious way back was "新对话" — the
+  "返回聊天" row was buried at the bottom of the filters. The Tasks page already
+  kept the chat lists, so Today was also inconsistent.
+- **Goal**: the sidebar is stable global navigation — clicking any chat (or the
+  history/topics switch) works from every view, so no dedicated back button is
+  needed. The Today filters moved into the page itself (`TodayFilterBar`).
+- **Change**: dropped the `TodayNav` branch and the `isToday` special-casing;
+  `TodayNav.tsx` deleted.
 
 ### 2026-06-13 — remove the read/unread feature
 - **Motivation**: user asked to drop read-state management entirely.

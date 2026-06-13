@@ -1,13 +1,12 @@
 // Left rail: brand, new-chat button, the "今日事项" inbox entry, the "任务"
-// entry (opens the full-page task center) with an active-task count, and a
-// context-aware body — history/topics switch in chat view, the Today reading
-// nav (filters + actions) on the Today page.
+// entry (opens the full-page task center) with an active-task count, and the
+// chat lists (history/topics switch) — shown on every view so any chat is one
+// click away no matter which page is open.
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
 import { AccountFoot } from './AccountFoot';
 import { ChatHistoryList } from './ChatHistoryList';
 import { TopicGroupList } from './TopicGroupList';
-import { TodayNav } from './TodayNav';
 
 export function Sidebar() {
   const view = useAppStore((s) => s.view);
@@ -26,7 +25,6 @@ export function Sidebar() {
   const setSideCollapsed = useAppStore((s) => s.setSideCollapsed);
 
   const isChatView = view === 'chat';
-  const isToday = view === 'today';
   const activeTaskCount = tasks.filter((t) => t.status === 'active').length;
 
   return (
@@ -65,18 +63,14 @@ export function Sidebar() {
           {activeTaskCount > 0 && <span className="count" data-testid="tasks-active-count">{activeTaskCount}</span>}
         </button>
 
-        {!isToday && (
-          <div className="nb-switch" data-testid="sidebar-view-switch">
-            <button className={sidebarMode === 'history' ? 'active' : ''} onClick={() => setSidebarMode('history')}>聊天记录</button>
-            <button className={sidebarMode === 'topics' ? 'active' : ''} onClick={() => setSidebarMode('topics')}>话题分组</button>
-          </div>
-        )}
+        <div className="nb-switch" data-testid="sidebar-view-switch">
+          <button className={sidebarMode === 'history' ? 'active' : ''} onClick={() => setSidebarMode('history')}>聊天记录</button>
+          <button className={sidebarMode === 'topics' ? 'active' : ''} onClick={() => setSidebarMode('topics')}>话题分组</button>
+        </div>
       </div>
 
       <div className="nb-side-scroll" data-testid="sidebar-scroll-area">
-        {isToday ? (
-          <TodayNav />
-        ) : sidebarMode === 'history' ? (
+        {sidebarMode === 'history' ? (
           <ChatHistoryList activeChatId={activeChatId} isChatView={isChatView}
             chats={chats} sessions={Object.values(sessionMeta)} onSelectChat={selectChat} />
         ) : (

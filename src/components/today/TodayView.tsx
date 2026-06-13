@@ -1,12 +1,11 @@
 // "今日事项" reading surface (Inoreader-style): timeline / list / card views
 // with expand-to-read. Filtering lives in the store (`todayFilter`) and is
-// driven by the sidebar's TodayNav; the toolbar only shows a clearable chip
-// for the active filter. Reports the item currently in view so the global
-// quick chat can be context-aware.
+// driven by the in-page TodayFilterBar chips in the toolbar. Reports the item
+// currently in view so the global quick chat can be context-aware.
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-import { topicById, topicShortName } from '../../data/topics';
 import { Icons } from '../../icons/icons';
+import { TodayFilterBar } from './TodayFilterBar';
 import { TimelineCard } from './TimelineCard';
 import { ReadRow } from './ReadRow';
 import { ReadCard } from './ReadCard';
@@ -22,7 +21,6 @@ export function TodayView() {
   const openUpdateInChat = useAppStore((s) => s.openUpdateInChat);
   const setQuickCtx = useAppStore((s) => s.setQuickCtx);
   const filter = useAppStore((s) => s.todayFilter);
-  const setFilter = useAppStore((s) => s.setTodayFilter);
 
   const [viewMode, setViewMode] = useState<ViewMode>('timeline');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -68,10 +66,6 @@ export function TodayView() {
     };
   }, [viewMode, filter, updates, setQuickCtx]);
 
-  // Label of the active filter (filtering itself happens in the sidebar nav).
-  const filterTopic = topicById(filter);
-  const filterLabel = filterTopic ? topicShortName(filterTopic) : null;
-
   return (
     <div className="nb-today" ref={scrollRef} data-testid="today-reading-page">
       <div className="nb-today-inner">
@@ -81,13 +75,7 @@ export function TodayView() {
         </div>
 
         <div className="nb-read-toolbar" data-testid="today-toolbar">
-          {filterLabel && (
-            <button className="nb-fchip active" title="清除筛选" onClick={() => setFilter('all')}
-              data-testid="today-active-filter">
-              {filterLabel}
-              <Icons.x size={11} style={{ marginLeft: 5 }} />
-            </button>
-          )}
+          <TodayFilterBar />
           <span className="nb-tool-ics">
             <span className="nb-viewseg" data-testid="today-view-switch">
               <button className={viewMode === 'timeline' ? 'active' : ''} title="时间线"

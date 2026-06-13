@@ -1,10 +1,10 @@
 # src/components/today/TodayView.tsx
 
 ## Responsibility
-"今日事项" reading surface: date header, a clearable active-filter chip (filtering itself is driven by the sidebar's TodayNav via the store), compact icon toolbar (timeline/list/card switch, "more" menu with collapse-all), grouped items (今天/本周) and the empty state.
+"今日事项" reading surface: date header, the in-page `TodayFilterBar` chips plus compact icon toolbar (timeline/list/card switch, "more" menu with collapse-all), grouped items (今天/本周) and the empty state.
 
 ## Dependencies
-- Upstream: store, topics, TimelineCard, ReadRow, ReadCard
+- Upstream: store, TodayFilterBar, TimelineCard, ReadRow, ReadCard
 - Downstream: App
 
 ## Key notes
@@ -12,6 +12,14 @@
 - Non-essential actions are folded into the ⋯ menu per the "maximize reading area, no fixed header" iteration.
 
 ## Change history
+
+### 2026-06-13 — filtering moved into the page (TodayFilterBar)
+- **Motivation**: filters lived in the sidebar (TodayNav), which replaced the
+  chat lists while reading — users had no visible way back to a chat. The
+  sidebar now always shows the chat lists, so the filters needed an in-page
+  home.
+- **Change**: the toolbar's single clearable chip was replaced by the full
+  `TodayFilterBar` chip row; `topicById`/`setTodayFilter` usage moved there.
 
 ### 2026-06-13 — remove the read/unread feature
 - **Motivation**: user asked to drop read-state management entirely (the "全部读完了 / 还有 N 件未读" summary and all mark-as-read flows).
