@@ -19,8 +19,36 @@ import { useAppStore } from "../../store/useAppStore";
 import {
 	AiProviderSetupForm,
 	type AiSetupFormValues,
+	type SaveState,
 	type TestStatus,
 } from "./AiProviderSetupForm";
+
+/** Debounce window before an edit is persisted (ms). */
+const AUTOSAVE_DELAY = 700;
+
+/** Default fallback config: OpenRouter + built-in key (the old "use defaults"). */
+const DEFAULT_SAVE_INPUT: SaveAiSettingsInput = {
+	provider: "openrouter",
+	apiKey: "",
+	baseUrl: "",
+	model: "",
+};
+
+/** Human-readable text for the inline auto-save status line. */
+function saveStateText(state: SaveState, invalidMsg: string | null): string {
+	switch (state) {
+		case "saving":
+			return "保存中…";
+		case "saved":
+			return "已自动保存";
+		case "error":
+			return "保存失败，请重试";
+		case "invalid":
+			return invalidMsg ?? "请补全必填项";
+		default:
+			return "修改后自动保存";
+	}
+}
 
 function initialValues(settings: AiSettings | null): AiSetupFormValues {
 	const provider = settings?.provider ?? "openrouter";
@@ -63,37 +91,45 @@ export function AiProviderSetupDialog() {
 	const settingsQuery = useAiSettings(Boolean(user));
 	const manualOpen = useAppStore((s) => s.aiSetupOpen);
 	const setAiSetupOpen = useAppStore((s) => s.setAiSetupOpen);
-	const toast = useAppStore((s) => s.toast);
 	const save = useSaveAiSettings();
 
 	const data = settingsQuery.data ?? null;
-	const isFirstSetup = Boolean(user) && data !== null && !data.configured;
-	const visible = Boolean(user) && data !== null && (isFirstSetup || manualOpen);
+	const needsFirstSetup = Boolean(user) && data !== null && !data.configured;
+
+	// First login with no saved config: auto-open the (now dismissible) dialog
+	// once. A ref guards against reopening after the user closes it, even while
+	// the settings query is still refetching the freshly-saved config.
+	const autoOpenedRef = useRef(false);
+	useEffect(() => {
+		if (needsFirstSetup && !manualOpen && !autoOpenedRef.current) {
+			autoOpenedRef.current = true;
+			setAiSetupOpen(true);
+		}
+	}, [needsFirstSetup, manualOpen, setAiSetupOpen]);
+
+	// Visibility is latched on the store flag so an auto-save flipping
+	// `configured` (first setup) never closes or remounts the open dialog.
+	const visible = Boolean(user) && data !== null && manualOpen;
 
 	if (!visible) return null;
 
 	return (
 		<AiSetupFormState
-			key={`${data.configured}-${manualOpen}`}
 			settings={data.settings}
-			isFirstSetup={isFirstSetup}
-			saving={save.isPending}
+			isFirstSetup={needsFirstSetup}
 			onClose={() => setAiSetupOpen(false)}
-			onSave={async (input) => {
-				await save.mutateAsync(input);
-				setAiSetupOpen(false);
-				toast("AI 模型设置已保存");
-			}}
+			onPersist={(input) => save.mutateAsync(input)}
 		/>
 	);
 }
 
 interface AiSetupFormStateProps {
 	settings: AiSettings | null;
+	/** True while no config has ever been saved (mandatory first-time flow). */
 	isFirstSetup: boolean;
-	saving: boolean;
 	onClose: () => void;
-	onSave: (input: SaveAiSettingsInput) => Promise<void>;
+	/** Persist settings without closing the dialog (used by auto-save). */
+	onPersist: (input: SaveAiSettingsInput) => Promise<unknown>;
 }
 
 function AiSetupFormState(props: AiSetupFormStateProps) {
@@ -105,6 +141,8 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 	const [modelsError, setModelsError] = useState<string | null>(null);
 	const [testStatus, setTestStatus] = useState<TestStatus>("idle");
 	const [testResult, setTestResult] = useState<TestConnectionResult | null>(null);
+	const [saveState, setSaveState] = useState<SaveState>("idle");
+	const [invalidMsg, setInvalidMsg] = useState<string | null>(null);
 	const fetchModels = useFetchModels();
 	const testConnection = useTestConnection();
 
@@ -173,6 +211,7 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 
 	const handleProviderChange = (id: AiProviderId) => {
 		const next = getProviderInfo(id);
+		dirtyRef.current = true;
 		setError(null);
 		// Switching providers invalidates the previous model list and test result,
 		// and re-seeds host/model with the new provider's defaults.
@@ -183,32 +222,67 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 		setValues((v) => ({ ...v, provider: id, baseUrl: next.defaultBaseUrl, model: next.defaultModel }));
 	};
 
-	const handleSubmit = async () => {
-		const apiKey = values.apiKey.trim();
+	// Validate the current form; returns an error message or null when savable.
+	const validate = useCallback((): string | null => {
 		if (info.id === "custom" && !values.baseUrl.trim()) {
-			setError("自定义供应商需要填写 API Host");
-			return;
+			return "自定义供应商需要填写 API Host";
 		}
-		if (!info.keyOptional && !apiKey && !hasStoredKey) {
-			setError(`${info.label} 需要填写 API Key`);
-			return;
+		if (!info.keyOptional && !values.apiKey.trim() && !hasStoredKey) {
+			return `${info.label} 需要填写 API Key`;
 		}
-		setError(null);
-		try {
-			await props.onSave(toSaveInput(values, hasStoredKey, hasStoredWebSearchKey));
-		} catch (e) {
-			setError(e instanceof Error ? e.message : "保存失败，请稍后重试");
-		}
-	};
+		return null;
+	}, [info, values.apiKey, values.baseUrl, hasStoredKey]);
 
-	const handleSkip = async () => {
-		setError(null);
-		try {
-			// "Use defaults": OpenRouter + DeepSeek V4 Flash on the built-in key.
-			await props.onSave({ provider: "openrouter", apiKey: "", baseUrl: "", model: "" });
-		} catch (e) {
-			setError(e instanceof Error ? e.message : "保存失败，请稍后重试");
+	// Instant auto-save: debounce edits and persist whenever the form is valid
+	// and the payload actually changed. The initial mount is skipped so simply
+	// opening the dialog never writes (important for the first-setup flow).
+	const dirtyRef = useRef(false);
+	const lastSavedRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (!dirtyRef.current) return;
+		const err = validate();
+		if (err) {
+			setSaveState("invalid");
+			setInvalidMsg(err);
+			return;
 		}
+		setInvalidMsg(null);
+		const input = toSaveInput(values, hasStoredKey, hasStoredWebSearchKey);
+		const serialized = JSON.stringify(input);
+		if (serialized === lastSavedRef.current) {
+			setSaveState("saved");
+			return;
+		}
+		setSaveState("saving");
+		const timer = setTimeout(async () => {
+			try {
+				await props.onPersist(input);
+				lastSavedRef.current = serialized;
+				setError(null);
+				setSaveState("saved");
+			} catch (e) {
+				setError(e instanceof Error ? e.message : "保存失败，请稍后重试");
+				setSaveState("error");
+			}
+		}, AUTOSAVE_DELAY);
+		return () => clearTimeout(timer);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [values, hasStoredKey, hasStoredWebSearchKey]);
+
+	// Closing: first-time users must leave with a saved config. If nothing has
+	// been persisted yet, save the current valid form (or the defaults).
+	const handleClose = async () => {
+		if (props.isFirstSetup && lastSavedRef.current === null) {
+			const input = validate()
+				? DEFAULT_SAVE_INPUT
+				: toSaveInput(values, hasStoredKey, hasStoredWebSearchKey);
+			try {
+				await props.onPersist(input);
+			} catch {
+				// Closing should not be blocked by a transient save failure.
+			}
+		}
+		props.onClose();
 	};
 
 	return (
@@ -217,16 +291,17 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 			info={info}
 			hasStoredKey={hasStoredKey}
 			hasStoredWebSearchKey={hasStoredWebSearchKey}
-			isFirstSetup={props.isFirstSetup}
-			saving={props.saving}
 			error={error}
 			models={models}
 			modelsLoading={fetchModels.isPending}
 			modelsError={modelsError}
 			testStatus={testStatus}
 			testResult={testResult}
+			saveState={saveState}
+			saveText={saveStateText(saveState, invalidMsg)}
 			onProviderChange={handleProviderChange}
 			onFieldChange={(field, value) => {
+				dirtyRef.current = true;
 				// Editing the key/host/model invalidates any prior test result.
 				if (testStatus !== "idle") {
 					setTestStatus("idle");
@@ -236,9 +311,7 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 			}}
 			onFetchModels={() => void runFetchModels(values.provider, values.apiKey, values.baseUrl)}
 			onTestConnection={() => void handleTestConnection()}
-			onSubmit={() => void handleSubmit()}
-			onSkip={() => void handleSkip()}
-			onClose={props.isFirstSetup ? () => undefined : props.onClose}
+			onClose={() => void handleClose()}
 		/>
 	);
 }

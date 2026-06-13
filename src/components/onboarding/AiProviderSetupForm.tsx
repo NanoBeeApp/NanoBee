@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { Icons } from "../../icons/icons";
+import { ProviderLogo } from "../../icons/provider-logos";
 import { AI_PROVIDERS, type AiProviderId, type AiProviderInfo } from "../../lib/ai-providers";
 import type { TestConnectionResult } from "../../lib/useAiSettings";
 
@@ -20,6 +21,9 @@ export interface AiSetupFormValues {
 
 export type TestStatus = "idle" | "testing" | "success" | "error";
 
+/** Inline auto-save status shown at the bottom of the provider column. */
+export type SaveState = "idle" | "saving" | "saved" | "error" | "invalid";
+
 export interface AiProviderSetupFormProps {
 	values: AiSetupFormValues;
 	info: AiProviderInfo;
@@ -27,9 +31,6 @@ export interface AiProviderSetupFormProps {
 	hasStoredKey: boolean;
 	/** True when a web-search (Tavily) key is already stored. */
 	hasStoredWebSearchKey: boolean;
-	/** First login: show the intro copy and the "use defaults" skip action. */
-	isFirstSetup: boolean;
-	saving: boolean;
 	error: string | null;
 	/** Auto-fetched model ids for the current provider (empty until fetched). */
 	models: string[];
@@ -38,6 +39,9 @@ export interface AiProviderSetupFormProps {
 	/** Connection-test state for the inline status line. */
 	testStatus: TestStatus;
 	testResult: TestConnectionResult | null;
+	/** Auto-save indicator state + its display text. */
+	saveState: SaveState;
+	saveText: string;
 	onProviderChange: (id: AiProviderId) => void;
 	onFieldChange: (
 		field: "apiKey" | "baseUrl" | "model" | "webSearchKey",
@@ -45,19 +49,12 @@ export interface AiProviderSetupFormProps {
 	) => void;
 	onFetchModels: () => void;
 	onTestConnection: () => void;
-	onSubmit: () => void;
-	onSkip: () => void;
 	onClose: () => void;
 }
 
-/** First character of a provider label, for the master-list avatar badge. */
-function providerInitial(label: string): string {
-	return [...label][0] ?? "?";
-}
-
 export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
-	const { values, info, hasStoredKey, hasStoredWebSearchKey, isFirstSetup, saving, error } = props;
-	const { models, modelsLoading, modelsError, testStatus, testResult } = props;
+	const { values, info, hasStoredKey, hasStoredWebSearchKey, error } = props;
+	const { models, modelsLoading, modelsError, testStatus, testResult, saveState, saveText } = props;
 	const [showKey, setShowKey] = useState(false);
 	const [showWebSearchKey, setShowWebSearchKey] = useState(false);
 
@@ -82,22 +79,20 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 				data-testid="ai-provider-setup-dialog"
 			>
 				{/* No header/footer bar — the form spans the full modal height.
-				    Close is a floating affordance; commit actions sit at the
-				    bottom of the master column. */}
-				{!isFirstSetup && (
-					<button
-						type="button"
-						className="nb-ai-close"
-						onClick={props.onClose}
-						aria-label="关闭"
-						data-testid="ai-settings-close"
-					>
-						<Icons.x size={16} />
-					</button>
-				)}
+				    Close is a floating affordance; changes auto-save, so there is
+				    no explicit save/cancel pair. */}
+				<button
+					type="button"
+					className="nb-ai-close"
+					onClick={props.onClose}
+					aria-label="关闭"
+					data-testid="ai-settings-close"
+				>
+					<Icons.x size={16} />
+				</button>
 
 				<div className="nb-ai-split">
-					{/* Master: provider list + commit actions */}
+					{/* Master: provider list + auto-save status */}
 					<div className="nb-ai-master">
 						<div className="nb-ai-master-label">供应商</div>
 						<div className="nb-ai-master-list" role="radiogroup" aria-label="AI 供应商">
@@ -113,44 +108,21 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 										onClick={() => props.onProviderChange(p.id)}
 										data-testid={`ai-provider-option-${p.id}`}
 									>
-										<span className="nb-ai-prow-badge">{providerInitial(p.label)}</span>
+										<ProviderLogo id={p.id} />
 										<span className="nb-ai-prow-name">{p.label}</span>
 										{p.id === "openrouter" && <span className="nb-ai-prow-tag">默认</span>}
 									</button>
 								);
 							})}
 						</div>
-						<div className="nb-ai-actions">
-							<button
-								type="button"
-								className="btn btn-primary"
-								onClick={props.onSubmit}
-								disabled={saving}
-								data-testid="ai-settings-save"
-							>
-								{saving ? "保存中…" : "保存"}
-							</button>
-							{isFirstSetup ? (
-								<button
-									type="button"
-									className="btn btn-ghost"
-									onClick={props.onSkip}
-									disabled={saving}
-									data-testid="ai-settings-skip"
-								>
-									先用默认配置
-								</button>
-							) : (
-								<button
-									type="button"
-									className="btn btn-ghost"
-									onClick={props.onClose}
-									disabled={saving}
-									data-testid="ai-settings-cancel"
-								>
-									取消
-								</button>
-							)}
+						<div
+							className="nb-ai-savehint"
+							data-state={saveState}
+							data-testid="ai-settings-savehint"
+							role="status"
+						>
+							<span className="dot" aria-hidden="true" />
+							{saveText}
 						</div>
 					</div>
 

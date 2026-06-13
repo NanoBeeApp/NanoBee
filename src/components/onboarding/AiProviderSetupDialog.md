@@ -55,3 +55,8 @@ the pure `AiProviderSetupForm`.
 - **Goal**: form value `webSearchKey`; `toSaveInput` applies keep/clear/replace
   against `hasStoredWebSearchKey`, which is provider-independent (switching
   providers keeps the stored web-search key).
+
+### 2026-06-13 — 即时自动保存（去掉保存/取消按钮）
+- **出发点**：用户要求去掉「保存 / 取消」按钮，改为编辑即时自动保存。
+- **目标**：字段或 provider 变更后防抖落库，无需任何显式提交动作；状态以 `.nb-ai-savehint` 行内提示反馈。
+- **关键决策**：① 新增防抖自动保存 effect（`AUTOSAVE_DELAY` 700ms）：跳过首次挂载（仅打开不写库），`validate()` 通过且 payload 变化才 `onPersist`，用 `lastSavedRef` 序列化对比去重避免回环；校验失败置 `invalid` 态、行内提示原因而非红色 error 块。② 可见性改为闩在 store flag `aiSetupOpen` 上（不再含 `configured`/key），使自动保存翻转 `configured` 时弹窗不被卸载/重挂、不丢输入；首次登录由 `autoOpenedRef` 一次性自动打开、关闭后不再回弹。③ `onSave`（保存即关闭+toast）拆为 `onPersist`（只落库不关闭）；关闭时若首次且尚无保存，则补存当前合法值或 OpenRouter 默认（替代旧「先用默认配置」）。④ provider 切换标记 dirty 触发自动保存。

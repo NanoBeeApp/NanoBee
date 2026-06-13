@@ -61,3 +61,8 @@ Completely stateless — all values and callbacks come from
 - **出发点**：原弹窗顶部整条 header（标题+副标题）和底部整条 footer（取消/保存）吃掉约 140px 纵向空间，把右侧表单挤到很小，连接测试一行被裁切。
 - **目标**：遵守「主体内容可视区域最大化铁律」，去掉两条 chrome 横条，让表单铺满弹窗高度。
 - **关键决策**：① 删除 `.nb-ai-head` 头部条，关闭按钮改为浮动在弹窗右上角（`.nb-ai-close` 绝对定位）；② 删除底部 `.nb-modal-foot`，保存/取消（或「先用默认配置」）移到左侧 master 栏底部 `.nb-ai-actions`（`margin-top:auto` 贴底，按钮全宽竖排）；③ provider 列表抽到 `.nb-ai-master-list`（`flex:1` 独立滚动），actions 不随列表滚动；④ 弹窗高度由 `max-height` 改为 `height: min(620px, 100vh-32px)` 让表单充分占高。移动端：actions 横排、列表 wrap。
+
+### 2026-06-13 — 真实彩色 logo + 去掉保存/取消（改即时自动保存）
+- **出发点**：用户要求 ① provider 列表用各家真实彩色 logo 替换灰色首字母徽标；② 去掉 master 栏底部的「保存 / 取消」按钮。
+- **目标**：provider 行展示官方品牌 logo（彩色），并把显式提交动作替换为一条「修改后自动保存」状态行。
+- **关键决策**：① 首字母徽标 `.nb-ai-prow-badge` 改为 `ProviderLogo`（`icons/provider-logos.tsx`，品牌色 tile + 官方单路径 mark，Gemini/Mistral 保留渐变，无单路径的几家用品牌色字母兜底）；② 删除 `.nb-ai-actions` 整块（保存/先用默认配置/取消），底部改放 `.nb-ai-savehint` 自动保存状态（idle/saving/saved/error/invalid 五态，对应文案与圆点色由 `data-state` 驱动）；③ 关闭按钮恒显（不再只在非首次时显示），因为自动保存让弹窗随时可安全关闭；④ 移除 `isFirstSetup`/`saving`/`onSubmit`/`onSkip` props，新增 `saveState`/`saveText`。
