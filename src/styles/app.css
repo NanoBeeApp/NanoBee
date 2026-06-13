@@ -52,13 +52,13 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
    a 24px invisible hit area along the screen's left edge; hovering it fades in
    a soft glow, and clicking anywhere in the strip peeks the sidebar.
    The glow (agy-designed "double-layer ambient", variant C) is two stacked
-   full-height linear gradients — a wide 120px ambient tail (peak alpha 0.05)
+   full-height linear gradients — a wide 200px ambient tail (peak alpha 0.05)
    plus a narrow core — radiating inward from the left edge with an extremely
    smooth, edgeless falloff. Deliberately faint and broad: large reach, weak
    color, heavy diffusion, no inset shadow / hard boundary. pointer-events are
    off so the wider halo never enlarges the click target. */
 .nb-edge-reveal { position: fixed; left: 0; top: 0; height: 100vh; width: 24px; z-index: 24; padding: 0; border: 0; background: transparent; cursor: pointer; }
-.nb-edge-glow { position: absolute; left: 0; top: 0; height: 100%; width: 120px; pointer-events: none; opacity: 0; transition: opacity var(--dur-1) var(--ease-out); background: linear-gradient(90deg, rgba(99,91,255,0.05) 0%, rgba(99,91,255,0.02) 35%, rgba(99,91,255,0.005) 70%, rgba(99,91,255,0) 100%), linear-gradient(90deg, rgba(99,91,255,0.04) 0%, rgba(99,91,255,0.01) 30%, rgba(99,91,255,0) 100%); }
+.nb-edge-glow { position: absolute; left: 0; top: 0; height: 100%; width: 200px; pointer-events: none; opacity: 0; transition: opacity var(--dur-1) var(--ease-out); background: linear-gradient(90deg, rgba(99,91,255,0.05) 0%, rgba(99,91,255,0.02) 35%, rgba(99,91,255,0.005) 70%, rgba(99,91,255,0) 100%), linear-gradient(90deg, rgba(99,91,255,0.04) 0%, rgba(99,91,255,0.01) 30%, rgba(99,91,255,0) 100%); }
 .nb-edge-reveal:hover .nb-edge-glow,
 .nb-edge-reveal:focus-visible .nb-edge-glow { opacity: 1; }
 
