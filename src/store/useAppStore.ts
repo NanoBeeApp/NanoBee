@@ -77,6 +77,8 @@ interface AppState {
   artifacts: Artifact[];
   selectedArtifactId: string | null;
   artifactsLoading: boolean;
+  /** A quick-launch shortcut is generating a deck (keeps the Artifacts page busy). */
+  artifactGenerating: boolean;
 
   // server sync
   bootstrap: () => Promise<void>;
@@ -105,6 +107,8 @@ interface AppState {
   loadArtifacts: () => Promise<void>;
   selectArtifact: (id: string) => void;
   deleteArtifact: (id: string) => void;
+  /** Run a canned prompt to generate a deck, staying on the Artifacts page. */
+  runArtifactShortcut: (prompt: string) => Promise<void>;
   setTodayFilter: (f: string) => void;
   setTasksFilter: (f: string) => void;
   backToChat: () => void;
@@ -198,6 +202,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   artifacts: [],
   selectedArtifactId: null,
   artifactsLoading: false,
+  artifactGenerating: false,
 
   bootstrap: async () => {
     try {
@@ -310,6 +315,42 @@ export const useAppStore = create<AppState>((set, get) => ({
       console.error('[artifacts] delete failed:', String(error));
       set({ artifacts: prev });
       get().toast('删除失败，请重试');
+    }
+  },
+
+  // A quick-launch shortcut: run a canned prompt through the same chat pipeline
+  // (so the create_card_artifact agent tool produces the deck), but keep the
+  // user on the Artifacts page and surface the new deck there. The message is
+  // still recorded to a chat, consistent with the chat-trigger model.
+  runArtifactShortcut: async (prompt) => {
+    if (get().artifactGenerating) return;
+    set({ view: 'artifacts', artifactGenerating: true, notifOpen: false });
+    const chatId = nextId('c');
+    const userMessageId = nextId();
+    try {
+      const res = await apiClient.messages.$post({
+        json: { chatId, userMessageId, title: truncateTitle(prompt), text: prompt },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { topicId: string; aiMessage: AiMessage };
+      // Record the exchange so the chat exists if the user opens it later.
+      set((st) => ({
+        sessionMeta: { ...st.sessionMeta, [chatId]: { id: chatId, title: truncateTitle(prompt), topicId: data.topicId } },
+        convos: { ...st.convos, [chatId]: [{ id: userMessageId, role: 'user', text: prompt }, data.aiMessage] },
+      }));
+      const created = data.aiMessage.artifacts?.[0];
+      await get().loadArtifacts();
+      if (created) {
+        set({ selectedArtifactId: created.id, artifactGenerating: false });
+        get().toast(`已生成 · ${created.title}`);
+      } else {
+        set({ artifactGenerating: false });
+        get().toast('这次没有生成卡片，换个说法再试试');
+      }
+    } catch (error) {
+      console.error('[artifacts] shortcut failed:', String(error));
+      set({ artifactGenerating: false });
+      get().toast('生成失败，请稍后重试');
     }
   },
 
