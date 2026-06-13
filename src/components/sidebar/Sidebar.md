@@ -17,6 +17,21 @@ shows on the chat view. The account avatar lives in the top-right floating bar
 
 ## Change history
 
+### 2026-06-13 — recolor nav tiles to neutral cards + indigo selection
+- **Motivation**: the provided mockup replaced the amber-filled tile block with
+  neutral white cards and an indigo (`--brand-2`) selection accent. The solid
+  amber grid was too warm/heavy for a navigation rail and the active tile read
+  ambiguously against the other amber tiles.
+- **Goal**: match the mockup — quiet white tiles by default, an unmistakable
+  indigo "selected" state, and a rounded icon-chip on every tile.
+- **Key decisions**: (1) each icon now sits in a rounded chip
+  (`--surface-2` fill, ink icon); the selected tile flips its chip to a filled
+  `--brand-2` square with a white icon. (2) selected tile = `--brand-soft`
+  lavender fill + `--brand-2` border + a soft indigo ring (replaces the amber
+  border/glow). (3) count badges recolored from amber to `--brand-2`. Amber now
+  stays reserved for the brand glyph and AI-initiated "proactive" moments, not
+  the nav chrome.
+
 ### 2026-06-13 — compact horizontal nav tiles
 - **Motivation**: user feedback — the tall square tiles (icon stacked above
   label, `min-height: 98px`) ate too much vertical space in the rail.
