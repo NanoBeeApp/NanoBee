@@ -59,44 +59,45 @@ export function Sidebar() {
           </button>
         </div>
 
-        {/* Uniform 3×2 tile grid — every entry is an equal-sized square so the
-            grid reads as one balanced block (聊天 no longer spans a wide row). */}
+        {/* Uniform 3×2 tile grid — every entry is an equal-sized short
+            rectangle (icon-chip left, label right on one line) so the grid
+            stays compact and reads as one balanced block. */}
         <div className="nb-nav-grid" data-testid="sidebar-nav-grid">
           <button className={`nb-nav-tile${isChatView ? ' active' : ''}`} onClick={openChat}
             data-testid="chat-entry">
-            <span className="ic"><Icons.chat size={18} /></span>
+            <span className="ic"><Icons.chat size={17} /></span>
             <span className="label">聊天</span>
           </button>
 
           <button className={`nb-nav-tile${view === 'today' ? ' active' : ''}`} onClick={openToday}
             data-testid="today-inbox-entry">
-            <span className="ic"><Icons.news size={18} /></span>
+            <span className="ic"><Icons.news size={17} /></span>
             <span className="label">今日事项</span>
             {todayCount > 0 && <span className="count" data-testid="today-count">{todayCount}</span>}
           </button>
 
           <button className={`nb-nav-tile${view === 'tasks' ? ' active' : ''}`} onClick={openTasks}
             data-testid="tasks-entry">
-            <span className="ic"><Icons.bolt size={18} /></span>
+            <span className="ic"><Icons.bolt size={17} /></span>
             <span className="label">任务</span>
             {activeTaskCount > 0 && <span className="count" data-testid="tasks-active-count">{activeTaskCount}</span>}
           </button>
 
           <button className={`nb-nav-tile${view === 'artifacts' ? ' active' : ''}`} onClick={() => openArtifacts()}
             data-testid="artifacts-entry">
-            <span className="ic"><Icons.grid size={18} /></span>
+            <span className="ic"><Icons.grid size={17} /></span>
             <span className="label">Artifacts</span>
           </button>
 
           <button className={`nb-nav-tile${view === 'research' ? ' active' : ''}`} onClick={openResearch}
             data-testid="research-entry">
-            <span className="ic"><Icons.spark size={18} /></span>
+            <span className="ic"><Icons.spark size={17} /></span>
             <span className="label">研究画布</span>
           </button>
 
           <button className="nb-nav-tile" onClick={() => setAiSetupOpen(true)}
             data-testid="settings-entry">
-            <span className="ic"><Icons.gear size={18} /></span>
+            <span className="ic"><Icons.gear size={17} /></span>
             <span className="label">设置</span>
           </button>
         </div>

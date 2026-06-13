@@ -95,26 +95,38 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-newchat:active { transform: translateY(1px); }
 .nb-newchat .kbd { margin-left: auto; font-family: var(--font-mono); font-size: 10px; padding: 2px 7px; background: var(--surface-3); color: var(--ink-3); border-radius: 6px; }
 
-/* Nav grid — uniform 3×2 amber tiles (聊天 / 今日事项 / 任务 / Artifacts /
-   研究画布 / 设置). Every tile is the same size: icon pinned top-left, label
-   pinned bottom-left, optional count badge top-right. */
-.nb-nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 2px; }
+/* Nav grid — uniform 2×3 neutral tiles (聊天 / 今日事项 / 任务 / Artifacts /
+   研究画布 / 设置). Each tile is a short, wide rectangle: a small rounded
+   icon-chip on the left with the label to its right on one line; the selected
+   tile switches to the indigo brand accent (lavender fill + indigo ring + a
+   filled white-on-indigo chip). Optional count badges trail at the right end. */
+.nb-nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 2px; }
 .nb-nav-tile {
-  display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between;
-  padding: 14px; border-radius: 14px; min-height: 84px; position: relative;
-  border: 1px solid var(--nb-amber-line); background: var(--nb-amber-soft);
-  color: var(--nb-amber-ink); font-weight: 600; font-size: 13.5px;
-  transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+  display: flex; flex-direction: row; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 11px; min-height: 0; position: relative;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--ink); font-weight: 600; font-size: 13px; letter-spacing: -0.01em;
+  transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
 }
-.nb-nav-tile:hover { background: #f8e8c9; }
+.nb-nav-tile:hover { background: var(--surface-2); border-color: var(--border-2); }
 .nb-nav-tile:active { transform: translateY(1px); }
-.nb-nav-tile.active { border-color: var(--nb-amber); box-shadow: 0 0 0 3px rgba(217,139,43,0.14); }
-.nb-nav-tile .ic { display: inline-flex; color: var(--nb-amber); }
-.nb-nav-tile .label { white-space: nowrap; }
+.nb-nav-tile .ic {
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: var(--surface-2); color: var(--ink);
+  transition: background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+}
+.nb-nav-tile .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* Selected tile — indigo brand accent (the design's active "聊天" state). */
+.nb-nav-tile.active { background: var(--brand-soft); border-color: var(--brand-2); box-shadow: 0 0 0 3px rgba(99,91,255,0.14); }
+.nb-nav-tile.active:hover { background: var(--brand-soft); border-color: var(--brand-2); }
+.nb-nav-tile.active .ic { background: var(--brand-2); color: #fff; }
+
 .nb-nav-tile .count {
-  position: absolute; top: 11px; right: 11px;
-  min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
-  background: var(--nb-amber); color: #fff; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  margin-left: auto; flex-shrink: 0;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+  background: var(--brand-2); color: #fff; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
   display: grid; place-items: center;
 }
 
@@ -163,12 +175,12 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-corner-account { display: inline-flex; align-items: center; gap: 6px; }
 .nb-corner-ctrl { position: relative; display: inline-flex; }
 /* The avatar button reuses the floating-button (.fbtn) chrome but stays fully
-   opaque (it is an identity marker) and lets the round avatar fill it. */
-.nb-account-trigger { padding: 0; opacity: 1; overflow: hidden; }
-.nb-account-trigger .avatar { width: 26px; height: 26px; }
-/* Menus open downward and align to their trigger's right edge. */
-.nb-account-pop, .nb-settings-pop { position: absolute; top: calc(100% + 8px); right: 0; width: 224px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--sh-4); overflow: hidden; z-index: 60; animation: nbtoast 0.22s var(--ease-out); }
-.nb-settings-pop { width: 200px; }
+   opaque (it is an identity marker). It is a horizontal pill: round avatar on
+   the left, the dropdown caret to its right. */
+.nb-account-trigger { width: auto; height: 34px; padding: 0 6px 0 4px; opacity: 1; overflow: visible; display: inline-flex; align-items: center; gap: 3px; }
+.nb-account-trigger .avatar { width: 26px; height: 26px; flex-shrink: 0; }
+/* Menu opens downward and aligns to its trigger's right edge. */
+.nb-account-pop { position: absolute; top: calc(100% + 8px); right: 0; width: 224px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--sh-4); overflow: hidden; z-index: 60; animation: nbtoast 0.22s var(--ease-out); }
 .nb-account-id { display: flex; align-items: center; gap: 9px; padding: 11px 12px; }
 .nb-account-id .meta { flex: 1; min-width: 0; }
 .nb-account-id .title { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

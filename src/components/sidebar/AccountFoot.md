@@ -1,9 +1,13 @@
 # AccountFoot.tsx
 
 ## Responsibility
-Sidebar footer account area: shows an avatar-only button for the signed-in
-user — clicking it opens a popover menu with identity info (name + email)
-and a logout action — or a login/register entry linking to `/login`.
+Top-right corner account control — the *sole* control in `FloatingControls`'s
+`.nb-float.tr` (the standalone notification bell and settings gear were folded
+into its menu). A single avatar + dropdown-caret pill: the avatar is on the
+left, the caret to its right; clicking opens one unified dropdown that gathers
+identity info, recent updates (notifications), AI model settings, native app
+downloads and logout. When signed out the same pill shows a bee glyph and the
+menu offers login/register plus the shared settings actions.
 
 ## Core exports / API
 - `AccountFoot` — no props; reads auth state via `useAuthUser()` and
@@ -11,14 +15,19 @@ and a logout action — or a login/register entry linking to `/login`.
 
 ## Dependencies
 - Upstream: `react` (useState), `@tanstack/react-router` (Link),
-  `../../icons/icons`, `../../lib/useAuth`, `./SettingsMenu`
-- Downstream: `Sidebar.tsx`
-- Styles: `.nb-account-trigger` / `.nb-account-pop` / `.nb-account-id` /
-  `.nb-account-action` in `src/styles/app.css`; reuses `.nb-scrim`
+  `../../icons/icons`, `../../config` (`APP_DOWNLOAD_LINKS`),
+  `../../lib/useAuth`, `../../store/useAppStore`
+- Downstream: `FloatingControls.tsx` (rendered inside the top-right float)
+- Styles: `.nb-corner-account` / `.nb-corner-ctrl` / `.nb-account-trigger` /
+  `.nb-account-pop` / `.nb-account-id` / `.nb-account-action` in
+  `src/styles/app.css`; the avatar button reuses the `.fbtn` floating-button
+  chrome; reuses `.nb-scrim`
 
 ## Notes
 - Avatar: provider image when available (`referrerPolicy="no-referrer"` for
   Google-hosted avatars), otherwise the first letter of the display name.
+- The popover opens downward and right-aligned to its `.nb-corner-ctrl`
+  anchor (the control moved from the sidebar bottom to the page top-right).
 - Test anchors: `account-area`, `account-menu-trigger`, `account-menu`,
   `login-entry`, `logout-button`.
 
@@ -61,3 +70,26 @@ and a logout action — or a login/register entry linking to `/login`.
   general settings button (gear) whose menu hosts the download links.
 - **Key decision**: only the import/usage changed here; the menu remains a
   separate self-contained component.
+
+### 2026-06-13 — moved to the top-right corner
+- **Motivation**: user request — move the sidebar's user icon and settings
+  button to the page's top-right corner, so the left rail focuses on
+  navigation and the chat lists.
+- **Goal**: the avatar + settings gear live in the top-right floating bar
+  alongside the notification bell.
+- **Key decision**: render `AccountFoot` inside `FloatingControls`'s
+  `.nb-float.tr` instead of the sidebar footer; the avatar reuses the `.fbtn`
+  chrome to match the bell/gear; the popovers flip from opening upward to
+  opening downward, right-aligned to each `.nb-corner-ctrl`; the signed-out
+  entry becomes an icon button to fit the compact bar.
+
+### 2026-06-13 — sole top-right control, caret on the right
+- **Motivation**: user request — the top-right should show *only* the user
+  avatar (drop the standalone bell) with the dropdown caret on the right.
+- **Goal**: one account pill that absorbs every other top-right action.
+- **Key decision**: drop the `SettingsMenu` import; the bell becomes a
+  「最近动态」menu entry (still drives `setNotifOpen`) and the gear's download
+  links move inline. The trigger stops being a square `.fbtn` (whose centered
+  grid stacked the caret *under* the avatar and clipped it) and becomes a
+  horizontal pill — `.nb-account-trigger` is now `inline-flex` with `width:auto`
+  so the 26px avatar sits left and `chevD` sits to its right.

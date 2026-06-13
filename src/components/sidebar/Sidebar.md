@@ -17,6 +17,16 @@ shows on the chat view. The account avatar lives in the top-right floating bar
 
 ## Change history
 
+### 2026-06-13 — compact horizontal nav tiles
+- **Motivation**: user feedback — the tall square tiles (icon stacked above
+  label, `min-height: 98px`) ate too much vertical space in the rail.
+- **Goal**: shorter tiles with a smaller label.
+- **Key decision**: switch `.nb-nav-tile` from a column to a horizontal row
+  (small icon-chip on the left, label on one line to its right), drop the fixed
+  min-height, and shrink padding / chip (46→30px) / icon (20→17px) / label
+  (15→13px). The count badge stops being an absolute top-right pill and trails
+  inline at the right end (`margin-left:auto`).
+
 ### 2026-06-13 — uniform 3×2 grid, 设置 tile, new-chat moved to foot
 - **Motivation**: design handoff — the user wanted the rail laid out as six
   equal tiles (聊天 leading a balanced 3×2 grid instead of a wide row), a 设置

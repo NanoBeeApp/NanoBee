@@ -1,13 +1,30 @@
 # src/components/layout/FloatingControls.tsx
 
 ## Responsibility
-Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) the panel-toggle that *pins* the sidebar open, plus back-to-chat on the Today page; top-right notification bell. While collapsed it also renders a wide left-edge reveal zone (`.nb-edge-reveal`) — hovering the screen's left edge fades in a soft glow and clicking anywhere in the strip *peeks* the sidebar open temporarily (overlay that auto-closes on pointer leave), distinct from the panel icon which pins it.
+Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) the panel-toggle that *pins* the sidebar open, plus back-to-chat on the Today page; top-right a single account control (`AccountFoot` — an avatar + chevron button whose dropdown menu gathers notifications, AI settings, app downloads and logout). While collapsed it also renders a wide left-edge reveal zone (`.nb-edge-reveal`) — hovering the screen's left edge fades in a soft glow and clicking anywhere in the strip *peeks* the sidebar open temporarily (overlay that auto-closes on pointer leave), distinct from the panel icon which pins it.
 
 ## Dependencies
-- Upstream: store, icons
+- Upstream: store, icons, `AccountFoot` (the whole top-right account dropdown)
 - Downstream: App
 
 ## Change history
+
+### 2026-06-13 — collapse the top-right into one account dropdown
+- **Motivation**: user request — the top-right should show only the account
+  icon with a dropdown caret, with everything else behind its "more" menu.
+- **Change**: removed the standalone notification bell from `.nb-float.tr` (and
+  the now-unused `notifOpen`/`setNotifOpen` store reads); the bell, the former
+  `SettingsMenu` gear and the avatar are unified into one `AccountFoot` dropdown.
+  Notifications are now opened from a menu entry (the `NotificationDropdown`
+  itself is unchanged — it stays anchored top-right via `setNotifOpen`).
+
+### 2026-06-13 — top-right bar takes over the account control
+- **Motivation**: user request — move the sidebar's user icon and settings
+  button to the page's top-right corner.
+- **Goal**: the top-right float hosts the notification bell, the settings gear
+  and the account avatar together.
+- **Change**: render `<AccountFoot />` (which itself contains `SettingsMenu`)
+  after the bell inside `.nb-float.tr`; the three share the `.fbtn` chrome.
 
 ### 2026-06-13 — edge reveal peeks temporarily, panel icon pins
 - **Motivation**: clicking the left-edge glow expanded the sidebar permanently,

@@ -1,7 +1,7 @@
 // Floating corner controls — the design intentionally has no fixed header to
 // maximize the content area. Top-left (only when the sidebar is collapsed):
 // expand sidebar, plus back-to-chat while reading the Today page;
-// top-right: notification bell, settings menu and the account avatar.
+// top-right: a single account avatar whose dropdown gathers everything else.
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
 import { AccountFoot } from '../sidebar/AccountFoot';
@@ -11,8 +11,6 @@ export function FloatingControls() {
   const sideCollapsed = useAppStore((s) => s.sideCollapsed);
   const setSideCollapsed = useAppStore((s) => s.setSideCollapsed);
   const peekSidebar = useAppStore((s) => s.peekSidebar);
-  const notifOpen = useAppStore((s) => s.notifOpen);
-  const setNotifOpen = useAppStore((s) => s.setNotifOpen);
   const backToChat = useAppStore((s) => s.backToChat);
 
   return (
@@ -46,9 +44,6 @@ export function FloatingControls() {
         </>
       )}
       <div className="nb-float tr">
-        <button className="fbtn" title="通知" onClick={() => setNotifOpen(!notifOpen)} data-testid="notification-bell">
-          <Icons.bell size={16} />
-        </button>
         <AccountFoot />
       </div>
     </>
