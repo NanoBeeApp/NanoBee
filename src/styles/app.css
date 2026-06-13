@@ -111,7 +111,10 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 }
 
 /* view switch segmented */
-.nb-switch { display: flex; gap: 2px; padding: 3px; margin: 12px 6px 4px; background: var(--surface-3); border-radius: 9px; }
+/* Horizontal margin stays 0 so the segmented switch lines up flush with the
+   nav grid and the new-chat button — all three share the .nb-side-top 12px
+   padding column, keeping their left/right edges on the same vertical grid. */
+.nb-switch { display: flex; gap: 2px; padding: 3px; margin: 12px 0 4px; background: var(--surface-3); border-radius: 9px; }
 .nb-switch button { flex: 1; padding: 6px 0; font-size: 12.5px; font-weight: 600; color: var(--ink-3); border-radius: 7px; transition: all var(--dur-1) var(--ease-out); }
 .nb-switch button:hover { color: var(--ink-2); }
 .nb-switch button.active { background: var(--surface); color: var(--ink); box-shadow: var(--sh-1); }
