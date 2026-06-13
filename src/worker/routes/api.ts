@@ -10,7 +10,9 @@ import type { Env } from "../api-worker";
 import { aiSettingsRoutes } from "./ai-settings";
 import { authRoutes } from "./auth";
 import { bootstrapRoutes } from "./bootstrap";
+import { cardRoutes } from "./cards";
 import { messageRoutes } from "./messages";
+import { researchRoutes } from "./research";
 import { taskRoutes } from "./tasks";
 
 export const apiRoutes = new Hono<{ Bindings: Env }>()
@@ -18,7 +20,9 @@ export const apiRoutes = new Hono<{ Bindings: Env }>()
 	.route("/ai", aiSettingsRoutes)
 	.route("/auth", authRoutes)
 	.route("/bootstrap", bootstrapRoutes)
+	.route("/cards", cardRoutes)
 	.route("/messages", messageRoutes)
+	.route("/research", researchRoutes)
 	.route("/tasks", taskRoutes)
 	// GET /api/hello — minimal RPC smoke-test endpoint
 	.get("/hello", (c) => {

@@ -24,7 +24,7 @@ const TOAST_DURATION_MS = 3600;
 const JUST_ADDED_FLASH_MS = 700;
 const TITLE_MAX_CHARS = 22;
 
-export type View = 'chat' | 'today' | 'tasks';
+export type View = 'chat' | 'today' | 'tasks' | 'cards' | 'research';
 export type SidebarMode = 'history' | 'topics';
 
 /** Server payload of GET /api/bootstrap. */
@@ -74,6 +74,8 @@ interface AppState {
   newChat: () => void;
   openToday: () => void;
   openTasks: () => void;
+  openCards: () => void;
+  openResearch: () => void;
   setTodayFilter: (f: string) => void;
   backToChat: () => void;
   openUpdateInChat: (u: UpdateItem) => void;
@@ -208,6 +210,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   openToday: () => set({ view: 'today', notifOpen: false }),
 
   openTasks: () => set({ view: 'tasks', notifOpen: false }),
+
+  openCards: () => set({ view: 'cards', notifOpen: false }),
+
+  openResearch: () => set({ view: 'research', notifOpen: false }),
 
   setTodayFilter: (todayFilter) => set({ todayFilter }),
 

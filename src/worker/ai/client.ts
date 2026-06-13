@@ -166,11 +166,13 @@ export async function generateAgentTurn(
 	cfg: AiRuntimeConfig,
 	messages: AgentChatMessage[],
 	tools: AiToolDef[],
+	opts?: { maxTokens?: number; timeoutMs?: number },
 ): Promise<AgentTurn> {
 	if (!cfg.apiKey) throw new Error("No API key available for AI provider");
 	if (!cfg.baseUrl) throw new Error("No base URL configured for AI provider");
 
-	const signal = AbortSignal.timeout(CONFIG.AI.REQUEST_TIMEOUT_MS);
+	const maxTokens = opts?.maxTokens ?? CONFIG.AI.MAX_COMPLETION_TOKENS;
+	const signal = AbortSignal.timeout(opts?.timeoutMs ?? CONFIG.AI.REQUEST_TIMEOUT_MS);
 
 	let url: string;
 	let headers: Record<string, string>;
@@ -189,7 +191,7 @@ export async function generateAgentTurn(
 			.join("\n");
 		payload = {
 			model: cfg.model,
-			max_tokens: CONFIG.AI.MAX_COMPLETION_TOKENS,
+			max_tokens: maxTokens,
 			...(system ? { system } : {}),
 			...(tools.length
 				? {
@@ -212,7 +214,7 @@ export async function generateAgentTurn(
 		};
 		payload = {
 			model: cfg.model,
-			max_tokens: CONFIG.AI.MAX_COMPLETION_TOKENS,
+			max_tokens: maxTokens,
 			...(tools.length
 				? {
 						tools: tools.map((t) => ({
@@ -295,8 +297,9 @@ export async function pingChatModel(cfg: AiRuntimeConfig): Promise<void> {
 export async function generateChatText(
 	cfg: AiRuntimeConfig,
 	messages: AiChatMessage[],
+	opts?: { maxTokens?: number; timeoutMs?: number },
 ): Promise<string> {
-	const turn = await generateAgentTurn(cfg, messages, []);
+	const turn = await generateAgentTurn(cfg, messages, [], opts);
 	const trimmed = turn.text?.trim();
 	if (!trimmed) throw new Error(`AI provider ${cfg.provider} returned an empty reply`);
 	return trimmed;

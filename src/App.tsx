@@ -10,6 +10,8 @@ import { Sidebar } from './components/sidebar/Sidebar';
 import { ChatView } from './components/chat/ChatView';
 import { TodayView } from './components/today/TodayView';
 import { TasksView } from './components/tasks/TasksView';
+import { CardsView } from './components/cards/CardsView';
+import { ResearchView } from './components/research/ResearchView';
 import { FloatingControls } from './components/layout/FloatingControls';
 import { NotificationDropdown } from './components/notifications/NotificationDropdown';
 import { QuickChat } from './components/quickchat/QuickChat';
@@ -49,7 +51,17 @@ export default function App() {
 
       <section className="nb-chat" data-testid="center-surface">
         <FloatingControls />
-        {view === 'today' ? <TodayView /> : view === 'tasks' ? <TasksView /> : <ChatView />}
+        {view === 'today' ? (
+          <TodayView />
+        ) : view === 'tasks' ? (
+          <TasksView />
+        ) : view === 'cards' ? (
+          <CardsView />
+        ) : view === 'research' ? (
+          <ResearchView />
+        ) : (
+          <ChatView />
+        )}
         {notifOpen && <NotificationDropdown />}
       </section>
 
