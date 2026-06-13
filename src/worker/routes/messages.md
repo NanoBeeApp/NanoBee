@@ -85,3 +85,9 @@ it and returns it.
 - **Goal**: resolve the user's key (else the built-in default) via
   `resolveWebSearchKey` and pass it to `runAgentLoop` as
   `ctx.secrets.tavily_api_key`.
+
+### 2026-06-13 — persist the agent trace in the AI message
+- **Motivation**: the debug modal must work after reload, not only on the
+  live response.
+- **Goal**: spread `run.trace` into the persisted/returned AI message
+  payload (`TracedAiMessage`); absent on rule-based fallback replies.

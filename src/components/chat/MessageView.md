@@ -23,3 +23,9 @@ Renders one chat message: user bubble / AI reply (minimal "NanoBee" role row, ri
 ### 2026-06-12 — text-only messages
 - **Motivation**: user feedback — the message area was still cluttered (thinking pill, task-suggestion card, citation chips, reply-suggestion chips).
 - **Goal**: keep only the basic content — role row + paragraphs (user bubble / proactive card framing unchanged). Props reduced to `{ m }`; PriceCard / RecommendedActions / TaskSuggestCard were deleted.
+
+### 2026-06-13 — agent-trace debug entry
+- **Motivation**: surface the agent execution process per AI reply.
+- **Goal**: messages whose payload carries `trace` render an「执行过程」
+  pill in the role row (testid `agent-trace-open-button`) that toggles
+  `AgentTraceModal`; the open/close flag is local UI state.

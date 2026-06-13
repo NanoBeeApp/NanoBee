@@ -1,0 +1,36 @@
+/* Agent execution-trace debug modal (AgentTraceModal.tsx).
+   Kept in its own stylesheet (imported by the component) so the modal is
+   self-contained. Follows the app conventions: white surfaces, background
+   tints over borders, mono for payloads. */
+
+.nb-trace-modal { width: min(680px, 100%); display: flex; flex-direction: column; }
+
+.nb-trace-head { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 24px 12px; }
+.nb-trace-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.nb-trace-meta { margin-top: 4px; font-size: 12px; color: var(--ink-3); }
+
+.nb-trace-tools { padding: 0 24px 12px; font-size: 12px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.nb-trace-chip { padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); font-family: var(--font-mono); font-size: 11px; }
+
+.nb-trace-body { padding: 0 24px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+
+.nb-trace-iter { display: flex; flex-direction: column; gap: 8px; }
+.nb-trace-iter-label { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.nb-trace-text { font-size: 13px; color: var(--ink-2); white-space: pre-wrap; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+
+.nb-trace-tool { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.nb-trace-tool-head { display: flex; align-items: center; gap: 8px; }
+.nb-trace-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.nb-trace-dot.ok { background: #30a46c; }
+.nb-trace-dot.fail { background: #e5484d; }
+.nb-trace-tool-name { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--ink); }
+.nb-trace-tool-time { margin-left: auto; font-size: 11px; color: var(--ink-4); }
+
+.nb-trace-io { display: flex; flex-direction: column; gap: 3px; }
+.nb-trace-io-label { font-size: 11px; color: var(--ink-4); }
+.nb-trace-pre { margin: 0; font-family: var(--font-mono); font-size: 11.5px; line-height: 1.5; color: var(--ink-2); background: var(--surface); border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; word-break: break-word; }
+.nb-trace-output { max-height: 220px; overflow-y: auto; }
+
+/* Entry button on AI messages (rendered in the role row by MessageView). */
+.nb-trace-open { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 8px; border: none; border-radius: 999px; background: var(--surface-2); color: var(--ink-3); font-size: 11px; cursor: pointer; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+.nb-trace-open:hover { background: var(--surface-3); color: var(--ink-2); }

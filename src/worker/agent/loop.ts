@@ -8,11 +8,20 @@
  * chain data fetches, skills and MCP calls, and decide on its own when it
  * has enough to answer.
  *
+ * Every run also produces an `AgentTrace` — a structured record of each
+ * iteration's text and tool calls (arguments / output / timing) that the
+ * frontend debug modal renders.
+ *
  * Safety rails: an iteration cap (after which the model must answer from
  * what it has), a per-tool timeout, and result truncation. With no tools
  * available the loop degrades to one plain completion.
  */
 
+import type {
+	AgentTrace,
+	AgentTraceIteration,
+	AgentTraceToolCall,
+} from "../../lib/agent-trace";
 import {
 	generateAgentTurn,
 	type AgentChatMessage,
@@ -37,6 +46,7 @@ export interface AgentToolTrace {
 export interface AgentRunResult {
 	text: string;
 	toolsUsed: AgentToolTrace[];
+	trace: AgentTrace;
 }
 
 /** Reject if a tool runs past the configured timeout. */
@@ -57,12 +67,17 @@ async function executeToolCall(
 	call: AiToolCall,
 	tools: AgentTool[],
 	env: Env,
-	trace: AgentToolTrace[],
-): Promise<string> {
+): Promise<AgentTraceToolCall> {
+	const started = Date.now();
 	const tool = tools.find((t) => t.name === call.name);
 	if (!tool) {
-		trace.push({ tool: call.name, ok: false });
-		return `Error: unknown tool '${call.name}'`;
+		return {
+			name: call.name,
+			arguments: call.arguments,
+			output: `Error: unknown tool '${call.name}'`,
+			ok: false,
+			durationMs: Date.now() - started,
+		};
 	}
 	try {
 		const output = await withTimeout(
@@ -70,20 +85,30 @@ async function executeToolCall(
 			CONFIG.AGENT.TOOL_TIMEOUT_MS,
 			call.name,
 		);
-		trace.push({ tool: call.name, ok: true });
 		console.log("[Agent] tool '%s' ok (%d chars)", call.name, output.length);
-		return output;
+		return {
+			name: call.name,
+			arguments: call.arguments,
+			output,
+			ok: true,
+			durationMs: Date.now() - started,
+		};
 	} catch (error) {
-		trace.push({ tool: call.name, ok: false });
 		console.warn("[Agent] tool '%s' failed: %s", call.name, String(error));
 		// The model sees the failure and can retry differently or answer without it.
-		return `Error: ${String(error)}`;
+		return {
+			name: call.name,
+			arguments: call.arguments,
+			output: `Error: ${String(error)}`,
+			ok: false,
+			durationMs: Date.now() - started,
+		};
 	}
 }
 
 /**
- * Run the agent loop over `baseMessages` and return the final reply text
- * plus a trace of every tool invocation.
+ * Run the agent loop over `baseMessages` and return the final reply text,
+ * a flat tool-usage summary, and the full execution trace.
  */
 export async function runAgentLoop(
 	env: Env,
@@ -91,9 +116,24 @@ export async function runAgentLoop(
 	baseMessages: AgentChatMessage[],
 	ctx: AgentContext = EMPTY_AGENT_CONTEXT,
 ): Promise<AgentRunResult> {
+	const startedAt = Date.now();
 	const tools = await collectAgentTools(env, ctx);
-	const toolsUsed: AgentToolTrace[] = [];
 	const messages: AgentChatMessage[] = [...baseMessages];
+	const iterations: AgentTraceIteration[] = [];
+
+	const finish = (text: string): AgentRunResult => ({
+		text,
+		toolsUsed: iterations.flatMap((it) =>
+			it.toolCalls.map((tc) => ({ tool: tc.name, ok: tc.ok })),
+		),
+		trace: {
+			provider: cfg.provider,
+			model: cfg.model,
+			tools: tools.map((t) => t.name),
+			iterations,
+			durationMs: Date.now() - startedAt,
+		},
+	});
 
 	for (let i = 0; i < CONFIG.AGENT.MAX_ITERATIONS; i++) {
 		// On the final iteration no tools are offered, forcing a plain answer.
@@ -102,7 +142,8 @@ export async function runAgentLoop(
 
 		if (turn.toolCalls.length === 0) {
 			if (!turn.text) throw new Error("agent loop ended without a reply");
-			return { text: turn.text, toolsUsed };
+			iterations.push({ n: i + 1, text: turn.text, toolCalls: [] });
+			return finish(turn.text);
 		}
 
 		console.log(
@@ -113,15 +154,24 @@ export async function runAgentLoop(
 		);
 
 		messages.push({ role: "assistant", content: turn.text, toolCalls: turn.toolCalls });
-		const outputs = await Promise.all(
-			turn.toolCalls.map((call) => executeToolCall(call, tools, env, toolsUsed)),
+		const results = await Promise.all(
+			turn.toolCalls.map((call) => executeToolCall(call, tools, env)),
 		);
+		iterations.push({
+			n: i + 1,
+			text: turn.text,
+			// The stored trace keeps a shorter slice than what the model sees.
+			toolCalls: results.map((r) => ({
+				...r,
+				output: truncate(r.output, CONFIG.AGENT.TRACE_MAX_OUTPUT_CHARS),
+			})),
+		});
 		turn.toolCalls.forEach((call, idx) => {
 			messages.push({
 				role: "tool",
 				toolCallId: call.id,
 				name: call.name,
-				content: truncate(outputs[idx], CONFIG.AGENT.MAX_TOOL_RESULT_CHARS),
+				content: truncate(results[idx].output, CONFIG.AGENT.MAX_TOOL_RESULT_CHARS),
 			});
 		});
 

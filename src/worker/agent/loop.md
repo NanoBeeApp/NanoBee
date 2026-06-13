@@ -36,3 +36,12 @@ MCP calls and decides on its own when it has enough to answer.
 - **Key decision**: native function calling on both wire protocols instead of
   JSON-text routing — more reliable parsing, parallel tool calls per turn,
   provider-agnostic via `generateAgentTurn`.
+
+### 2026-06-13 — structured execution trace
+- **Motivation**: the in-app debug modal needs the full run record, not just
+  a flat tool-name list.
+- **Goal**: `AgentRunResult.trace: AgentTrace` — per-iteration model text and
+  tool calls (model-supplied arguments, output truncated to
+  `TRACE_MAX_OUTPUT_CHARS`, ok flag, per-call duration) plus run metadata
+  (provider/model/toolset/total duration). `executeToolCall` now returns the
+  full call record; `toolsUsed` is derived from the trace.

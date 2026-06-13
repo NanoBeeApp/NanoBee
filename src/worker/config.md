@@ -55,3 +55,7 @@ default list limit). Route files must reference this instead of hardcoding.
   request timeout; per the single-config rule they live here.
 - **Goal**: `CONFIG.DATA_HUB` (hub request timeout) and `CONFIG.AGENT`
   (MAX_ITERATIONS / TOOL_TIMEOUT_MS / MAX_TOOL_RESULT_CHARS).
+
+### 2026-06-13 — AGENT.TRACE_MAX_OUTPUT_CHARS
+- **Motivation**: traces persist inside message payloads; stored tool
+  outputs need a tighter cap (2k) than what the model sees (8k).

@@ -44,6 +44,8 @@ export const CONFIG = {
 		TOOL_TIMEOUT_MS: 20_000,
 		// Tool results longer than this are truncated before re-prompting
 		MAX_TOOL_RESULT_CHARS: 8_000,
+		// Tool outputs stored in the persisted execution trace are kept shorter
+		TRACE_MAX_OUTPUT_CHARS: 2_000,
 	},
 
 	// Auth system constants (sessions, email codes, OAuth providers)

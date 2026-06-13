@@ -10,6 +10,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { Env } from "../api-worker";
+import type { AgentTrace } from "../../lib/agent-trace";
 import { resolveAiConfig, resolveWebSearchKey } from "../ai/settings";
 import { runAgentLoop } from "../agent/loop";
 import { getSessionToken } from "../auth/cookies";
@@ -52,6 +53,7 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 			// Ask the configured model to write the reply text; on any failure
 			// fall back to the rule-based copy so chat never breaks.
 			let llm: { text: string; model: string } | null = null;
+			let trace: AgentTrace | null = null;
 			if (aiConfig.apiKey) {
 				try {
 					// Agent loop: the model can iteratively call tools (data-hub
@@ -75,6 +77,7 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 						);
 					}
 					llm = { text: run.text, model: aiConfig.model };
+					trace = run.trace;
 				} catch (error) {
 					console.error(
 						"[API] POST /api/messages LLM call failed (provider:",
@@ -93,6 +96,9 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 			// A Today-page reading context pins the topic; otherwise the
 			// reply's keyword-detected topic is the AI's auto-categorization.
 			const topicId = body.ctxTopicId ?? reply.topicId;
+			// The execution trace rides inside the persisted payload so the
+			// debug modal can show how the answer was produced, even after reload.
+			const aiMessage = { ...reply.msg, ...(trace ? { trace } : {}) };
 
 			const userMessage = { id: body.userMessageId, role: "user" as const, text: body.text };
 
@@ -110,10 +116,10 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 				).bind(userMessage.id, body.chatId, "user", JSON.stringify(userMessage)),
 				c.env.DB.prepare(
 					"INSERT INTO messages (id, chat_id, role, payload) VALUES (?, ?, ?, ?)",
-				).bind(reply.msg.id, body.chatId, reply.msg.role, JSON.stringify(reply.msg)),
+				).bind(aiMessage.id, body.chatId, aiMessage.role, JSON.stringify(aiMessage)),
 			]);
 
-			return c.json({ chatId: body.chatId, topicId, aiMessage: reply.msg }, 201);
+			return c.json({ chatId: body.chatId, topicId, aiMessage }, 201);
 		} catch (error) {
 			console.error("[API] POST /api/messages D1 error:", String(error));
 			return c.json({ error: "Database error" }, 500);
