@@ -49,10 +49,14 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .fbtn:hover { color: var(--ink); opacity: 1; background: #fff; border-color: var(--border-2); }
 
 /* left-edge reveal zone (only rendered when the sidebar is collapsed):
-   a wide invisible hit area along the screen's left edge; hovering it fades in
-   a soft vertical glow, and clicking anywhere in the strip expands the sidebar. */
+   a 28px invisible hit area along the screen's left edge; hovering it fades in
+   a soft arc-shaped glow, and clicking anywhere in the strip peeks the sidebar.
+   The glow is a half-ellipse radiating from the mid-height of the left edge:
+   brightest at the vertical center, tapering toward the top/bottom and outward.
+   It spans ~84px (3x the hit area) and overflows the strip — pointer-events are
+   off so the wider halo never enlarges the click target. */
 .nb-edge-reveal { position: fixed; left: 0; top: 0; height: 100vh; width: 28px; z-index: 24; padding: 0; border: 0; background: transparent; cursor: pointer; }
-.nb-edge-glow { position: absolute; left: 0; top: 0; height: 100%; width: 100%; pointer-events: none; opacity: 0; transition: opacity var(--dur-1) var(--ease-out); background: linear-gradient(90deg, rgba(99,91,255,0.18) 0%, rgba(99,91,255,0.09) 35%, rgba(99,91,255,0) 100%); box-shadow: inset 3px 0 12px -2px rgba(99,91,255,0.32); }
+.nb-edge-glow { position: absolute; left: 0; top: 0; height: 100%; width: 84px; pointer-events: none; opacity: 0; transition: opacity var(--dur-1) var(--ease-out); background: radial-gradient(84px 46vh at left center, rgba(99,91,255,0.32) 0%, rgba(99,91,255,0.17) 36%, rgba(99,91,255,0.06) 66%, rgba(99,91,255,0) 100%); }
 .nb-edge-reveal:hover .nb-edge-glow,
 .nb-edge-reveal:focus-visible .nb-edge-glow { opacity: 1; }
 
