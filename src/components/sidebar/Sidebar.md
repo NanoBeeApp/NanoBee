@@ -9,6 +9,17 @@ Left rail: brand row with collapse button, "新对话" (⌘N), the amber "今日
 
 ## Change history
 
+### 2026-06-13 — Arc-style two-column nav grid
+- **Motivation**: the four navigation entries (今日事项 / 任务 / 动态卡片 /
+  研究画布) were stacked as full-width rows, eating vertical space and pushing
+  the chat list down. The user wanted the Arc browser sidebar look.
+- **Goal**: lay the four entries out as a compact 2×2 grid of tiles.
+- **Change**: wrapped them in `.nb-nav-grid` and replaced the per-entry
+  classes (`nb-inbox-entry` / `nb-tasks-entry`) with a single unified
+  `nb-nav-tile` (icon top-left, label bottom-left, count badge floated
+  top-right). All four share the amber soft style for a cohesive grid; the
+  active tile keeps the amber border + glow ring.
+
 ### 2026-06-13 — chat lists stay visible on the Today page (TodayNav removed)
 - **Motivation**: opening 今日事项 swapped the sidebar body for TodayNav, so the
   chat lists vanished and the only obvious way back was "新对话" — the

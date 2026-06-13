@@ -21,6 +21,8 @@ export function Sidebar() {
   const newChat = useAppStore((s) => s.newChat);
   const openToday = useAppStore((s) => s.openToday);
   const openTasks = useAppStore((s) => s.openTasks);
+  const openCards = useAppStore((s) => s.openCards);
+  const openResearch = useAppStore((s) => s.openResearch);
   const toggleTopic = useAppStore((s) => s.toggleTopic);
   const setSideCollapsed = useAppStore((s) => s.setSideCollapsed);
 
@@ -50,18 +52,32 @@ export function Sidebar() {
           <span className="kbd">⌘N</span>
         </button>
 
-        <button className={`nb-inbox-entry${view === 'today' ? ' active' : ''}`} onClick={openToday}
-          data-testid="today-inbox-entry">
-          <Icons.news size={15} />
-          今日事项
-        </button>
+        <div className="nb-nav-grid" data-testid="sidebar-nav-grid">
+          <button className={`nb-nav-tile${view === 'today' ? ' active' : ''}`} onClick={openToday}
+            data-testid="today-inbox-entry">
+            <span className="ic"><Icons.news size={16} /></span>
+            <span className="label">今日事项</span>
+          </button>
 
-        <button className={`nb-tasks-entry${view === 'tasks' ? ' active' : ''}`} onClick={openTasks}
-          data-testid="tasks-entry">
-          <span className="ic"><Icons.bolt size={15} /></span>
-          任务
-          {activeTaskCount > 0 && <span className="count" data-testid="tasks-active-count">{activeTaskCount}</span>}
-        </button>
+          <button className={`nb-nav-tile${view === 'tasks' ? ' active' : ''}`} onClick={openTasks}
+            data-testid="tasks-entry">
+            <span className="ic"><Icons.bolt size={16} /></span>
+            <span className="label">任务</span>
+            {activeTaskCount > 0 && <span className="count" data-testid="tasks-active-count">{activeTaskCount}</span>}
+          </button>
+
+          <button className={`nb-nav-tile${view === 'cards' ? ' active' : ''}`} onClick={openCards}
+            data-testid="cards-entry">
+            <span className="ic"><Icons.grid size={16} /></span>
+            <span className="label">动态卡片</span>
+          </button>
+
+          <button className={`nb-nav-tile${view === 'research' ? ' active' : ''}`} onClick={openResearch}
+            data-testid="research-entry">
+            <span className="ic"><Icons.spark size={16} /></span>
+            <span className="label">研究画布</span>
+          </button>
+        </div>
 
         <div className="nb-switch" data-testid="sidebar-view-switch">
           <button className={sidebarMode === 'history' ? 'active' : ''} onClick={() => setSidebarMode('history')}>聊天记录</button>
