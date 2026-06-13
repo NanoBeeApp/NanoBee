@@ -59,6 +59,9 @@ const putSchema = z.object({
 		.optional()
 		.default(""),
 	model: z.string().max(FIELD_MAX).optional().default(""),
+	// Tavily web-search key; same keep/clear/replace semantics as apiKey.
+	// Independent of the AI provider, so switching providers keeps it.
+	webSearchKey: z.string().max(FIELD_MAX).optional(),
 });
 
 const modelsSchema = z.object({
@@ -137,6 +140,7 @@ export const aiSettingsRoutes = new Hono<{ Bindings: Env }>()
 				baseUrl,
 				model,
 				apiKey,
+				webSearchKey: body.webSearchKey?.trim(),
 			});
 		} catch (error) {
 			console.error("[API] PUT /api/ai/settings failed:", String(error));

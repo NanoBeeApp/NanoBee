@@ -43,3 +43,8 @@ settings entry.
 - **出发点**：双栏弹窗的「连接测试」需要前端 mutation。
 - **目标**：`useTestConnection` 调 POST /api/ai/test，返回 `{ok,latencyMs,modelCount?,error?}`。
 - **关键决策**：失败的连接以 `{ok:false}` 返回而非 throw，组件按结果渲染三态。
+
+### 2026-06-13 — web-search key field
+- **Motivation**: the settings dialog gains a Tavily key input.
+- **Goal**: `AiSettings.hasWebSearchKey`; `SaveAiSettingsInput.webSearchKey`
+  with the same keep/clear/replace semantics as `apiKey`.

@@ -26,3 +26,9 @@ toolset open-ended: nothing upstream hardcodes a tool name.
   uniform tool abstraction over an unbounded set of capabilities.
 - **Key decision**: providers are independent and discovered at runtime —
   adding a source/skill/server requires no changes here or in the loop.
+
+### 2026-06-13 — AgentContext with per-request secrets
+- **Motivation**: keyed sources (web search) need credentials at execute time
+  without ever showing them to the model.
+- **Goal**: `AgentContext { secrets }` threaded through `collectAgentTools`
+  into providers; keyed by secret param name (e.g. `tavily_api_key`).

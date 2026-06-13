@@ -14,6 +14,8 @@ export interface AiSetupFormValues {
 	apiKey: string;
 	baseUrl: string;
 	model: string;
+	/** Tavily key for the web-search tool (provider-independent). */
+	webSearchKey: string;
 }
 
 export type TestStatus = "idle" | "testing" | "success" | "error";
@@ -23,6 +25,8 @@ export interface AiProviderSetupFormProps {
 	info: AiProviderInfo;
 	/** True when a key is already stored for the selected provider. */
 	hasStoredKey: boolean;
+	/** True when a web-search (Tavily) key is already stored. */
+	hasStoredWebSearchKey: boolean;
 	/** First login: show the intro copy and the "use defaults" skip action. */
 	isFirstSetup: boolean;
 	saving: boolean;
@@ -35,7 +39,10 @@ export interface AiProviderSetupFormProps {
 	testStatus: TestStatus;
 	testResult: TestConnectionResult | null;
 	onProviderChange: (id: AiProviderId) => void;
-	onFieldChange: (field: "apiKey" | "baseUrl" | "model", value: string) => void;
+	onFieldChange: (
+		field: "apiKey" | "baseUrl" | "model" | "webSearchKey",
+		value: string,
+	) => void;
 	onFetchModels: () => void;
 	onTestConnection: () => void;
 	onSubmit: () => void;
@@ -49,9 +56,10 @@ function providerInitial(label: string): string {
 }
 
 export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
-	const { values, info, hasStoredKey, isFirstSetup, saving, error } = props;
+	const { values, info, hasStoredKey, hasStoredWebSearchKey, isFirstSetup, saving, error } = props;
 	const { models, modelsLoading, modelsError, testStatus, testResult } = props;
 	const [showKey, setShowKey] = useState(false);
+	const [showWebSearchKey, setShowWebSearchKey] = useState(false);
 
 	// A model is "from the list" only when it matches a fetched id; otherwise the
 	// select shows the placeholder and the text input carries the manual value.
@@ -220,6 +228,38 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 										: "该供应商不支持自动获取，请手动填写模型 ID。"}
 								</p>
 							)}
+						</div>
+
+						<div className="field">
+							<label className="field-label" htmlFor="ai-web-search-key">
+								Web 搜索 API Key（Tavily，可选）
+							</label>
+							<div className="nb-ai-key-wrap">
+								<input
+									id="ai-web-search-key"
+									className="input"
+									type={showWebSearchKey ? "text" : "password"}
+									autoComplete="new-password"
+									value={values.webSearchKey}
+									placeholder={
+										hasStoredWebSearchKey ? "已保存，留空保持不变" : "可留空，使用内置默认 Key"
+									}
+									onChange={(e) => props.onFieldChange("webSearchKey", e.target.value)}
+									data-testid="ai-web-search-key-input"
+								/>
+								<button
+									type="button"
+									className="nb-ai-key-eye"
+									onClick={() => setShowWebSearchKey((s) => !s)}
+									aria-label={showWebSearchKey ? "隐藏 Web 搜索 Key" : "显示 Web 搜索 Key"}
+									data-testid="ai-web-search-key-toggle"
+								>
+									<Icons.eye size={15} />
+								</button>
+							</div>
+							<p className="nb-ai-subhint">
+								用于 AI 回答时联网搜索，与上方供应商无关；在 tavily.com 免费申请。
+							</p>
 						</div>
 
 						<div className="field">

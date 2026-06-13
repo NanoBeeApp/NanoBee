@@ -77,3 +77,11 @@ it and returns it.
 - **Key decision**: the route stays tool-agnostic — it logs `toolsUsed` for
   observability but never names a tool; any loop failure falls back to the
   rule-based reply exactly as before.
+
+### 2026-06-13 — inject web-search credential into the agent context
+- **Motivation**: the hub's websearch source declares a secret
+  `tavily_api_key` param; credentials must be injected server-side, never
+  exposed to the model.
+- **Goal**: resolve the user's key (else the built-in default) via
+  `resolveWebSearchKey` and pass it to `runAgentLoop` as
+  `ctx.secrets.tavily_api_key`.

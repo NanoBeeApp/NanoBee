@@ -22,6 +22,8 @@ export interface DataSourceParam {
 	required?: boolean;
 	enum?: string[];
 	default?: string | number | boolean;
+	/** Credential-bearing param: injected server-side, never shown to the model. */
+	secret?: boolean;
 }
 
 /** One entry in the hub catalog (mirrors the hub's SourceDescriptor). */

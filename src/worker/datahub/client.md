@@ -36,3 +36,7 @@ discovers sources from the hub catalog and invokes them by id.
 ### 2026-06-12 — rewritten doc in English; consumer switched to agent loop
 - **Motivation**: this is a public repository (English-only docs), and the
   one-shot `datahub/augment` consumer was replaced by `agent/datahub-tools`.
+
+### 2026-06-13 — mirror the hub's `secret` param flag
+- **Motivation**: consumers must know which params are credentials so they can
+  inject them server-side instead of exposing them to an LLM.

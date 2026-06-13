@@ -45,3 +45,14 @@ user's saved settings when present, otherwise the backend default
   masked `UserAiSettings` shape that routes return to clients.
 - **Key decision**: only the model-list route consumes it, and it pairs the key
   with its provider so callers can reject a key meant for a different provider.
+
+### 2026-06-13 — per-user web-search (Tavily) key
+- **Motivation**: the web-search agent tool is keyed; users enter their own
+  key in the AI settings dialog, with NanoBee's built-in default as fallback.
+- **Goal**: `web_search_key_enc` column (migration 0005, AES-GCM like
+  api_key_enc); `hasWebSearchKey` in `UserAiSettings`; `webSearchKey` in
+  `SaveAiSettingsInput` (keep/clear/replace); new `resolveWebSearchKey(env,
+  userId)` → user's key else `TAVILY_API_KEY`.
+- **Key decision**: key-column upsert plumbing extracted into `keyUpsert` so
+  both encrypted keys share one code path; the web-search key is
+  provider-independent and survives provider switches.

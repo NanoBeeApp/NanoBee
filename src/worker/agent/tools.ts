@@ -24,15 +24,29 @@ export interface AgentTool extends AiToolDef {
 	execute(args: Record<string, unknown>, env: Env): Promise<string>;
 }
 
+/**
+ * Per-request context for tool providers. `secrets` maps secret param names
+ * (as declared by data-hub sources, e.g. "tavily_api_key") to resolved
+ * values; providers inject them server-side so the model never sees a key.
+ */
+export interface AgentContext {
+	secrets: Record<string, string>;
+}
+
+export const EMPTY_AGENT_CONTEXT: AgentContext = { secrets: {} };
+
 /** Restrict a tool name to what every provider accepts: [A-Za-z0-9_-], ≤64. */
 export function sanitizeToolName(raw: string): string {
 	return raw.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 64);
 }
 
 /** Gather tools from all providers (each fails independently to []). */
-export async function collectAgentTools(env: Env): Promise<AgentTool[]> {
+export async function collectAgentTools(
+	env: Env,
+	ctx: AgentContext = EMPTY_AGENT_CONTEXT,
+): Promise<AgentTool[]> {
 	const [hub, skills, mcp] = await Promise.all([
-		datahubTools(env).catch((e) => {
+		datahubTools(env, ctx).catch((e) => {
 			console.warn("[Agent] datahub tools unavailable:", String(e));
 			return [] as AgentTool[];
 		}),

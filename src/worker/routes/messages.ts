@@ -10,7 +10,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { Env } from "../api-worker";
-import { resolveAiConfig } from "../ai/settings";
+import { resolveAiConfig, resolveWebSearchKey } from "../ai/settings";
 import { runAgentLoop } from "../agent/loop";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
@@ -42,6 +42,12 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 			const token = getSessionToken(c);
 			const user = token ? await getUserBySessionToken(c.env.DB, token) : null;
 			const aiConfig = await resolveAiConfig(c.env, user?.id ?? null);
+			// Per-request secrets for agent tools (user's own Tavily key, else
+			// the built-in default), injected server-side — never model-visible.
+			const webSearchKey = await resolveWebSearchKey(c.env, user?.id ?? null);
+			const secrets: Record<string, string> = {};
+			if (webSearchKey) secrets.tavily_api_key = webSearchKey;
+			const agentCtx = { secrets };
 
 			// Ask the configured model to write the reply text; on any failure
 			// fall back to the rule-based copy so chat never breaks.
@@ -51,12 +57,17 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 					// Agent loop: the model can iteratively call tools (data-hub
 					// sources, built-in skills, MCP servers) before answering. The
 					// toolset is discovered at runtime — nothing here names a tool.
-					const run = await runAgentLoop(c.env, aiConfig, [
-						...(body.ctxTitle
-							? [{ role: "system" as const, content: `用户当前正在阅读：「${body.ctxTitle}」` }]
-							: []),
-						{ role: "user", content: body.text },
-					]);
+					const run = await runAgentLoop(
+						c.env,
+						aiConfig,
+						[
+							...(body.ctxTitle
+								? [{ role: "system" as const, content: `用户当前正在阅读：「${body.ctxTitle}」` }]
+								: []),
+							{ role: "user", content: body.text },
+						],
+						agentCtx,
+					);
 					if (run.toolsUsed.length > 0) {
 						console.log(
 							"[API] POST /api/messages agent tools:",

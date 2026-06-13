@@ -12,6 +12,7 @@ export interface AiSettings {
 	baseUrl: string;
 	model: string;
 	hasApiKey: boolean;
+	hasWebSearchKey: boolean;
 }
 
 export interface AiSettingsResponse {
@@ -45,6 +46,8 @@ export interface SaveAiSettingsInput {
 	apiKey?: string;
 	baseUrl?: string;
 	model?: string;
+	/** Tavily web-search key; same keep/clear/replace semantics as apiKey. */
+	webSearchKey?: string;
 }
 
 export interface FetchModelsInput {

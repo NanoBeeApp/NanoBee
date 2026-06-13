@@ -20,6 +20,7 @@ interface SettingsRow {
 	base_url: string;
 	model: string;
 	api_key_enc: string | null;
+	web_search_key_enc: string | null;
 }
 
 /** What the settings API returns to the client (never the raw key). */
@@ -28,6 +29,7 @@ export interface UserAiSettings {
 	baseUrl: string;
 	model: string;
 	hasApiKey: boolean;
+	hasWebSearchKey: boolean;
 }
 
 /** Fully-resolved config the chat pipeline uses to call the model. */
@@ -47,7 +49,7 @@ export async function getUserAiSettings(
 ): Promise<UserAiSettings | null> {
 	const row = await db
 		.prepare(
-			"SELECT provider, base_url, model, api_key_enc FROM user_ai_settings WHERE user_id = ?",
+			"SELECT provider, base_url, model, api_key_enc, web_search_key_enc FROM user_ai_settings WHERE user_id = ?",
 		)
 		.bind(userId)
 		.first<SettingsRow>();
@@ -57,6 +59,7 @@ export async function getUserAiSettings(
 		baseUrl: row.base_url,
 		model: row.model,
 		hasApiKey: row.api_key_enc !== null,
+		hasWebSearchKey: row.web_search_key_enc !== null,
 	};
 }
 
@@ -88,6 +91,27 @@ export interface SaveAiSettingsInput {
 	model: string;
 	/** undefined = keep the stored key, "" = clear it, string = replace it. */
 	apiKey?: string;
+	/** Tavily key for web search; same keep/clear/replace semantics. */
+	webSearchKey?: string;
+}
+
+/**
+ * Upsert plumbing for one encrypted-key column: undefined keeps the stored
+ * value, "" clears it, any other string is encrypted and stored.
+ */
+async function keyUpsert(
+	input: string | undefined,
+	column: string,
+	env: Env,
+): Promise<{ clause: string; value: string | null }> {
+	if (input === undefined) return { clause: column, value: null };
+	if (input === "") return { clause: `excluded.${column}`, value: null };
+	if (!env.AUTH_SECRET) {
+		// Without the secret we cannot store the key safely — fail loudly
+		// instead of silently downgrading to plaintext.
+		throw new Error("AUTH_SECRET is required to store API keys encrypted");
+	}
+	return { clause: `excluded.${column}`, value: await encryptSecret(input, env.AUTH_SECRET) };
 }
 
 export async function saveUserAiSettings(
@@ -95,42 +119,44 @@ export async function saveUserAiSettings(
 	userId: string,
 	input: SaveAiSettingsInput,
 ): Promise<void> {
-	let keyClause: string;
-	const binds: (string | null)[] = [];
-	if (input.apiKey === undefined) {
-		// Keep whatever key is already stored (excluded.api_key_enc is NULL on insert).
-		keyClause = "api_key_enc";
-	} else if (input.apiKey === "") {
-		keyClause = "excluded.api_key_enc";
-		binds.push(null);
-	} else {
-		if (!env.AUTH_SECRET) {
-			// Without the secret we cannot store the key safely — fail loudly
-			// instead of silently downgrading to plaintext.
-			throw new Error("AUTH_SECRET is required to store API keys encrypted");
-		}
-		keyClause = "excluded.api_key_enc";
-		binds.push(await encryptSecret(input.apiKey, env.AUTH_SECRET));
-	}
+	const aiKey = await keyUpsert(input.apiKey, "api_key_enc", env);
+	const wsKey = await keyUpsert(input.webSearchKey, "web_search_key_enc", env);
 
 	await env.DB.prepare(
-		`INSERT INTO user_ai_settings (user_id, provider, base_url, model, api_key_enc)
-		 VALUES (?, ?, ?, ?, ?)
+		`INSERT INTO user_ai_settings (user_id, provider, base_url, model, api_key_enc, web_search_key_enc)
+		 VALUES (?, ?, ?, ?, ?, ?)
 		 ON CONFLICT(user_id) DO UPDATE SET
 		   provider = excluded.provider,
 		   base_url = excluded.base_url,
 		   model = excluded.model,
-		   api_key_enc = ${keyClause},
+		   api_key_enc = ${aiKey.clause},
+		   web_search_key_enc = ${wsKey.clause},
 		   updated_at = unixepoch()`,
 	)
-		.bind(
-			userId,
-			input.provider,
-			input.baseUrl,
-			input.model,
-			binds.length > 0 ? binds[0] : null,
-		)
+		.bind(userId, input.provider, input.baseUrl, input.model, aiKey.value, wsKey.value)
 		.run();
+}
+
+/**
+ * The web-search (Tavily) key for a request: the user's own stored key when
+ * present, otherwise NanoBee's built-in default (TAVILY_API_KEY binding).
+ */
+export async function resolveWebSearchKey(
+	env: Env,
+	userId: string | null,
+): Promise<string | null> {
+	if (userId) {
+		const row = await env.DB.prepare(
+			"SELECT web_search_key_enc FROM user_ai_settings WHERE user_id = ?",
+		)
+			.bind(userId)
+			.first<{ web_search_key_enc: string | null }>();
+		if (row?.web_search_key_enc && env.AUTH_SECRET) {
+			const key = await decryptSecret(row.web_search_key_enc, env.AUTH_SECRET);
+			if (key) return key;
+		}
+	}
+	return env.TAVILY_API_KEY ?? null;
 }
 
 /** Backend default config (OpenRouter + DeepSeek V4 Flash, built-in key). */

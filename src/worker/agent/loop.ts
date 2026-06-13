@@ -21,7 +21,12 @@ import {
 import type { AiRuntimeConfig } from "../ai/settings";
 import type { Env } from "../api-worker";
 import { CONFIG } from "../config";
-import { collectAgentTools, type AgentTool } from "./tools";
+import {
+	collectAgentTools,
+	EMPTY_AGENT_CONTEXT,
+	type AgentContext,
+	type AgentTool,
+} from "./tools";
 
 /** One executed tool call, for logging/observability. */
 export interface AgentToolTrace {
@@ -84,8 +89,9 @@ export async function runAgentLoop(
 	env: Env,
 	cfg: AiRuntimeConfig,
 	baseMessages: AgentChatMessage[],
+	ctx: AgentContext = EMPTY_AGENT_CONTEXT,
 ): Promise<AgentRunResult> {
-	const tools = await collectAgentTools(env);
+	const tools = await collectAgentTools(env, ctx);
 	const toolsUsed: AgentToolTrace[] = [];
 	const messages: AgentChatMessage[] = [...baseMessages];
 

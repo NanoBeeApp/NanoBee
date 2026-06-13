@@ -48,3 +48,9 @@ Completely stateless — all values and callbacks come from
 - **出发点**：用户要求弹窗左栏列所有 provider、右栏单个 provider 设置并可测试连接（按 V2 设计稿实现）。
 - **目标**：左 master（provider 列表，首字母徽标 + 默认胶囊 + 选中整块高亮，无侧条）/ 右 detail（API Key 带显示切换、Host、模型下拉+手动+自动获取、连接测试 inline 三态、保存）。
 - **关键决策**：保持纯渲染，仅保留 password 显隐这一 UI 态本地 useState；连接测试三态（idle/testing/success/error）由 props 注入，TestStatusLine 子组件渲染圆点+文案；无嵌套卡片、字号≥12px、对比度达标。
+
+### 2026-06-13 — web-search key field
+- **Motivation**: render the Tavily key input in the detail pane.
+- **Goal**: password input + visibility toggle below the model field
+  (testids `ai-web-search-key-input` / `ai-web-search-key-toggle`), hint
+  explains it is provider-independent and optional (built-in default key).

@@ -30,6 +30,7 @@ function initialValues(settings: AiSettings | null): AiSetupFormValues {
 		apiKey: "",
 		baseUrl: settings?.baseUrl || info.defaultBaseUrl,
 		model: settings?.model || info.defaultModel,
+		webSearchKey: "",
 	};
 }
 
@@ -37,11 +38,13 @@ function initialValues(settings: AiSettings | null): AiSetupFormValues {
 function toSaveInput(
 	values: AiSetupFormValues,
 	hasStoredKey: boolean,
+	hasStoredWebSearchKey: boolean,
 ): SaveAiSettingsInput {
 	const info = getProviderInfo(values.provider);
 	const baseUrl = values.baseUrl.trim();
 	const model = values.model.trim();
 	const apiKey = values.apiKey.trim();
+	const webSearchKey = values.webSearchKey.trim();
 	return {
 		provider: values.provider,
 		// Store "" when the user kept the provider default, so future
@@ -50,6 +53,8 @@ function toSaveInput(
 		model: model === info.defaultModel ? "" : model,
 		// Blank input keeps a stored key; otherwise it means "no own key".
 		apiKey: apiKey !== "" ? apiKey : hasStoredKey ? undefined : "",
+		webSearchKey:
+			webSearchKey !== "" ? webSearchKey : hasStoredWebSearchKey ? undefined : "",
 	};
 }
 
@@ -107,6 +112,8 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 	const hasStoredKey = Boolean(
 		props.settings?.hasApiKey && props.settings.provider === values.provider,
 	);
+	// The web-search key is provider-independent — switching providers keeps it.
+	const hasStoredWebSearchKey = Boolean(props.settings?.hasWebSearchKey);
 
 	// A usable key exists when the user typed one, a key is on file for this
 	// provider, or the provider rides on NanoBee's built-in key (OpenRouter).
@@ -188,7 +195,7 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 		}
 		setError(null);
 		try {
-			await props.onSave(toSaveInput(values, hasStoredKey));
+			await props.onSave(toSaveInput(values, hasStoredKey, hasStoredWebSearchKey));
 		} catch (e) {
 			setError(e instanceof Error ? e.message : "保存失败，请稍后重试");
 		}
@@ -209,6 +216,7 @@ function AiSetupFormState(props: AiSetupFormStateProps) {
 			values={values}
 			info={info}
 			hasStoredKey={hasStoredKey}
+			hasStoredWebSearchKey={hasStoredWebSearchKey}
 			isFirstSetup={props.isFirstSetup}
 			saving={props.saving}
 			error={error}
