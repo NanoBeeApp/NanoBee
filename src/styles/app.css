@@ -137,17 +137,6 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-sub-item.active { background: var(--surface-2); color: var(--ink); font-weight: 600; }
 .nb-sub-label { flex:1; min-width:0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Today reading nav (sidebar body while on the Today page) */
-.nb-tnav { padding-top: 6px; }
-.nb-tnav-row { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; border-radius: 9px; cursor: pointer; font-size: 13px; color: var(--ink-2); text-align: left; transition: background var(--dur-1) var(--ease-out); }
-.nb-tnav-row:hover { background: var(--surface-2); }
-.nb-tnav-row.active { background: var(--surface-3); color: var(--ink); font-weight: 600; }
-.nb-tnav-row .ic { display: grid; place-items: center; width: 22px; color: var(--ink-4); flex-shrink: 0; }
-.nb-tnav-row.active .ic { color: var(--ink-2); }
-.nb-tnav-row .tic { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; color: #fff; flex-shrink: 0; }
-.nb-tnav-row .lbl { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.nb-tnav-row .n { font-family: var(--font-mono); font-size: 11px; color: var(--ink-4); }
-
 .nb-side-foot { border-top: 1px solid var(--border); padding: 10px; position: relative; display: flex; align-items: center; gap: 4px; }
 .nb-side-foot .nb-login-entry { flex: 1; }
 
@@ -319,6 +308,11 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-fchip { display: inline-flex; align-items: center; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--ink-3); background: var(--surface); border: 1px solid var(--border); transition: all var(--dur-1) var(--ease-out); white-space: nowrap; }
 .nb-fchip:hover { color: var(--ink); border-color: var(--border-2); }
 .nb-fchip.active { background: var(--ink); color: var(--ink-on-dark); border-color: var(--ink); }
+/* in-page Today filter chips (all + per-topic) */
+.nb-fchips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.nb-fchip .dot { width: 7px; height: 7px; border-radius: 999px; margin-right: 6px; flex-shrink: 0; }
+.nb-fchip .cnt { margin-left: 6px; font-family: var(--font-mono); font-size: 11px; font-weight: 400; color: var(--ink-4); }
+.nb-fchip.active .cnt { color: var(--ink-on-dark); opacity: 0.72; }
 .badge, .segmented button { white-space: nowrap; }
 .nb-tool-ics { margin-left: auto; display: flex; gap: 2px; align-items: center; }
 .nb-mini-menu { position: absolute; right: 0; top: calc(100% + 6px); width: 224px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--sh-3); padding: 6px; z-index: 50; }

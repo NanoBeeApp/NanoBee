@@ -2,8 +2,10 @@
 
 ## Responsibility
 Pure render component for the AI provider setup dialog: provider pill
-radio-group, API key / host / model fields, inline error, and the footer
-actions ("先用默认配置" + save on first setup; cancel + save in edit mode).
+radio-group, API key / host / model fields, inline error, and the commit
+actions ("先用默认配置" + save on first setup; cancel + save in edit mode)
+pinned to the bottom of the master column. No header/footer chrome bar — the
+form spans the full modal height; close is a floating top-right affordance.
 Completely stateless — all values and callbacks come from
 `AiProviderSetupDialog`.
 
@@ -54,3 +56,8 @@ Completely stateless — all values and callbacks come from
 - **Goal**: password input + visibility toggle below the model field
   (testids `ai-web-search-key-input` / `ai-web-search-key-toggle`), hint
   explains it is provider-independent and optional (built-in default key).
+
+### 2026-06-13 — 去掉 header/footer，最大化主体内容区域
+- **出发点**：原弹窗顶部整条 header（标题+副标题）和底部整条 footer（取消/保存）吃掉约 140px 纵向空间，把右侧表单挤到很小，连接测试一行被裁切。
+- **目标**：遵守「主体内容可视区域最大化铁律」，去掉两条 chrome 横条，让表单铺满弹窗高度。
+- **关键决策**：① 删除 `.nb-ai-head` 头部条，关闭按钮改为浮动在弹窗右上角（`.nb-ai-close` 绝对定位）；② 删除底部 `.nb-modal-foot`，保存/取消（或「先用默认配置」）移到左侧 master 栏底部 `.nb-ai-actions`（`margin-top:auto` 贴底，按钮全宽竖排）；③ provider 列表抽到 `.nb-ai-master-list`（`flex:1` 独立滚动），actions 不随列表滚动；④ 弹窗高度由 `max-height` 改为 `height: min(620px, 100vh-32px)` 让表单充分占高。移动端：actions 横排、列表 wrap。

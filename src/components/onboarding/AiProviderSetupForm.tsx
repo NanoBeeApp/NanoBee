@@ -81,50 +81,77 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 				onClick={(e) => e.stopPropagation()}
 				data-testid="ai-provider-setup-dialog"
 			>
-				<div className="nb-ai-head">
-					<div className="nb-ai-head-text">
-						<div className="title">{isFirstSetup ? "选择你的 AI 模型" : "AI 模型设置"}</div>
-						<div className="sub">
-							{isFirstSetup
-								? "默认使用内置 DeepSeek V4 Flash（via OpenRouter），也可换成自己的供应商。"
-								: "对话回复将使用这里配置的供应商与模型。"}
-						</div>
-					</div>
-					{!isFirstSetup && (
-						<button
-							type="button"
-							className="nb-ai-close"
-							onClick={props.onClose}
-							aria-label="关闭"
-							data-testid="ai-settings-close"
-						>
-							<Icons.x size={16} />
-						</button>
-					)}
-				</div>
+				{/* No header/footer bar — the form spans the full modal height.
+				    Close is a floating affordance; commit actions sit at the
+				    bottom of the master column. */}
+				{!isFirstSetup && (
+					<button
+						type="button"
+						className="nb-ai-close"
+						onClick={props.onClose}
+						aria-label="关闭"
+						data-testid="ai-settings-close"
+					>
+						<Icons.x size={16} />
+					</button>
+				)}
 
 				<div className="nb-ai-split">
-					{/* Master: provider list */}
-					<div className="nb-ai-master" role="radiogroup" aria-label="AI 供应商">
+					{/* Master: provider list + commit actions */}
+					<div className="nb-ai-master">
 						<div className="nb-ai-master-label">供应商</div>
-						{AI_PROVIDERS.map((p) => {
-							const selected = values.provider === p.id;
-							return (
+						<div className="nb-ai-master-list" role="radiogroup" aria-label="AI 供应商">
+							{AI_PROVIDERS.map((p) => {
+								const selected = values.provider === p.id;
+								return (
+									<button
+										key={p.id}
+										type="button"
+										role="radio"
+										aria-checked={selected}
+										className={`nb-ai-prow${selected ? " selected" : ""}`}
+										onClick={() => props.onProviderChange(p.id)}
+										data-testid={`ai-provider-option-${p.id}`}
+									>
+										<span className="nb-ai-prow-badge">{providerInitial(p.label)}</span>
+										<span className="nb-ai-prow-name">{p.label}</span>
+										{p.id === "openrouter" && <span className="nb-ai-prow-tag">默认</span>}
+									</button>
+								);
+							})}
+						</div>
+						<div className="nb-ai-actions">
+							<button
+								type="button"
+								className="btn btn-primary"
+								onClick={props.onSubmit}
+								disabled={saving}
+								data-testid="ai-settings-save"
+							>
+								{saving ? "保存中…" : "保存"}
+							</button>
+							{isFirstSetup ? (
 								<button
-									key={p.id}
 									type="button"
-									role="radio"
-									aria-checked={selected}
-									className={`nb-ai-prow${selected ? " selected" : ""}`}
-									onClick={() => props.onProviderChange(p.id)}
-									data-testid={`ai-provider-option-${p.id}`}
+									className="btn btn-ghost"
+									onClick={props.onSkip}
+									disabled={saving}
+									data-testid="ai-settings-skip"
 								>
-									<span className="nb-ai-prow-badge">{providerInitial(p.label)}</span>
-									<span className="nb-ai-prow-name">{p.label}</span>
-									{p.id === "openrouter" && <span className="nb-ai-prow-tag">默认</span>}
+									先用默认配置
 								</button>
-							);
-						})}
+							) : (
+								<button
+									type="button"
+									className="btn btn-ghost"
+									onClick={props.onClose}
+									disabled={saving}
+									data-testid="ai-settings-cancel"
+								>
+									取消
+								</button>
+							)}
+						</div>
 					</div>
 
 					{/* Detail: selected provider settings */}
@@ -285,39 +312,6 @@ export function AiProviderSetupForm(props: AiProviderSetupFormProps) {
 							</div>
 						)}
 					</div>
-				</div>
-
-				<div className="nb-modal-foot">
-					{isFirstSetup ? (
-						<button
-							type="button"
-							className="btn btn-ghost"
-							onClick={props.onSkip}
-							disabled={saving}
-							data-testid="ai-settings-skip"
-						>
-							先用默认配置
-						</button>
-					) : (
-						<button
-							type="button"
-							className="btn btn-ghost"
-							onClick={props.onClose}
-							disabled={saving}
-							data-testid="ai-settings-cancel"
-						>
-							取消
-						</button>
-					)}
-					<button
-						type="button"
-						className="btn btn-primary"
-						onClick={props.onSubmit}
-						disabled={saving}
-						data-testid="ai-settings-save"
-					>
-						{saving ? "保存中…" : "保存"}
-					</button>
 				</div>
 			</div>
 		</div>

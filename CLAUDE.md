@@ -48,6 +48,7 @@ This project is a **public open-source repository**. **The public repo must only
 ## 🎨 UI rules
 
 - **Every page must have a white background** (`var(--bg)` = `#ffffff`). Page-level containers (reading surfaces, task center, auth pages, chat, etc.) must never use gray fills like `var(--surface-2)` / `var(--surface-3)` as their background — those tokens are reserved for small inset elements (hover states, chips, code/spark blocks), not whole pages.
+- **Always maximize the main content area — never let chrome crowd it out**. For every surface (page, dialog, modal, panel, drawer), the primary content is what the user came for; framing chrome (header bars, footer bars, toolbars, breadcrumbs, oversized titles/subtitles, nested cards) must stay minimal and must not eat vertical/horizontal space the content needs. Concretely: do not stack a full-width header bar *and* a full-width footer bar around a modal body — drop redundant titles (the dialog already has an `aria-label`/context), float the close affordance instead of giving it its own bar, and fold commit actions (Save/Cancel) into an existing column or a slim inline strip rather than a dedicated footer band. When a form/body is being clipped or scrolls awkwardly, first reclaim space from chrome before shrinking the content. This reinforces the global "主体内容可视区域最大化铁律".
 
 ## 🗄️ Storage architecture principles (D1 vs Durable Objects)
 
