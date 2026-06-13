@@ -81,24 +81,29 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-brand .name b { color: var(--nb-amber-ink); }
 .nb-brand .sub { font-size: 10.5px; color: var(--ink-3); font-family: var(--font-mono); letter-spacing: 0.02em; margin-top: 1px; white-space: nowrap; }
 
+/* New-chat button — sits at the foot of the fixed header (below the switch),
+   styled as a quiet white affordance so the amber tiles remain the rail's
+   visual anchor. */
 .nb-newchat {
   display: flex; align-items: center; gap: 9px; width: 100%;
-  padding: 10px 12px; border-radius: 10px;
-  background: var(--brand-2); color: #fff; font-weight: 600; font-size: 13.5px;
-  box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.2);
-  transition: background var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+  padding: 11px 14px; border-radius: 11px; margin: 8px 0 4px;
+  background: var(--surface); color: var(--ink); font-weight: 600; font-size: 13.5px;
+  border: 1px solid var(--border); box-shadow: var(--sh-1);
+  transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
 }
-.nb-newchat:hover { background: var(--brand-2-hover); }
+.nb-newchat:hover { background: var(--surface-2); border-color: var(--border-2); }
 .nb-newchat:active { transform: translateY(1px); }
-.nb-newchat .kbd { margin-left: auto; font-family: var(--font-mono); font-size: 10px; padding: 1px 6px; background: rgba(255,255,255,0.16); border-radius: 5px; }
+.nb-newchat .kbd { margin-left: auto; font-family: var(--font-mono); font-size: 10px; padding: 2px 7px; background: var(--surface-3); color: var(--ink-3); border-radius: 6px; }
 
-/* Nav grid (Arc-style two-column tiles: today / tasks / cards / research) */
-.nb-nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+/* Nav grid — uniform 3×2 amber tiles (聊天 / 今日事项 / 任务 / Artifacts /
+   研究画布 / 设置). Every tile is the same size: icon pinned top-left, label
+   pinned bottom-left, optional count badge top-right. */
+.nb-nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 2px; }
 .nb-nav-tile {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
-  padding: 11px 12px 10px; border-radius: 12px; min-height: 62px; position: relative;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between;
+  padding: 14px; border-radius: 14px; min-height: 84px; position: relative;
   border: 1px solid var(--nb-amber-line); background: var(--nb-amber-soft);
-  color: var(--nb-amber-ink); font-weight: 600; font-size: 13px;
+  color: var(--nb-amber-ink); font-weight: 600; font-size: 13.5px;
   transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
 }
 .nb-nav-tile:hover { background: #f8e8c9; }
@@ -106,13 +111,10 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-nav-tile.active { border-color: var(--nb-amber); box-shadow: 0 0 0 3px rgba(217,139,43,0.14); }
 .nb-nav-tile .ic { display: inline-flex; color: var(--nb-amber); }
 .nb-nav-tile .label { white-space: nowrap; }
-/* The "聊天" tile spans both columns as a compact horizontal row: it is the
-   primary view + the way back to chat from any page, so it leads the grid. */
-.nb-nav-tile.wide { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 10px; min-height: 0; padding: 10px 13px; }
 .nb-nav-tile .count {
-  position: absolute; top: 9px; right: 9px;
-  min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px;
-  background: var(--nb-amber); color: #fff; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  position: absolute; top: 11px; right: 11px;
+  min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
+  background: var(--nb-amber); color: #fff; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
   display: grid; place-items: center;
 }
 

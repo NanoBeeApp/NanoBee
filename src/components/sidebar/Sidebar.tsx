@@ -1,8 +1,10 @@
-// Left rail: brand, new-chat button, and the page nav grid (聊天 / 今日事项 /
-// 任务 / Artifacts / 研究画布). The scroll area below is context-aware: it shows
-// the list that belongs to the current page — chats on the chat view, today's
-// items on 今日事项, tasks on 任务, decks on Artifacts, projects on 研究画布.
-// The "聊天" tile is how you return to the chat view from any other page.
+// Left rail: brand, the page nav grid (聊天 / 今日事项 / 任务 / Artifacts /
+// 研究画布 / 设置), the history/topics switch, and the new-chat button. The
+// scroll area below is context-aware: it shows the list that belongs to the
+// current page — chats on the chat view, today's items on 今日事项, tasks on
+// 任务, decks on Artifacts, projects on 研究画布. The "聊天" tile is how you
+// return to the chat view from any other page; "设置" opens the AI/settings
+// dialog (the app's only settings surface today).
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
 import { ChatHistoryList } from './ChatHistoryList';
@@ -21,6 +23,7 @@ export function Sidebar() {
   const sessionMeta = useAppStore((s) => s.sessionMeta);
   const openTopics = useAppStore((s) => s.openTopics);
   const tasks = useAppStore((s) => s.tasks);
+  const updates = useAppStore((s) => s.updates);
   const selectChat = useAppStore((s) => s.selectChat);
   const newChat = useAppStore((s) => s.newChat);
   const openChat = useAppStore((s) => s.openChat);
@@ -28,12 +31,14 @@ export function Sidebar() {
   const openTasks = useAppStore((s) => s.openTasks);
   const openArtifacts = useAppStore((s) => s.openArtifacts);
   const openResearch = useAppStore((s) => s.openResearch);
+  const setAiSetupOpen = useAppStore((s) => s.setAiSetupOpen);
   const toggleTopic = useAppStore((s) => s.toggleTopic);
   const setSideCollapsed = useAppStore((s) => s.setSideCollapsed);
   const endPeek = useAppStore((s) => s.endPeek);
 
   const isChatView = view === 'chat';
   const activeTaskCount = tasks.filter((t) => t.status === 'active').length;
+  const todayCount = updates.filter((u) => u.group === '今天').length;
 
   return (
     // onMouseLeave only matters while peeking (endPeek is a no-op otherwise):
@@ -54,42 +59,45 @@ export function Sidebar() {
           </button>
         </div>
 
-        <button className="nb-newchat" onClick={newChat} data-testid="new-chat-button">
-          <Icons.plus size={15} />
-          新对话
-          <span className="kbd">⌘N</span>
-        </button>
-
+        {/* Uniform 3×2 tile grid — every entry is an equal-sized square so the
+            grid reads as one balanced block (聊天 no longer spans a wide row). */}
         <div className="nb-nav-grid" data-testid="sidebar-nav-grid">
-          <button className={`nb-nav-tile wide${isChatView ? ' active' : ''}`} onClick={openChat}
+          <button className={`nb-nav-tile${isChatView ? ' active' : ''}`} onClick={openChat}
             data-testid="chat-entry">
-            <span className="ic"><Icons.chat size={16} /></span>
+            <span className="ic"><Icons.chat size={18} /></span>
             <span className="label">聊天</span>
           </button>
 
           <button className={`nb-nav-tile${view === 'today' ? ' active' : ''}`} onClick={openToday}
             data-testid="today-inbox-entry">
-            <span className="ic"><Icons.news size={16} /></span>
+            <span className="ic"><Icons.news size={18} /></span>
             <span className="label">今日事项</span>
+            {todayCount > 0 && <span className="count" data-testid="today-count">{todayCount}</span>}
           </button>
 
           <button className={`nb-nav-tile${view === 'tasks' ? ' active' : ''}`} onClick={openTasks}
             data-testid="tasks-entry">
-            <span className="ic"><Icons.bolt size={16} /></span>
+            <span className="ic"><Icons.bolt size={18} /></span>
             <span className="label">任务</span>
             {activeTaskCount > 0 && <span className="count" data-testid="tasks-active-count">{activeTaskCount}</span>}
           </button>
 
           <button className={`nb-nav-tile${view === 'artifacts' ? ' active' : ''}`} onClick={() => openArtifacts()}
             data-testid="artifacts-entry">
-            <span className="ic"><Icons.grid size={16} /></span>
+            <span className="ic"><Icons.grid size={18} /></span>
             <span className="label">Artifacts</span>
           </button>
 
           <button className={`nb-nav-tile${view === 'research' ? ' active' : ''}`} onClick={openResearch}
             data-testid="research-entry">
-            <span className="ic"><Icons.spark size={16} /></span>
+            <span className="ic"><Icons.spark size={18} /></span>
             <span className="label">研究画布</span>
+          </button>
+
+          <button className="nb-nav-tile" onClick={() => setAiSetupOpen(true)}
+            data-testid="settings-entry">
+            <span className="ic"><Icons.gear size={18} /></span>
+            <span className="label">设置</span>
           </button>
         </div>
 
@@ -100,6 +108,15 @@ export function Sidebar() {
             <button className={sidebarMode === 'topics' ? 'active' : ''} onClick={() => setSidebarMode('topics')}>话题分组</button>
           </div>
         )}
+
+        {/* New-chat lives at the foot of the fixed header, right above the list
+            it seeds — a quiet white affordance so the amber tiles stay the
+            visual anchor of the rail. */}
+        <button className="nb-newchat" onClick={newChat} data-testid="new-chat-button">
+          <Icons.plus size={16} />
+          新建对话
+          <span className="kbd">⌘N</span>
+        </button>
       </div>
 
       <div className="nb-side-scroll" data-testid="sidebar-scroll-area">

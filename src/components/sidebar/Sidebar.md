@@ -1,13 +1,14 @@
 # src/components/sidebar/Sidebar.tsx
 
 ## Responsibility
-Left rail: brand row with collapse button, "新对话" (⌘N), and the page nav grid
-— a wide "聊天" tile leading a 2×2 of 今日事项 / 任务 / Artifacts / 研究画布. The
-scroll area below is **context-aware**: it renders the list that belongs to the
-current page (chats, today items, tasks, decks, or research projects). The
-history/topics switch only shows on the chat view. The account/settings controls
-no longer live here — they moved to the top-right floating bar (`FloatingControls`
-/ `AccountFoot`).
+Left rail: brand row with collapse button, a uniform 3×2 nav grid (聊天 / 今日事项
+/ 任务 / Artifacts / 研究画布 / 设置), the history/topics switch, then the
+"新建对话" (⌘N) button at the foot of the fixed header. The scroll area below is
+**context-aware**: it renders the list that belongs to the current page (chats,
+today items, tasks, decks, or research projects). The history/topics switch only
+shows on the chat view. The account avatar lives in the top-right floating bar
+(`FloatingControls` / `AccountFoot`); the 设置 tile opens the AI/settings dialog
+(`setAiSetupOpen`).
 
 ## Dependencies
 - Upstream: store, ChatHistoryList, TopicGroupList, TodayNavList, TasksNavList,
@@ -15,6 +16,23 @@ no longer live here — they moved to the top-right floating bar (`FloatingContr
 - Downstream: App
 
 ## Change history
+
+### 2026-06-13 — uniform 3×2 grid, 设置 tile, new-chat moved to foot
+- **Motivation**: design handoff — the user wanted the rail laid out as six
+  equal tiles (聊天 leading a balanced 3×2 grid instead of a wide row), a 设置
+  entry surfaced as a first-class tile, a count badge on 今日事项, and the
+  new-chat action relocated to the bottom of the fixed header as a quiet white
+  button.
+- **Goal**: match the mockup — amber tiles as the rail's anchor, new-chat
+  secondary.
+- **Key decisions**: (1) dropped the `wide` modifier so 聊天 is a normal tile;
+  every tile is now the same size with icon top-left / label bottom-left. (2)
+  Added a 设置 tile wired to `setAiSetupOpen(true)` — the app's only settings
+  surface today; it is an action tile (no persistent active state). (3) 今日事项
+  shows a `today-count` badge (count of `updates` in the "今天" group), mirroring
+  the existing 任务 active-count badge. (4) Moved `nb-newchat` below the switch
+  and restyled it white/outlined (was brand-filled, above the grid); renamed
+  "新对话" → "新建对话".
 
 ### 2026-06-13 — context-aware sidebar list + "聊天" nav tile
 - **Motivation**: the user wanted the sidebar list to reflect the current page
