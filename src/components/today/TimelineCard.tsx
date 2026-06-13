@@ -36,7 +36,6 @@ export function TimelineCard({ item }: TimelineCardProps) {
             <Sparkline up={item.tone === 'up'} color={item.tone === 'up' ? 'var(--success)' : 'var(--danger)'} height={40} vbHeight={46} />
           </div>
         )}
-        {item.source && <div className="src-line" style={{ marginTop: 8 }}>来源 · {item.source}</div>}
       </div>
     </div>
   );
