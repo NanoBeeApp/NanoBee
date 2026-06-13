@@ -1,8 +1,9 @@
 // Reading panel for the active node: shows the generated article, makes bold
 // terms clickable (deep-dive → grow a child), and renders the three follow-up
-// questions as chips (click → grow a child along that question). Right-docked
-// so the canvas stays visible behind it; white background, chrome minimized
-// (floating close button, no header/footer bars) per NanoBee's UI rules.
+// questions as chips (click → grow a child along that question). Rendered as a
+// centered modal (mirrors Curve's reading sheet) over a dimmed backdrop —
+// clicking the backdrop closes it, clicking the sheet does not. White
+// background, chrome minimized (floating close button, no header/footer bars).
 
 import { useResearchStore } from "../../store/useResearchStore";
 import { Icons } from "../../icons/icons";
@@ -21,9 +22,11 @@ export function ReadingOverlay() {
   const failed = node.status === "failed";
 
   return (
-    <>
-      <div className="rc-reading-scrim" onClick={closeReading} data-testid="research-reading-scrim" />
-      <aside className="rc-reading" data-testid="research-reading-overlay">
+    <div className="rc-reading-scrim" onClick={closeReading} data-testid="research-reading-scrim">
+      <aside
+        className="rc-reading"
+        data-testid="research-reading-overlay"
+        onClick={(e) => e.stopPropagation()}>
         <button
           className="rc-reading-close"
           onClick={closeReading}
@@ -90,6 +93,6 @@ export function ReadingOverlay() {
           )}
         </div>
       </aside>
-    </>
+    </div>
   );
 }

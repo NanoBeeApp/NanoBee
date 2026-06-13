@@ -12,69 +12,45 @@
   overflow: hidden;
 }
 
-/* ---------- Top strip ----------
-   The global FloatingControls (app.css `.nb-float`, z-index 25) overlay a
-   notification bell at top-right (always) and an expand-sidebar button at
-   top-left (only while the sidebar is collapsed). This bar sits below them
-   (z-index 5), so its content must be inset to clear those 34px floating
-   buttons — otherwise the title / "新研究" action collide with them. */
-.rc-topbar {
+/* ---------- Floating status ----------
+   No header bar — the canvas fills the whole surface, and starting a new
+   research lives in the left sidebar (ResearchNavList). The only floating canvas
+   chrome is a transient generation-status / error pill at top-left, deliberately
+   opposite the global FloatingControls cluster (app.css `.nb-float.tr`, z-index
+   25: notification / settings / account at top-right) so they never collide. */
+.rc-actions {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 48px;
+  top: 12px;
+  left: 14px;
+  z-index: 20;
   display: flex;
   align-items: center;
-  gap: 12px;
-  /* right: clear the floating notification bell (right:14px + 34px wide). */
-  padding: 0 58px 0 18px;
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border);
-  z-index: 5;
+  gap: 10px;
 }
-/* left: clear the floating expand-sidebar button, which only exists while the
-   sidebar is collapsed (left:12px + 34px wide). */
-.nb-app.side-collapsed .rc-topbar {
-  padding-left: 56px;
+/* When the sidebar is collapsed, the global expand-sidebar button occupies the
+   top-left corner (app.css `.nb-float.tl`, left:12px + 34px); shift clear of it. */
+.nb-app.side-collapsed .rc-actions {
+  left: 56px;
 }
-.rc-topbar-title {
-  font-weight: 650;
-  font-size: 14px;
-  color: var(--ink);
-  max-width: 40%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.rc-topbar-status,
-.rc-topbar-error {
+.rc-actions-status,
+.rc-actions-error {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(140%) blur(10px);
+  border: 1px solid var(--border);
   font-size: 12.5px;
   color: var(--ink-3);
 }
-.rc-topbar-error { color: var(--danger); }
-.rc-topbar-action {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: var(--brand-2);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-}
-.rc-topbar-action:hover { background: var(--brand-2-hover); }
+.rc-actions-error { color: var(--danger); border-color: var(--danger); }
 
 /* ---------- Viewport / world ---------- */
 .rc-viewport {
   position: absolute;
-  inset: 48px 0 0 0;
+  inset: 0;
   overflow: hidden;
   cursor: grab;
   background-color: var(--bg);
@@ -382,28 +358,49 @@
   font-weight: 500;
 }
 
-/* ---------- Reading overlay ---------- */
+/* ---------- Reading overlay ----------
+   Centered modal (mirrors Curve's `.reading-overlay`/`.reading-sheet` layout: a
+   fixed full-screen backdrop that flex-centers a fixed-size reading sheet), not
+   a right-docked drawer. Sits ABOVE the global FloatingControls (z-index 25) so
+   reading is a focused mode. NanoBee keeps its white-Stripe sheet styling (the
+   project bans Curve's sketch/paper theme) while preserving Curve's modal shape,
+   sizing and entry animation. The `.rc-reading-scrim` is the centering backdrop;
+   the inner `.rc-reading` sheet stops click propagation so only the backdrop
+   closes. */
 .rc-reading-scrim {
   position: absolute;
-  inset: 48px 0 0 0;
-  background: rgba(15, 17, 23, 0.18);
-  z-index: 8;
+  inset: 0;
+  background: rgba(15, 17, 23, 0.4);
+  backdrop-filter: blur(3px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  animation: rc-fade-in 0.2s ease-out;
+}
+@keyframes rc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .rc-reading {
-  position: absolute;
-  top: 48px;
-  right: 0;
-  bottom: 0;
-  width: min(620px, 92vw);
+  position: relative;
+  width: 760px;
+  max-width: calc(100vw - 40px);
+  height: 88vh;
+  max-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
-  border-left: 1px solid var(--border);
-  box-shadow: -8px 0 32px rgba(15, 17, 23, 0.1);
-  z-index: 9;
-  animation: rc-slide-in 0.18s ease;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(15, 17, 23, 0.22);
+  overflow: hidden;
+  animation: rc-modal-in 0.28s cubic-bezier(0.2, 1, 0.3, 1);
 }
-@keyframes rc-slide-in {
-  from { transform: translateX(24px); opacity: 0.6; }
-  to { transform: translateX(0); opacity: 1; }
+@keyframes rc-modal-in {
+  from { transform: translateY(16px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 .rc-reading-close {
   position: absolute;
@@ -421,7 +418,8 @@
 }
 .rc-reading-close:hover { background: var(--surface-3); color: var(--ink); }
 .rc-reading-scroll {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 28px 36px 56px;
 }
