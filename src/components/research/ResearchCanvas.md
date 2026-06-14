@@ -24,6 +24,15 @@ indented under its parent along a vertical rail.
 
 ## Change history
 
+### 2026-06-14 — Stop horizontal swipe from triggering browser back/forward
+- **Motivation**: A horizontal trackpad swipe over the canvas was being handed to
+  the browser as back/forward navigation, yanking the user off the page mid-pan.
+- **Goal**: Keep all horizontal wheel/swipe gestures inside the canvas pan.
+- **Key decision**: React's `onWheel` registers a *passive* listener, so its
+  `preventDefault()` is ignored. Switched to a native `wheel` listener attached
+  via `useEffect` with `{ passive: false }` and call `preventDefault()` there;
+  added `overscroll-behavior: none` on `.rc-viewport` as a CSS backstop.
+
 ### 2026-06-13 — Replace tidy-tree with nested-outline hierarchical view
 - **Motivation**: The ported canvas defaulted to a top-down tidy-tree *diagram*,
   which is not how Curve's canvas works — Curve's default is a nested outline

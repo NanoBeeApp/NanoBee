@@ -96,13 +96,19 @@ export function ResearchCanvas() {
     pan.current = null;
   }, []);
 
-  const onWheel = useCallback((e: React.WheelEvent) => {
+  // Native (non-passive) wheel listener. We must NOT use React's onWheel here:
+  // React registers wheel as a passive listener, so preventDefault() is ignored
+  // and a horizontal trackpad swipe (deltaX) bubbles up to the browser as
+  // back/forward navigation. A non-passive listener lets us preventDefault and
+  // keep the gesture inside the canvas.
+  const onWheel = useCallback((e: WheelEvent) => {
     const vp = viewportRef.current;
     if (!vp) return;
+    e.preventDefault();
     const rect = vp.getBoundingClientRect();
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
-    // ctrl/meta (or pinch) → zoom around the cursor; otherwise pan vertically.
+    // ctrl/meta (or pinch) → zoom around the cursor; otherwise pan.
     if (e.ctrlKey || e.metaKey) {
       setT((prev) => {
         const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
@@ -115,6 +121,13 @@ export function ResearchCanvas() {
     setT((prev) => ({ ...prev, tx: prev.tx - e.deltaX, ty: prev.ty - e.deltaY }));
   }, []);
 
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+    vp.addEventListener("wheel", onWheel, { passive: false });
+    return () => vp.removeEventListener("wheel", onWheel);
+  }, [onWheel]);
+
   if (!root) return null;
   const rootLoading = root.status === "loading";
 
@@ -126,8 +139,7 @@ export function ResearchCanvas() {
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={endPan}
-      onPointerLeave={endPan}
-      onWheel={onWheel}>
+      onPointerLeave={endPan}>
       <div
         className="rc-world"
         style={{ transform: `translate(${t.tx}px, ${t.ty}px) scale(${t.scale})` }}>

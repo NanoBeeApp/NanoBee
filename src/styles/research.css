@@ -57,6 +57,10 @@
   background-image: radial-gradient(var(--border) 1px, transparent 1px);
   background-size: 26px 26px;
   touch-action: none;
+  /* Stop a horizontal trackpad swipe from being handed to the browser as
+     back/forward navigation (defense-in-depth alongside the non-passive
+     wheel preventDefault in ResearchCanvas.tsx). */
+  overscroll-behavior: none;
 }
 .rc-viewport:active { cursor: grabbing; }
 .rc-world {
@@ -448,6 +452,28 @@
 }
 .rc-reading-failed { color: var(--ink-3); }
 .rc-reading-failed p { margin: 0 0 10px; }
+
+/* Live-generation footer shown under the streaming article body. */
+.rc-reading-streaming {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.rc-stream-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 15px;
+  border-radius: 1px;
+  background: var(--brand-2);
+  animation: rc-blink 1s steps(2, start) infinite;
+}
+@keyframes rc-blink {
+  to { opacity: 0; }
+}
+
 .rc-reading-roothint {
   color: var(--ink-3);
   font-size: 14px;
