@@ -17,10 +17,14 @@ Main chat composer: auto-growing textarea, contextual quick-suggestion chips, sl
 - **Motivation**: the sidebar's page-aware "新建任务" / "新建 Artifact" actions
   open a fresh chat that should land pre-filled with a starter prompt the user
   finishes typing (tasks/artifacts are created by talking to the AI).
-- **Change**: read `composerSeed` from the store; when set, fill the textarea
-  with it, clear the seed (`clearComposerSeed`), then focus with the caret at the
-  end and grow the textarea. Plain "新建对话" sets the seed to null, so an
-  un-seeded new chat behaves exactly as before.
+- **Change**: the seed actions set `composerSeed` in the store *before*
+  navigating here, so the composer always mounts fresh with the seed already
+  present. We read it once into the initial `val` (lazy `useState` + a
+  `seededRef`) rather than mirroring store → state through an effect; the mount
+  effect only clears the one-shot seed (`clearComposerSeed`), focuses, places the
+  caret at the end and grows the textarea. Plain "新建对话" leaves the seed null,
+  so an un-seeded new chat behaves exactly as before. (Reading at mount, not via
+  a `setState`-in-effect, also keeps `react-hooks/set-state-in-effect` happy.)
 
 ### 2026-06-12 — created
 - **Motivation**: PRD requires full ChatGPT-style chat plus task creation entry points in the composer.

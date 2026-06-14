@@ -33,11 +33,15 @@ interface ComposerProps {
 type Popover = 'slash' | 'mention' | null;
 
 export function Composer({ topic, onSend, showQuick = true }: ComposerProps) {
-  const [val, setVal] = useState('');
+  // A page-specific "new" action (新建任务 / 新建 Artifact) seeds the composer
+  // through the store *before* navigating here, so the seed is already present
+  // when this composer mounts — read it once into the initial value (rather than
+  // mirroring store → state via an effect).
+  const seededRef = useRef(useAppStore.getState().composerSeed);
+  const [val, setVal] = useState(() => seededRef.current ?? '');
   const [pop, setPop] = useState<Popover>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const activeChatId = useAppStore((s) => s.activeChatId);
-  const composerSeed = useAppStore((s) => s.composerSeed);
   const clearComposerSeed = useAppStore((s) => s.clearComposerSeed);
 
   // Focus the input on mount and whenever the conversation changes
@@ -46,22 +50,18 @@ export function Composer({ topic, onSend, showQuick = true }: ComposerProps) {
     taRef.current?.focus();
   }, [activeChatId]);
 
-  // A page-specific "new" action (新建任务 / 新建 Artifact) can pre-fill the
-  // composer with a starter prompt; consume it once, then focus with the caret
-  // at the end and grow the textarea so the user keeps typing from the seed.
+  // When mounted from a seed, clear it (one-shot) and put the caret at the end +
+  // grow the textarea so the user keeps typing from the starter prompt.
   useEffect(() => {
-    if (!composerSeed) return;
-    setVal(composerSeed);
+    if (!seededRef.current) return;
     clearComposerSeed();
-    requestAnimationFrame(() => {
-      const ta = taRef.current;
-      if (!ta) return;
-      ta.focus();
-      ta.setSelectionRange(ta.value.length, ta.value.length);
-      ta.style.height = 'auto';
-      ta.style.height = `${Math.min(ta.scrollHeight, TEXTAREA_MAX_HEIGHT)}px`;
-    });
-  }, [composerSeed, clearComposerSeed]);
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+    ta.style.height = 'auto';
+    ta.style.height = `${Math.min(ta.scrollHeight, TEXTAREA_MAX_HEIGHT)}px`;
+  }, [clearComposerSeed]);
 
   const autoGrow = () => {
     const ta = taRef.current;
