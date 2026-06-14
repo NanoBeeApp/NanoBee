@@ -295,10 +295,6 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 /* ============ COMPOSER ============ */
 .nb-composer-wrap { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 32px 24px; background: linear-gradient(to bottom, transparent, var(--bg) 38%); }
 .nb-composer-inner { max-width: 720px; margin: 0 auto; }
-.nb-suggest-row { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 10px; }
-.nb-suggest-row button { background: var(--surface); border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px; font-size: 12.5px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; transition: all var(--dur-1) var(--ease-out); box-shadow: var(--sh-1); white-space: nowrap; }
-.nb-suggest-row button:hover { background: var(--surface-2); border-color: var(--border-2); color: var(--ink); }
-.nb-suggest-row button .ic { color: var(--ink-3); display: inline-grid; place-items: center; }
 .nb-composer { background: var(--surface); border: 1px solid var(--border-2); border-radius: 18px; box-shadow: var(--sh-3); transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out); position: relative; }
 .nb-composer:focus-within { border-color: var(--brand-2); box-shadow: var(--sh-3), 0 0 0 4px rgba(99,91,255,0.12); }
 .nb-composer textarea { width: 100%; border: 0; outline: none; resize: none; background: transparent; padding: 15px 16px 4px; font-size: 15px; line-height: 1.5; color: var(--ink); font-family: var(--font-sans); max-height: 160px; }

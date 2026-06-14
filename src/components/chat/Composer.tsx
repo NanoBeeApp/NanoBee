@@ -1,8 +1,6 @@
-// Main chat composer: auto-growing textarea, quick-suggestion chips, and the
-// slash ("/task") and mention ("@watchlist") popovers that turn conversation
-// into automated tasks.
+// Main chat composer: auto-growing textarea plus the slash ("/task") and
+// mention ("@watchlist") popovers that turn conversation into automated tasks.
 import { useEffect, useRef, useState } from 'react';
-import type { Topic } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useImeComposition } from '../../lib/useImeComposition';
 import { Icon, Icons } from '../../icons/icons';
@@ -23,17 +21,12 @@ const MENTION_ITEMS = [
 const TEXTAREA_MAX_HEIGHT = 160;
 
 interface ComposerProps {
-  topic: Topic | null;
   onSend: (text: string) => void;
-  /** Whether to show the quick-suggestion chip row. Defaults to true.
-   *  Pass false on the welcome/empty state where guide cards already cover
-   *  the same actions. */
-  showQuick?: boolean;
 }
 
 type Popover = 'slash' | 'mention' | null;
 
-export function Composer({ topic, onSend, showQuick = true }: ComposerProps) {
+export function Composer({ onSend }: ComposerProps) {
   // A page-specific "new" action (新建任务 / 新建 Artifact) seeds the composer
   // through the store *before* navigating here, so the seed is already present
   // when this composer mounts — read it once into the initial value (rather than
@@ -111,23 +104,9 @@ export function Composer({ topic, onSend, showQuick = true }: ComposerProps) {
     taRef.current?.focus();
   };
 
-  const quick = topic
-    ? [{ ic: 'bolt', t: '设一个提醒' }, { ic: 'bars', t: '帮我盯着这个' }, { ic: 'news', t: '每天给我摘要' }]
-    : [{ ic: 'coins', t: '帮我关注金价' }, { ic: 'book', t: '盯着孩子的作业' }, { ic: 'news', t: '每天来份早报' }];
-
   return (
     <div className="nb-composer-wrap">
       <div className="nb-composer-inner">
-        {showQuick && (
-          <div className="nb-suggest-row" data-testid="composer-quick-suggestions">
-            {quick.map((q, i) => (
-              <button key={i} onClick={() => onSend(q.t)}>
-                <span className="ic"><Icon name={q.ic} size={14} /></span>{q.t}
-              </button>
-            ))}
-          </div>
-        )}
-
         <div className="nb-composer" data-testid="chat-composer">
           {pop === 'slash' && (
             <div className="nb-pop" data-testid="slash-command-popover">

@@ -8,7 +8,6 @@
 //  - opening an existing chat from history jumps to the latest message.
 import { useEffect, useMemo, useRef } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-import { topicById } from '../../data/topics';
 import { MessageView } from './MessageView';
 import { ThinkingIndicator } from './ThinkingIndicator';
 import { Composer } from './Composer';
@@ -19,13 +18,11 @@ const FEED_TOP_PAD = 12;
 
 export function ChatView() {
   const activeChatId = useAppStore((s) => s.activeChatId);
-  const activeTopicId = useAppStore((s) => s.activeTopicId);
   const convos = useAppStore((s) => s.convos);
   const pending = useAppStore((s) => s.pending);
   const send = useAppStore((s) => s.send);
 
   const messages = (activeChatId && convos[activeChatId]) || [];
-  const topic = topicById(activeTopicId) ?? null;
   const feedRef = useRef<HTMLDivElement>(null);
 
   // Id of the last user message — changes exactly when a question is sent.
@@ -66,7 +63,7 @@ export function ChatView() {
     return (
       <>
         <EmptyState />
-        <Composer topic={topic} onSend={send} showQuick={false} />
+        <Composer onSend={send} />
       </>
     );
   }
@@ -79,7 +76,7 @@ export function ChatView() {
         ))}
         {pending && <ThinkingIndicator />}
       </div>
-      <Composer topic={topic} onSend={send} />
+      <Composer onSend={send} />
     </>
   );
 }

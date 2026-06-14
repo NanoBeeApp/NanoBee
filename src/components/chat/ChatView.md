@@ -4,10 +4,14 @@
 Center chat surface: auto-scrolling message feed, pending indicator, composer, and the empty state for new chats.
 
 ## Dependencies
-- Upstream: store, topics, MessageView, ThinkingIndicator, Composer, EmptyState
+- Upstream: store, MessageView, ThinkingIndicator, Composer, EmptyState
 - Downstream: App
 
 ## Change history
+
+### 2026-06-15 — drop the `topic` / `showQuick` plumbing for Composer
+- **Motivation**: the Composer's quick-suggestion chip row was removed, so the only reason this view computed `topic` (to pick a chip variant) and passed `showQuick={false}` in the empty state was gone.
+- **Change**: removed the `activeTopicId` subscription, the `topicById` import, and the `topic` local; both Composer renders now pass only `onSend`.
 
 ### 2026-06-12 — created
 - **Motivation**: design handoff; isolates feed scrolling behavior from the App shell.

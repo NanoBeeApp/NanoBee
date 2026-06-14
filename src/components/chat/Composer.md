@@ -1,10 +1,10 @@
 # src/components/chat/Composer.tsx
 
 ## Responsibility
-Main chat composer: auto-growing textarea, contextual quick-suggestion chips, slash (/任务 /提醒 /盯盘 /早报) and mention (@) popovers, toolbar (attach / slash / voice / model) and send button.
+Main chat composer: auto-growing textarea, slash (/任务 /提醒 /盯盘 /早报) and mention (@) popovers, toolbar (attach / slash / voice / model) and send button.
 
 ## Dependencies
-- Upstream: types (Topic), icons, `lib/useImeComposition`
+- Upstream: icons, `lib/useImeComposition`
 - Downstream: ChatView
 
 ## Key notes
@@ -13,7 +13,10 @@ Main chat composer: auto-growing textarea, contextual quick-suggestion chips, sl
 
 ## Change history
 
-### 2026-06-14 — IME-safe Enter (shared composition guard)
+### 2026-06-15 — remove the quick-suggestion chip row entirely
+- **Motivation**: user asked to drop the chip block ("设一个提醒" / "帮我盯着这个" / "每天给我摘要" in a topic, and the welcome-state variant). The chips duplicated actions already reachable via slash commands and added visual noise above the composer.
+- **Change**: deleted the `nb-suggest-row` JSX, the `quick` variant array, and the `.nb-suggest-row` CSS. With the chips gone, the `showQuick` and `topic` props became dead, so both were removed from `ComposerProps` (and the now-unused `Topic` import dropped). `ChatView` no longer computes `topic` / subscribes to `activeTopicId` / imports `topicById`, since they only fed the chip variant.
+- **Key decision**: full removal rather than hiding behind a flag — there was no remaining caller that wanted the chips, so keeping the prop would have been dead code.
 - **Motivation**: under a Chinese IME, pressing Enter to confirm a pinyin
   candidate was captured as "send", firing the message before the word was even
   committed. This composer's `onKeyDown` checked only `Enter && !Shift`, with no
