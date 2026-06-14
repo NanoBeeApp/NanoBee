@@ -15,6 +15,7 @@ import {
 	useRouterState,
 } from "@tanstack/react-router";
 import { useAppStore, viewFromPath } from "@/store/useAppStore";
+import { useResearchStore } from "@/store/useResearchStore";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { FloatingControls } from "@/components/layout/FloatingControls";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
@@ -36,6 +37,7 @@ function AppLayout() {
 	const sideCollapsed = useAppStore((s) => s.sideCollapsed);
 	const sidePeek = useAppStore((s) => s.sidePeek);
 	const rightCollapsed = useAppStore((s) => s.rightCollapsed);
+	const researchPhase = useResearchStore((s) => s.phase);
 	const notifOpen = useAppStore((s) => s.notifOpen);
 	const newChat = useAppStore((s) => s.newChat);
 	const bootstrap = useAppStore((s) => s.bootstrap);
@@ -77,9 +79,17 @@ function AppLayout() {
 	// page has its own full-width composer and settings is a configuration page.
 	const withRightChat = view !== "chat" && view !== "settings";
 
+	// On the research canvas (the live canvas phase, not the welcome screen) both
+	// rails float over a full-width, position-stable canvas: opening/closing a
+	// sidebar must never resize or shift the canvas. The `research-canvas` class
+	// flips the grid to a single column and turns both rails into fixed overlays
+	// (see app.css). Welcome phase keeps the normal squeeze layout.
+	const researchCanvasFloating =
+		view === "research" && researchPhase === "canvas";
+
 	return (
 		<div
-			className={`nb-app${withRightChat ? " with-rightchat" : ""}${sideCollapsed ? " side-collapsed" : ""}${sideCollapsed && sidePeek ? " side-peek" : ""}${rightCollapsed ? " right-collapsed" : ""}`}
+			className={`nb-app${withRightChat ? " with-rightchat" : ""}${sideCollapsed ? " side-collapsed" : ""}${sideCollapsed && sidePeek ? " side-peek" : ""}${rightCollapsed ? " right-collapsed" : ""}${researchCanvasFloating ? " research-canvas" : ""}`}
 			data-testid="nanobee-app"
 		>
 			<Sidebar />

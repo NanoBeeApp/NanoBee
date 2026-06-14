@@ -47,6 +47,44 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   to { transform: translateX(0); opacity: 1; }
 }
 
+/* ---- Research canvas: floating rails over a position-stable canvas ----
+   On the live research canvas, opening/closing either sidebar must NOT resize
+   or move the canvas. So the grid collapses to a single full-width center column
+   regardless of rail state, and both rails are lifted out of flow into fixed
+   overlays that float above the canvas. The canvas keeps the full viewport width
+   in every rail combination (both open, left only, right only, both closed). */
+.nb-app.research-canvas,
+.nb-app.research-canvas.with-rightchat,
+.nb-app.research-canvas.with-rightchat.right-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+/* The center surface is placed at column 2 by default; pin it to the single
+   column so it doesn't spawn an implicit empty track. */
+.nb-app.research-canvas .nb-chat { grid-column: 1; }
+/* Left rail floats over the canvas from the left edge (fixed, full height,
+   slide-in). No drop shadow on the canvas — its 1px right border is enough
+   separation and the shadow over the dotted canvas reads as clutter. It is
+   hidden when collapsed by the base `.side-collapsed:not(.side-peek) .nb-side`
+   rule, and still peeks normally. */
+.nb-app.research-canvas .nb-side {
+  position: fixed; left: 0; top: 0; z-index: 30;
+  width: var(--nb-side-w-open); height: 100vh;
+  animation: nb-peek-in var(--dur-2) var(--ease-out);
+}
+/* Right chat rail floats over the canvas from the right edge. Like the left
+   rail, no drop shadow on the canvas — its 1px left border is enough separation
+   and a shadow over the dotted canvas reads as clutter. Hidden when collapsed by
+   the base `.right-collapsed .nb-rightchat` rule. */
+.nb-app.research-canvas .nb-rightchat {
+  position: fixed; right: 0; top: 0; z-index: 30;
+  width: var(--nb-rightchat-w); height: 100vh;
+  animation: nb-peek-in-right var(--dur-2) var(--ease-out);
+}
+@keyframes nb-peek-in-right {
+  from { transform: translateX(100%); opacity: 0.4; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
 /* floating corner controls (replace the fixed header) */
 .nb-float { position: absolute; top: 12px; z-index: 25; display: flex; gap: 6px; }
 .nb-float.tl { left: 12px; }

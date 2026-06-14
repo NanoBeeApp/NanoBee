@@ -28,9 +28,25 @@ Replaces the former `App.tsx` shell.
 - `with-rightchat` is applied for the content surfaces only
   (`view !== 'chat' && view !== 'settings'`); chat has its own composer and
   settings is a configuration page.
+- `research-canvas` is applied only on the live research canvas
+  (`view === 'research' && researchPhase === 'canvas'`). It makes both rails
+  float over a full-width, position-stable canvas (CSS in app.css). Reads
+  `useResearchStore.phase` so the shell knows when the canvas is live.
 - Hosts the bootstrap effect (load D1 state) and the ⌘N new-chat shortcut.
 
 ## Change history
+
+### 2026-06-14 — research canvas: floating rails
+- **Motivation**: on the research canvas, toggling either sidebar resized and
+  shifted the canvas (the grid squeezed the center column), so the canvas
+  jumped around when the user opened/closed a rail.
+- **Goal**: keep the canvas position stable — both rails should float over a
+  full-width canvas and never move it.
+- **Key decisions**: add a `research-canvas` modifier class on `.nb-app`, gated
+  on `view === 'research'` AND `useResearchStore.phase === 'canvas'` (welcome
+  phase keeps the normal squeeze layout). The grid logic stays in CSS (single
+  full-width column + fixed-overlay rails) rather than inline styles, matching
+  the existing `side-peek` float pattern.
 
 ### 2026-06-13 — created (extracted from App.tsx)
 - **Motivation**: the user wanted every page to have a real URL and the settings
