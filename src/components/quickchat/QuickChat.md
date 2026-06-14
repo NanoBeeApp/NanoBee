@@ -10,7 +10,7 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 ## Key notes
 - Returns null on the chat view (centered bottom composer is the quick chat's "full form") and on the settings page (a configuration surface).
 - Folded by default (`rightCollapsed` starts `true`): only the bubble shows. Clicking the bubble toggles `rightCollapsed`; while open (`!rightCollapsed`) the popup renders and stays open until the bubble or the header's `×` closes it (no auto-close on mouse leave). The bubble shows the bee icon when folded, `×` when open.
-- **Space opens the popup, and Escape closes it when open** (the listener is inert on the chat / settings surfaces where the widget isn't rendered). Space only fires in a non-input state — it is gated on `document.activeElement === document.body`, so it never steals a space from an `<input>`/`<textarea>`/contenteditable, a focused button/link, or a scrollable region; the app `body` is `overflow:hidden`, so a bare Space has no page-scroll job to hijack. The shortcut is surfaced to the user via the bubble's hover tooltip and a `空格` kbd chip in the popup header; the close button's tooltip notes `Esc`. Opening the popup (via the shortcut or a bubble click) auto-focuses the composer.
+- **⌘J / Ctrl+J toggles the popup, and Escape closes it when open** (the listener is inert on the chat / settings surfaces where the widget isn't rendered). It `preventDefault`s so the browser's own ⌘J (downloads) stays out of the way while the app owns it. The shortcut is surfaced to the user via the bubble's hover tooltip and a `⌘J` kbd chip in the popup header; the close button's tooltip notes `Esc`. Opening the popup (via the shortcut or a bubble click) auto-focuses the composer.
 - The popup floats over content (fixed, bottom-right) instead of squeezing a grid column, so opening/closing it never reflows the page.
 - The feed pins to the bottom on new messages, on the pending indicator, and whenever the popup (re)opens.
 - Quick conversations get session metadata so they appear in the sidebar's "刚刚" group.
@@ -30,6 +30,11 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 ### 2026-06-14 — float above the research reading overlay (z-index 28 → 35)
 - **Motivation**: while reading a research article (the centered reading overlay, `.rc-reading-scrim` z-index 30), the bubble + popup were hidden behind it, so you couldn't pop open the assistant to ask about what you're reading.
 - **Fix**: raised `.nb-qc-bubble` / `.nb-qc-pop` z-index from 28 to 35 (in `styles/quickchat.css`) so they sit above the reading overlay, while staying below the system layers that should fully own the screen (notification scrim 40, image lightbox 60, modal scrims 80, selection float 200, toasts 300).
+
+### 2026-06-14 — open shortcut reverted from Space back to ⌘J
+- **Motivation**: the user asked to switch the bottom-right bubble's open shortcut back from Space to ⌘J. A bare Space, even gated on a non-input state, proved too easy to fire by accident.
+- **Goal**: restore the ⌘J / Ctrl+J toggle as the single, modifier-guarded way to open/close the popup from the keyboard.
+- **Key decisions**: reinstated the `(metaKey || ctrlKey) && key === 'j'` toggle with `preventDefault` (so the browser's ⌘J/downloads stays out of the way); dropped the Space + `document.activeElement === document.body` branch. Kept Escape-to-close and the IME composition guard. The header kbd chip and bubble tooltip read `⌘J` again.
 
 ### 2026-06-14 — open shortcut changed from ⌘J to Space (non-input only)
 - **Motivation**: the user wanted to open the bubble by simply pressing Space, explicitly only when not in an input state.
