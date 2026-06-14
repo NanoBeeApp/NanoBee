@@ -73,6 +73,7 @@ export function ReadingOverlay() {
               className="rc-prose"
               data-testid="research-article-body"
               content={node.content!}
+              streaming={loading}
               onTermClick={(term) => growChild(node.id, { focusTerm: term })}
             />
           )}

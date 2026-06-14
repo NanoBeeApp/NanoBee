@@ -15,6 +15,10 @@ math, highlight.js code blocks, gemoji shortcodes, CJK-friendly line breaks.
     plain `<strong>` (chat).
   - `onOpenImage(src)` — when provided, images render as `.md-img-btn` buttons
     that open a zoom/lightbox. Omitted → plain lazy `<img>`.
+  - `streaming` — set while `content` is still streaming token by token. Each
+    frame is pre-passed through `completeStreamingMarkdown` (temporarily closes
+    open markers so the structure stays stable) and rehype-highlight is dropped
+    (deferred to the final render). Omitted → normal one-shot render.
   - `className` — merged onto the `.markdown-body` root (e.g. `nb-body`,
     `rc-prose`, `nb-selectable`).
   - `data-testid` / `data-ai-text` — forwarded to the root so callers keep their
@@ -34,7 +38,13 @@ math, highlight.js code blocks, gemoji shortcodes, CJK-friendly line breaks.
 - Plugin arrays are module-level constants (stable identity → react-markdown does
   not re-run the pipeline every render).
 - `content` is run through `normalizeMathDelimiters` first so `\( … \)` / `\[ … \]`
-  math becomes the dollar form remark-math understands.
+  math becomes the dollar form remark-math understands. In `streaming` mode the
+  result is then passed through `completeStreamingMarkdown` so an incomplete
+  frame's markers are balanced before parsing.
+- The normalize/complete pipeline and the rendered `source` are memoized on
+  `[content, streaming]` so re-renders that don't change the text are cheap.
+- `streaming` selects `REHYPE_PLUGINS_STREAMING` (no rehype-highlight); the
+  final render uses the full `REHYPE_PLUGINS` with highlighting restored.
 - `.markdown-body` (in Markdown.css) is the single authority for every element's
   styling; chat (`.nb-body`) and research (`.rc-prose`) wrappers only set CSS
   custom properties (`--md-fs`/`--md-lh`/`--md-fg`/`--md-gap`) — no element rules
@@ -43,6 +53,16 @@ math, highlight.js code blocks, gemoji shortcodes, CJK-friendly line breaks.
   `.hljs` background/padding is stripped so the `<pre>` container owns the surface.
 
 ## 变更历史
+
+### 2026-06-14 — 新增流式 `streaming` 模式
+- **出发点**：研究阅读页打字机流式输出时，每个 token 都把「不完整的 markdown」整篇
+  重新解析，未闭合标记（`**`、围栏 ```` ``` ````、标题 `#`、`$$`）会先以原始文本渲染，
+  等闭合标记到达又突然变成块/行内元素，触发整篇重排，视觉上文字排版不断跳动。
+- **目标**：让流式每一帧的块/行内结构与最终结果一致（只是更短），消除「文本→元素」
+  的结构突变与重排。
+- **关键决策**：(1) 新增 `streaming` prop，开启时先用 `completeStreamingMarkdown`
+  临时补全未闭合标记再渲染；(2) 流式期间禁用 rehype-highlight（逐 token 重新高亮既慢
+  又闪色），最终态恢复完整高亮；(3) 用 `useMemo` 缓存 normalize/complete 管线与渲染源。
 
 ### 2026-06-13 — 创建
 - **出发点**：聊天 AI 回复其实是 LLM 输出的 markdown 文本，但旧链路（textToParas +

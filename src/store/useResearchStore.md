@@ -9,12 +9,13 @@ snapshot persistence.
 - `useResearchStore` with state (`phase`, `projectId`, `nodes`, `order`,
   `activeNodeId`, `generating`, `projects`, `error`) and actions:
   `listProjects`, `startResearch`, `openNode`, `growChild`, `closeReading`,
-  `loadProject`, `newResearch`.
+  `loadProject(id, openNodeId?)`, `newResearch`.
 
 ## Dependencies
 - Upstream: `lib/api-client.ts` (typed RPC), `data/ids.ts`, `research/types.ts`,
   `research/streaming.ts` (`extractStreamingContent`).
-- Downstream: every `components/research/*` component.
+- Downstream: every `components/research/*` component;
+  `components/research/useResearchUrlSync.ts` (URL ↔ store bridge).
 
 ## Key implementation notes
 - Kept separate from `useAppStore` so the large canvas state doesn't bloat the
@@ -28,6 +29,25 @@ snapshot persistence.
   user's chat provider config.
 
 ## Change history
+
+### 2026-06-14 — loadProject can open a node (deep-link support)
+- **Motivation**: with `?project=&node=` now in the URL, a refresh/deep-link must
+  load the project *and* reopen the reading overlay on a specific node.
+- **Goal**: let `loadProject(id, openNodeId?)` open the node in the same set as
+  the project load (no intermediate state that would make the URL flicker).
+- **Key decision**: set `activeNodeId` to the requested node up front (ignoring a
+  stale id not in the snapshot), then call `openNode` so a bookmarked stub node
+  that was never filled in still generates its article.
+
+### 2026-06-14 — Coalesce token updates to one render per frame
+- **Motivation**: tokens arrive faster than the browser paints, and each
+  `onContent` triggers a markdown reflow; firing a `set`/render per token was
+  wasteful and amplified the streaming jitter.
+- **Goal**: throttle the per-token `onContent` to at most one update per
+  animation frame without dropping the final partial.
+- **Key decision**: in `generateContentStream`, keep only the latest partial and
+  flush it via `requestAnimationFrame` (direct call where rAF is unavailable);
+  flush once more after the stream ends so the last partial always lands.
 
 ### 2026-06-14 — Stream content-mode generation (typewriter)
 - **Motivation**: `openNode` / `growChild` filled a node's article via the

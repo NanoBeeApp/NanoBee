@@ -10,7 +10,7 @@
 //    terms (research canvas grows a child node around the clicked entity). When
 //    omitted, bold renders as a plain <strong> (chat).
 //  - onOpenImage: when provided, images become buttons that open a zoom/lightbox.
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import ReactMarkdown, { type Components, type Options } from "react-markdown";
 import remarkCjkFriendly from "remark-cjk-friendly";
 import remarkGfm from "remark-gfm";
@@ -21,6 +21,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
 import { cn } from "../../lib/utils";
 import { normalizeMathDelimiters } from "./normalize-math";
+import { completeStreamingMarkdown } from "./complete-streaming-markdown";
 import "katex/dist/katex.min.css";
 import "highlight.js/styles/github.css";
 import "./Markdown.css";
@@ -37,6 +38,17 @@ const REMARK_PLUGINS: Options["remarkPlugins"] = [
 const REHYPE_PLUGINS: Options["rehypePlugins"] = [
   rehypeSlug,
   [rehypeHighlight, { detect: true, ignoreMissing: true }],
+  [
+    rehypeKatex,
+    { strict: false, throwOnError: false, errorColor: "var(--ink-3)" },
+  ],
+];
+
+// While streaming we drop rehype-highlight: re-tokenizing the whole code block
+// on every token is expensive and makes the syntax colors flicker as keywords
+// complete. The final (non-streaming) render restores full highlighting.
+const REHYPE_PLUGINS_STREAMING: Options["rehypePlugins"] = [
+  rehypeSlug,
   [
     rehypeKatex,
     { strict: false, throwOnError: false, errorColor: "var(--ink-3)" },
@@ -68,6 +80,13 @@ interface MarkdownProps {
   onTermClick?: (term: string) => void;
   /** When set, images render as buttons that open the given src (zoom). */
   onOpenImage?: (src: string) => void;
+  /**
+   * Set while `content` is still streaming in token by token. Each frame's
+   * incomplete markers are temporarily closed (via `completeStreamingMarkdown`)
+   * so the block/inline structure stays stable instead of reflowing on every
+   * token, and code highlighting is deferred to the final render.
+   */
+  streaming?: boolean;
   /** Extra classes merged onto the `.markdown-body` root (e.g. chat body styles). */
   className?: string;
   /** Forwarded to the root so callers can attach data-* hooks (selection, e2e). */
@@ -79,10 +98,18 @@ export function Markdown({
   content,
   onTermClick,
   onOpenImage,
+  streaming,
   className,
   "data-testid": dataTestid,
   "data-ai-text": dataAiText,
 }: MarkdownProps) {
+  // Normalize math, then (while streaming) close any markers the partial frame
+  // has left open so the rendered structure does not snap on each token.
+  const source = useMemo(() => {
+    const normalized = normalizeMathDelimiters(content);
+    return streaming ? completeStreamingMarkdown(normalized) : normalized;
+  }, [content, streaming]);
+
   const components: Components = {
     a: ({ node, ...props }) => {
       void node; // strip the hast node so it is not spread onto the DOM element
@@ -129,9 +156,9 @@ export function Markdown({
       data-ai-text={dataAiText}>
       <ReactMarkdown
         remarkPlugins={REMARK_PLUGINS}
-        rehypePlugins={REHYPE_PLUGINS}
+        rehypePlugins={streaming ? REHYPE_PLUGINS_STREAMING : REHYPE_PLUGINS}
         components={components}>
-        {normalizeMathDelimiters(content)}
+        {source}
       </ReactMarkdown>
     </div>
   );

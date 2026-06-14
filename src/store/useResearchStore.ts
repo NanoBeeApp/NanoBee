@@ -39,7 +39,8 @@ interface ResearchState {
   openNode: (id: string) => Promise<void>;
   growChild: (parentId: string, opts: { question?: string; focusTerm?: string }) => Promise<void>;
   closeReading: () => void;
-  loadProject: (id: string) => Promise<void>;
+  /** Load a project; optionally open `openNodeId`'s reading overlay (deep link). */
+  loadProject: (id: string, openNodeId?: string) => Promise<void>;
   newResearch: () => void;
 }
 
@@ -142,6 +143,32 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       let result: ResearchGenerationResult | null = null;
       let streamError: string | null = null;
 
+      // Coalesce token updates to one render per animation frame: tokens can
+      // arrive faster than the browser can paint, and each `onContent` reflows
+      // the markdown. We keep only the latest partial and flush it on the next
+      // frame (falls back to a direct call where rAF is unavailable).
+      const canRaf = typeof requestAnimationFrame === "function";
+      let pending: string | null = null;
+      let rafQueued = false;
+      const flushEmit = () => {
+        rafQueued = false;
+        if (pending !== null) {
+          onContent(pending);
+          pending = null;
+        }
+      };
+      const scheduleEmit = (partial: string) => {
+        if (!canRaf) {
+          onContent(partial);
+          return;
+        }
+        pending = partial;
+        if (!rafQueued) {
+          rafQueued = true;
+          requestAnimationFrame(flushEmit);
+        }
+      };
+
       // Parse one SSE frame: `event:` + one or more `data:` lines. Token/final/
       // error data are all JSON-encoded, so a single data line per frame.
       const handleFrame = (frame: string) => {
@@ -156,7 +183,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         if (event === "token") {
           try {
             raw += JSON.parse(data) as string;
-            onContent(extractStreamingContent(raw));
+            scheduleEmit(extractStreamingContent(raw));
           } catch {
             /* ignore a malformed token frame */
           }
@@ -187,6 +214,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         }
       }
       if (buffer.trim()) handleFrame(buffer);
+      flushEmit(); // ensure the last partial lands even if no frame fired
 
       if (streamError) throw new Error(streamError);
       return result;
@@ -379,12 +407,15 @@ export const useResearchStore = create<ResearchState>((set, get) => {
 
     closeReading: () => set({ activeNodeId: null }),
 
-    loadProject: async (id) => {
+    loadProject: async (id, openNodeId) => {
       try {
         const res = await apiClient.research.snapshots[":id"].$get({ param: { id } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as { snapshot: ResearchSnapshot };
         const snap = data.snapshot;
+        // Open the deep-linked node up front (single set → no URL flicker);
+        // ignore a stale id that isn't in this snapshot.
+        const willOpen = openNodeId && snap.nodes[openNodeId] ? openNodeId : null;
         set({
           phase: "canvas",
           projectId: snap.projectId,
@@ -392,10 +423,12 @@ export const useResearchStore = create<ResearchState>((set, get) => {
           topic: snap.topic,
           nodes: snap.nodes,
           order: snap.order,
-          activeNodeId: null,
+          activeNodeId: willOpen,
           generating: false,
           error: null,
         });
+        // A bookmarked node that was never filled in still needs its article.
+        if (willOpen) void get().openNode(willOpen);
       } catch (error) {
         console.error("[research] loadProject failed:", String(error));
       }

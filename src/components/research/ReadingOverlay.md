@@ -26,6 +26,15 @@ backdrop.
 
 ## Change history
 
+### 2026-06-14 — Stop the layout jumping while streaming
+- **Motivation**: with the typewriter render in place, each token re-parsed
+  incomplete markdown, so unclosed markers snapped into styled elements as their
+  closers arrived and reflowed the whole article on every frame.
+- **Goal**: keep the streamed body structurally stable frame to frame.
+- **Key decision**: pass `streaming={loading}` to `<Markdown>` so partial frames
+  are balanced via `completeStreamingMarkdown` and highlighting is deferred; once
+  `loading` clears (final result), it falls back to the normal full render.
+
 ### 2026-06-14 — Render streaming article (typewriter)
 - **Motivation**: the overlay only knew "loading (spinner)" vs "ready (full
   body)", so even after the store began streaming tokens it would hide the body

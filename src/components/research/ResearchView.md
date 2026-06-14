@@ -11,9 +11,9 @@ chrome is a transient generation-status / error pill. Imports the scoped
 - `ResearchView()` — mounted by `App.tsx` when `view === "research"`.
 
 ## Dependencies
-- Upstream: `store/useResearchStore.ts`, `icons/icons.tsx`,
-  `ResearchWelcome.tsx`, `ResearchCanvas.tsx`, `ReadingOverlay.tsx`,
-  `styles/research.css`.
+- Upstream: `store/useResearchStore.ts`, `useResearchUrlSync.ts`,
+  `icons/icons.tsx`, `ResearchWelcome.tsx`, `ResearchCanvas.tsx`,
+  `ReadingOverlay.tsx`, `styles/research.css`.
 - Downstream: `App.tsx`.
 
 ## Key implementation notes
@@ -21,8 +21,18 @@ chrome is a transient generation-status / error pill. Imports the scoped
   canvas banner instead. New-research is a sidebar entry (ResearchNavList), not a
   canvas button; only a transient status/error pill floats top-left, opposite the
   global top-right FloatingControls cluster. CSS is imported here.
+- Calls `useResearchUrlSync()` once at the top (unconditionally, before the
+  phase branch) to keep `?project=&node=` and the store in sync.
 
 ## Change history
+
+### 2026-06-14 — Mount the URL ↔ store sync hook
+- **Motivation**: opening an article (or a project) only mutated the store, so
+  the reading overlay had no URL and was lost on refresh / couldn't be bookmarked.
+- **Goal**: bind the view's bookmarkable state to the URL without bloating this
+  container.
+- **Key decision**: call the dedicated `useResearchUrlSync()` here (the route
+  component is the natural single mount point), keeping the sync logic isolated.
 
 ### 2026-06-13 — Drop the canvas "新研究" button (new-research → sidebar)
 - **Motivation**: The user wants creating a new research to live solely in the

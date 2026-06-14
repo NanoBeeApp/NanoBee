@@ -6,12 +6,17 @@
 // only floating canvas chrome is a transient generation-status / error pill.
 
 import { useResearchStore } from "../../store/useResearchStore";
+import { useResearchUrlSync } from "./useResearchUrlSync";
 import { ResearchWelcome } from "./ResearchWelcome";
 import { ResearchCanvas } from "./ResearchCanvas";
 import { ReadingOverlay } from "./ReadingOverlay";
 import "../../styles/research.css";
 
 export function ResearchView() {
+  // Keep the URL (?project=&node=) and the store in sync so the open project +
+  // reading overlay survive a refresh and are bookmarkable.
+  useResearchUrlSync();
+
   const phase = useResearchStore((s) => s.phase);
   const generating = useResearchStore((s) => s.generating);
   const error = useResearchStore((s) => s.error);
