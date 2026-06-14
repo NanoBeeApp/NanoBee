@@ -10,12 +10,16 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 ## Key notes
 - Returns null on the chat view (centered bottom composer is the quick chat's "full form") and on the settings page (a configuration surface).
 - Folded by default (`rightCollapsed` starts `true`): only the bubble shows. Clicking the bubble toggles `rightCollapsed`; while open (`!rightCollapsed`) the popup renders and stays open until the bubble or the header's `×` closes it (no auto-close on mouse leave). The bubble shows the bee icon when folded, `×` when open.
-- **⌘J / Ctrl+J toggles the popup from anywhere** (the listener is inert on the chat / settings surfaces where the widget isn't rendered; it `preventDefault`s the browser's own ⌘J). The shortcut is surfaced to the user in two places: the bubble's hover tooltip (`快速对话 · ⌘J`) and a `⌘J` kbd chip in the popup header. Opening the popup (via the shortcut or a bubble click) auto-focuses the composer.
+- **⌘J / Ctrl+J toggles the popup from anywhere**, and **Escape closes it when open** (the listener is inert on the chat / settings surfaces where the widget isn't rendered; it `preventDefault`s the browser's own ⌘J). The shortcut is surfaced to the user in two places: the bubble's hover tooltip (`快速对话 · ⌘J`) and a `⌘J` kbd chip in the popup header; the close button's tooltip notes `Esc`. Opening the popup (via the shortcut or a bubble click) auto-focuses the composer.
 - The popup floats over content (fixed, bottom-right) instead of squeezing a grid column, so opening/closing it never reflows the page.
 - The feed pins to the bottom on new messages, on the pending indicator, and whenever the popup (re)opens.
 - Quick conversations get session metadata so they appear in the sidebar's "刚刚" group.
 
 ## Change history
+
+### 2026-06-14 — Escape closes the popup
+- **Motivation**: the user asked that Escape also dismiss the popup, matching the standard "close overlay" gesture.
+- **Change**: the same widget `keydown` listener now closes the popup on `Escape` when it's open; the close button's tooltip notes `Esc`.
 
 ### 2026-06-14 — ⌘J keyboard shortcut + discoverability
 - **Motivation**: the user asked for a simple keyboard shortcut to open the bottom-right quick-chat bubble, and a place to tell users about it.

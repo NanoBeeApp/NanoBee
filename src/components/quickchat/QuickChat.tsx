@@ -46,15 +46,20 @@ export function QuickChat() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, pending, open]);
 
-  // ⌘J / Ctrl+J toggles the quick-chat popup from anywhere. Inert on the chat /
-  // settings surfaces where the widget isn't rendered. preventDefault so the
-  // browser's own ⌘J (downloads) stays out of the way while the app owns it.
+  // Keyboard control for the popup. Inert on the chat / settings surfaces where
+  // the widget isn't rendered.
+  // - ⌘J / Ctrl+J toggles it from anywhere (preventDefault so the browser's own
+  //   ⌘J / downloads stays out of the way while the app owns it).
+  // - Escape closes it when open (matches the standard "dismiss overlay" gesture).
   useEffect(() => {
     if (hidden) return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
         e.preventDefault();
         setRightCollapsed(!rightCollapsed);
+      } else if (e.key === 'Escape' && !rightCollapsed) {
+        e.preventDefault();
+        setRightCollapsed(true);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -110,7 +115,7 @@ export function QuickChat() {
                 <Icons.arrowRight size={15} />
               </button>
             )}
-            <button className="btn btn-ghost btn-icon btn-sm" title="关闭" onClick={() => setRightCollapsed(true)}
+            <button className="btn btn-ghost btn-icon btn-sm" title="关闭 · Esc" onClick={() => setRightCollapsed(true)}
               data-testid="collapse-right-chat">
               <Icons.x size={15} />
             </button>
