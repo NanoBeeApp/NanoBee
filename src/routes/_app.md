@@ -1,8 +1,8 @@
 # _app.tsx
 
 ## Responsibility
-Pathless layout route that owns the whole app shell (sidebar | center surface |
-docked right chat panel) and the global overlay layers (notifications,
+Pathless layout route that owns the whole app shell (sidebar | center surface)
+and the global overlay layers (the floating QuickChat widget, notifications,
 selection float, toasts). Every in-app page renders into the `<Outlet/>` inside
 the center surface, so each view has its own URL while sharing this chrome.
 Replaces the former `App.tsx` shell.
@@ -25,16 +25,23 @@ Replaces the former `App.tsx` shell.
 - **navigate bridge**: an effect binds the router's `navigate()` into the store
   (`bindNavigate`) so actions like `openToday` / `selectChat` / `send` change
   the URL. `to` is a plain string cast past the typed-route union.
-- `with-rightchat` is applied for the content surfaces only
-  (`view !== 'chat' && view !== 'settings'`); chat has its own composer and
-  settings is a configuration page.
+- The quick chat is a fixed-position floating widget (bubble + popup, see
+  QuickChat), so the shell no longer adds a `with-rightchat` grid column; it
+  self-gates on `view` (`chat` / `settings` hide it).
 - `research-canvas` is applied only on the live research canvas
-  (`view === 'research' && researchPhase === 'canvas'`). It makes both rails
+  (`view === 'research' && researchPhase === 'canvas'`). It makes the left rail
   float over a full-width, position-stable canvas (CSS in app.css). Reads
   `useResearchStore.phase` so the shell knows when the canvas is live.
 - Hosts the bootstrap effect (load D1 state) and the ⌘N new-chat shortcut.
 
 ## Change history
+
+### 2026-06-14 — quick chat floats; drop the reserved grid column
+- **Motivation**: the quick chat became a customer-service-style floating
+  bubble + popup (see QuickChat), which overlays content instead of docking.
+- **Change**: removed the `with-rightchat` class / `withRightChat` flag and the
+  `right-collapsed` class (and the `rightCollapsed` read); the grid is back to
+  `sidebar | content`, and the widget floats over it.
 
 ### 2026-06-14 — research canvas: floating rails
 - **Motivation**: on the research canvas, toggling either sidebar resized and

@@ -1,13 +1,20 @@
 # src/components/layout/FloatingControls.tsx
 
 ## Responsibility
-Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) the panel-toggle that *pins* the sidebar open, plus back-to-chat on the Today page; top-right an expand control for the docked right chat panel (only when it is collapsed on a non-chat view) followed by a single account control (`AccountFoot` — an avatar + chevron button whose dropdown menu gathers notifications, AI settings, app downloads and logout). While collapsed it also renders a wide left-edge reveal zone (`.nb-edge-reveal`) — hovering the screen's left edge fades in a soft glow and clicking anywhere in the strip *peeks* the sidebar open temporarily (overlay that auto-closes on pointer leave), distinct from the panel icon which pins it.
+Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) the panel-toggle that *pins* the sidebar open, plus back-to-chat on the Today page; top-right a single account control (`AccountFoot` — an avatar + chevron button whose dropdown menu gathers notifications, AI settings, app downloads and logout). While collapsed it also renders a wide left-edge reveal zone (`.nb-edge-reveal`) — hovering the screen's left edge fades in a soft glow and clicking anywhere in the strip *peeks* the sidebar open temporarily (overlay that auto-closes on pointer leave), distinct from the panel icon which pins it.
 
 ## Dependencies
 - Upstream: store, icons, `AccountFoot` (the whole top-right account dropdown)
 - Downstream: App
 
 ## Change history
+
+### 2026-06-14 — drop the quick-chat re-open button
+- **Motivation**: the quick chat became a customer-service-style floating bubble
+  (see QuickChat) that is itself the open/close toggle, so the top-right re-open
+  control was redundant.
+- **Change**: removed the `expand-right-chat` `.fbtn` and the `rightCollapsed` /
+  `setRightCollapsed` reads; `.nb-float.tr` now holds only `AccountFoot`.
 
 ### 2026-06-13 — re-open control for the docked right chat panel
 - **Motivation**: the quick chat became a collapsible right column (see App /

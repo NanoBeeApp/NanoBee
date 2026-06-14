@@ -22,6 +22,13 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ## Change history
 
+### 2026-06-14 — quick chat folds by default (`rightCollapsed` semantics)
+- **Motivation**: the quick chat became a customer-service-style floating bubble
+  + popup; it should start folded (bubble only) and the bubble toggles it.
+- **Change**: `rightCollapsed` now means "QuickChat widget folded" and its
+  initial value flipped `false → true` (folded by default). The action
+  (`setRightCollapsed`) is unchanged; the bubble drives it.
+
 ### 2026-06-13 — URL-driven navigation; settings becomes a route; drop `aiSetupOpen`
 - **Motivation**: the user asked that every page have its own URL and that
   settings be a page instead of a modal. Navigation was a single `view` flag on

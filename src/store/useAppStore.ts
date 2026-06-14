@@ -86,9 +86,10 @@ interface AppState {
   /** Temporary "peek": the sidebar is shown as an overlay while collapsed
    *  (triggered by the left-edge reveal) and auto-closes on mouse leave. */
   sidePeek: boolean;
-  /** Persistent collapse state of the docked right chat panel (QuickChat).
-   *  Unlike the sidebar there is no peek — a chat panel that vanished on mouse
-   *  leave would be hostile, so re-opening is an explicit click. */
+  /** Folded state of the QuickChat widget (a customer-service-style launcher
+   *  bubble + popup). Folded by default: only the bubble shows; clicking it
+   *  opens the popup, which then stays open until the bubble (or its close
+   *  button) is clicked again — there is no auto-close on mouse leave. */
   rightCollapsed: boolean;
   pending: boolean;
   toasts: Toast[];
@@ -222,7 +223,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   notifOpen: false,
   sideCollapsed: false,
   sidePeek: false,
-  rightCollapsed: false,
+  rightCollapsed: true,
   pending: false,
   toasts: [],
   justAddedTaskId: null,

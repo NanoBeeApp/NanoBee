@@ -1,0 +1,69 @@
+/* ============================================================
+   QuickChat — customer-service-style floating widget
+   A launcher bubble pinned to the bottom-right, plus a popup chat panel that
+   opens above it. Replaces the docked right rail: the popup floats over content
+   (no grid column reserved) and the panel internals reuse the existing
+   `.nb-rc-*` / `.nb-qc` styles from app.css.
+   z-index sits above content + the floating corner controls (app.css `.nb-float`
+   z-index 25) but below page dropdowns / the research reading modal, so a
+   focused reading view still covers it.
+   ============================================================ */
+
+.nb-qc-bubble {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 28;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(150deg, var(--nb-honey), #d98b2b);
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(217, 139, 43, 0.34), 0 2px 6px rgba(15, 17, 23, 0.12);
+  transition: transform var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out),
+    background var(--dur-2) var(--ease-out);
+}
+.nb-qc-bubble:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(217, 139, 43, 0.4), 0 3px 8px rgba(15, 17, 23, 0.14);
+}
+.nb-qc-bubble:active { transform: translateY(0); }
+/* Open state: quieter neutral chip so the "×" reads as a close affordance. */
+.nb-qc-bubble.is-open {
+  background: var(--surface);
+  color: var(--ink-2);
+  border: 1px solid var(--border);
+  box-shadow: var(--sh-3);
+}
+.nb-qc-bubble.is-open:hover { color: var(--ink); border-color: var(--border-2); }
+
+/* Popup chat panel, anchored above the bubble. */
+.nb-qc-pop {
+  position: fixed;
+  right: 22px;
+  bottom: 88px;
+  z-index: 28;
+  width: 384px;
+  max-width: calc(100vw - 32px);
+  height: 560px;
+  max-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 20px 56px rgba(15, 17, 23, 0.2), 0 4px 12px rgba(15, 17, 23, 0.08);
+  overflow: hidden;
+  animation: nb-qc-pop-in 0.2s var(--ease-out);
+}
+@keyframes nb-qc-pop-in {
+  from { transform: translateY(12px) scale(0.985); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Message rows inside the popup match the old docked-rail padding. */
+.nb-qc-pop .nb-msg,
+.nb-qc-pop .nb-proactive { padding: 0 16px; max-width: none; }

@@ -36,7 +36,6 @@ function AppLayout() {
 	const view = useAppStore((s) => s.view);
 	const sideCollapsed = useAppStore((s) => s.sideCollapsed);
 	const sidePeek = useAppStore((s) => s.sidePeek);
-	const rightCollapsed = useAppStore((s) => s.rightCollapsed);
 	const researchPhase = useResearchStore((s) => s.phase);
 	const notifOpen = useAppStore((s) => s.notifOpen);
 	const newChat = useAppStore((s) => s.newChat);
@@ -75,21 +74,20 @@ function AppLayout() {
 		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [newChat]);
 
-	// The docked right chat panel rides on the content surfaces only; the chat
-	// page has its own full-width composer and settings is a configuration page.
-	const withRightChat = view !== "chat" && view !== "settings";
+	// The quick-chat widget floats over content as a bottom-right bubble + popup
+	// (see QuickChat), so the shell no longer reserves a grid column for it.
 
-	// On the research canvas (the live canvas phase, not the welcome screen) both
-	// rails float over a full-width, position-stable canvas: opening/closing a
-	// sidebar must never resize or shift the canvas. The `research-canvas` class
-	// flips the grid to a single column and turns both rails into fixed overlays
-	// (see app.css). Welcome phase keeps the normal squeeze layout.
+	// On the research canvas (the live canvas phase, not the welcome screen) the
+	// left rail floats over a full-width, position-stable canvas: opening/closing
+	// the sidebar must never resize or shift the canvas. The `research-canvas`
+	// class flips the grid to a single column and turns the rail into a fixed
+	// overlay (see app.css). Welcome phase keeps the normal squeeze layout.
 	const researchCanvasFloating =
 		view === "research" && researchPhase === "canvas";
 
 	return (
 		<div
-			className={`nb-app${withRightChat ? " with-rightchat" : ""}${sideCollapsed ? " side-collapsed" : ""}${sideCollapsed && sidePeek ? " side-peek" : ""}${rightCollapsed ? " right-collapsed" : ""}${researchCanvasFloating ? " research-canvas" : ""}`}
+			className={`nb-app${sideCollapsed ? " side-collapsed" : ""}${sideCollapsed && sidePeek ? " side-peek" : ""}${researchCanvasFloating ? " research-canvas" : ""}`}
 			data-testid="nanobee-app"
 		>
 			<Sidebar />
