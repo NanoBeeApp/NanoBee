@@ -18,15 +18,16 @@ in-canvas outline drawn by `ResearchCanvas`.
   with its connected parent).
 
 ## Dependencies
-- Upstream: `useResearchStore` (state + `openNode`), `research/types`
-  (`ResearchNode`).
+- Upstream: `useResearchStore` (state + `openNode`), `research/outline`
+  (`buildChildrenMap`), `research/types` (`ResearchNode`).
 - Downstream: rendered by `sidebar/ResearchNavList` when a project is open on the
   research canvas.
 - Styling: `nb-outline-*` classes in `src/styles/app.css`.
 
 ## Key implementation notes
-- Structure is derived purely from `parentId` + the store's `order` (same
-  `buildChildrenMap` logic as `ResearchCanvas`) — no per-row coordinates.
+- Structure is derived purely from `parentId` + the store's `order` via the
+  shared `buildChildrenMap` helper (the same one `ResearchCanvas` uses) — no
+  per-row coordinates.
 - The root node (`order[0]`, carries the topic) is skipped; only its descendants
   are listed, matching Curve's `SidePanel`.
 - Status → dot styling via a `status-{idle|loading|ready|failed}` class.

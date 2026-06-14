@@ -9,20 +9,8 @@
 
 import { useMemo } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
+import { buildChildrenMap } from "../../research/outline";
 import type { ResearchNode } from "../../research/types";
-
-/** Parent id → ordered child ids, derived from the flat node map + `order`. */
-function buildChildrenMap(
-  nodes: Record<string, ResearchNode>,
-  order: string[],
-): Record<string, string[]> {
-  const childrenOf: Record<string, string[]> = {};
-  for (const id of order) {
-    const parentId = nodes[id]?.parentId;
-    if (parentId) (childrenOf[parentId] ??= []).push(id);
-  }
-  return childrenOf;
-}
 
 export function ResearchOutlineTree() {
   const nodes = useResearchStore((s) => s.nodes);

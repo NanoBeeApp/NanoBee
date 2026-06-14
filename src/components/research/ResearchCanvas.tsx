@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
 import { ResearchNodeCard } from "./ResearchNodeCard";
+import { buildChildrenMap } from "../../research/outline";
 import type { ResearchNode } from "../../research/types";
 
 interface Transform {
@@ -27,19 +28,6 @@ const INITIAL_SCALE = 1;
 // Fixed-width outline column (world units). Kept narrow enough to read like an
 // article column; per-depth cards shrink further via CSS max-width.
 const OUTLINE_WIDTH = 760;
-
-/** Parent id → ordered child ids, derived from the flat node map + `order`. */
-function buildChildrenMap(
-  nodes: Record<string, ResearchNode>,
-  order: string[],
-): Record<string, string[]> {
-  const childrenOf: Record<string, string[]> = {};
-  for (const id of order) {
-    const parentId = nodes[id]?.parentId;
-    if (parentId) (childrenOf[parentId] ??= []).push(id);
-  }
-  return childrenOf;
-}
 
 export function ResearchCanvas() {
   const nodes = useResearchStore((s) => s.nodes);

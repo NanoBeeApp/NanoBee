@@ -24,6 +24,14 @@ indented under its parent along a vertical rail.
 
 ## Change history
 
+### 2026-06-14 — Share buildChildrenMap with the sidebar outline
+- **Motivation**: The new left-rail `ResearchOutlineTree` needed the exact same
+  parent→children derivation, which had been a file-local copy here.
+- **Goal**: Remove the duplication so both the in-canvas outline and the sidebar
+  tree read from one source of truth.
+- **Key decision**: Move `buildChildrenMap` into `src/research/outline.ts` and
+  import it here; behaviour is unchanged.
+
 ### 2026-06-14 — Stop horizontal swipe from triggering browser back/forward
 - **Motivation**: A horizontal trackpad swipe over the canvas was being handed to
   the browser as back/forward navigation, yanking the user off the page mid-pan.
