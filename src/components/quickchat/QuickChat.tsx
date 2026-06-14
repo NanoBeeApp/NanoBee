@@ -35,6 +35,9 @@ export function QuickChat() {
   const messages = (quickChatId && convos[quickChatId]) || [];
   const hasMessages = messages.length > 0;
   const open = !rightCollapsed;
+  // The chat page has its own full-width composer, and the settings page is a
+  // configuration surface — neither shows the quick-chat widget.
+  const hidden = view === 'chat' || view === 'settings';
 
   // Keep the feed pinned to the latest message / pending indicator — and to the
   // bottom whenever the popup is (re)opened.
@@ -43,9 +46,28 @@ export function QuickChat() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, pending, open]);
 
-  // The chat page has its own full-width composer, and the settings page is a
-  // configuration surface — neither shows the quick-chat widget.
-  if (view === 'chat' || view === 'settings') return null;
+  // ⌘J / Ctrl+J toggles the quick-chat popup from anywhere. Inert on the chat /
+  // settings surfaces where the widget isn't rendered. preventDefault so the
+  // browser's own ⌘J (downloads) stays out of the way while the app owns it.
+  useEffect(() => {
+    if (hidden) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault();
+        setRightCollapsed(!rightCollapsed);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [hidden, rightCollapsed, setRightCollapsed]);
+
+  // Drop the cursor straight into the composer whenever the popup opens, so the
+  // shortcut (or a bubble click) leaves the user ready to type.
+  useEffect(() => {
+    if (open) taRef.current?.focus();
+  }, [open]);
+
+  if (hidden) return null;
 
   const submit = () => {
     if (!val.trim()) return;
@@ -80,6 +102,7 @@ export function QuickChat() {
           <div className="nb-rc-head">
             <span className="nb-rc-glyph"><Icons.bee size={14} sw={1.6} /></span>
             <b>快速对话</b>
+            <span className="kbd" title="按 ⌘J 开关">⌘J</span>
             <span style={{ flex: 1 }} />
             {hasMessages && (
               <button className="btn btn-ghost btn-icon btn-sm" title="在聊天页打开" onClick={openQuickInChat}
@@ -138,8 +161,8 @@ export function QuickChat() {
       <button
         className={`nb-qc-bubble${open ? ' is-open' : ''}`}
         onClick={() => setRightCollapsed(open)}
-        title={open ? '关闭快速对话' : '快速对话'}
-        aria-label={open ? '关闭快速对话' : '打开快速对话'}
+        title={open ? '关闭快速对话 · ⌘J' : '快速对话 · ⌘J'}
+        aria-label={open ? '关闭快速对话（⌘J）' : '打开快速对话（⌘J）'}
         aria-expanded={open}
         data-testid="quick-chat-bubble">
         {open ? <Icons.x size={22} sw={2.2} /> : <Icons.bee size={24} sw={1.6} />}

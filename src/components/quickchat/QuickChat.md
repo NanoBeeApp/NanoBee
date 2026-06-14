@@ -10,11 +10,17 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 ## Key notes
 - Returns null on the chat view (centered bottom composer is the quick chat's "full form") and on the settings page (a configuration surface).
 - Folded by default (`rightCollapsed` starts `true`): only the bubble shows. Clicking the bubble toggles `rightCollapsed`; while open (`!rightCollapsed`) the popup renders and stays open until the bubble or the header's `×` closes it (no auto-close on mouse leave). The bubble shows the bee icon when folded, `×` when open.
+- **⌘J / Ctrl+J toggles the popup from anywhere** (the listener is inert on the chat / settings surfaces where the widget isn't rendered; it `preventDefault`s the browser's own ⌘J). The shortcut is surfaced to the user in two places: the bubble's hover tooltip (`快速对话 · ⌘J`) and a `⌘J` kbd chip in the popup header. Opening the popup (via the shortcut or a bubble click) auto-focuses the composer.
 - The popup floats over content (fixed, bottom-right) instead of squeezing a grid column, so opening/closing it never reflows the page.
 - The feed pins to the bottom on new messages, on the pending indicator, and whenever the popup (re)opens.
 - Quick conversations get session metadata so they appear in the sidebar's "刚刚" group.
 
 ## Change history
+
+### 2026-06-14 — ⌘J keyboard shortcut + discoverability
+- **Motivation**: the user asked for a simple keyboard shortcut to open the bottom-right quick-chat bubble, and a place to tell users about it.
+- **Goal**: toggle the popup with ⌘J / Ctrl+J without a mouse, and make the binding discoverable rather than hidden.
+- **Key decisions**: a `keydown` listener lives in the widget itself (co-located with toggle/focus, auto-guarded by the existing chat/settings `hidden` check) instead of the shell's ⌘N handler in `_app.tsx`; it `preventDefault`s so the browser's ⌘J (downloads) doesn't fire. The shortcut is announced via the bubble tooltip + an `⌘J` kbd chip in the popup header (styled to match the sidebar's existing `⌘N` chip). Opening now auto-focuses the composer.
 
 ### 2026-06-14 — customer-service widget (was docked right rail)
 - **Motivation**: the user asked for a customer-service-style chat — a folded-by-default bubble that opens a popup which stays open, and re-clicking the bubble closes it.

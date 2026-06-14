@@ -463,6 +463,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 
 .nb-rc-head { display: flex; align-items: center; gap: 9px; padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .nb-rc-head b { font-size: 13px; white-space: nowrap; }
+.nb-rc-head .kbd { font-family: var(--font-mono); font-size: 10px; padding: 2px 7px; background: var(--surface-3); color: var(--ink-3); border-radius: 6px; }
 .nb-rc-glyph { width: 24px; height: 24px; border-radius: 8px; background: linear-gradient(150deg, var(--nb-honey), #d98b2b); color: #fff; display: grid; place-items: center; flex-shrink: 0; }
 
 .nb-rc-ctx { padding: 10px 14px 0; }
