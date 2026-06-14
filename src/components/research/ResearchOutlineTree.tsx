@@ -16,7 +16,8 @@ export function ResearchOutlineTree() {
   const nodes = useResearchStore((s) => s.nodes);
   const order = useResearchStore((s) => s.order);
   const activeNodeId = useResearchStore((s) => s.activeNodeId);
-  const openNode = useResearchStore((s) => s.openNode);
+  // Sidebar rows scroll the canvas to the node, pause, then open the overlay.
+  const focusAndOpenNode = useResearchStore((s) => s.focusAndOpenNode);
 
   const childrenOf = useMemo(() => buildChildrenMap(nodes, order), [nodes, order]);
 
@@ -40,7 +41,7 @@ export function ResearchOutlineTree() {
           nodes={nodes}
           childrenOf={childrenOf}
           activeNodeId={activeNodeId}
-          onOpen={openNode}
+          onOpen={focusAndOpenNode}
         />
       ))}
     </ul>

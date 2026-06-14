@@ -9,16 +9,17 @@ This is the sidebar counterpart to the in-canvas outline drawn by
 
 ## Core exports / API
 - `ResearchOutlineTree()` — connected component. Reads `nodes`, `order`,
-  `activeNodeId`, `openNode` from `useResearchStore`; builds a parent→children
-  map from `parentId` + `order`; renders the root's children as a nested `<ul>`.
-  Clicking a row calls `openNode(id)`. Renders a "大纲生成中…" placeholder while
-  the root has no children yet.
+  `activeNodeId`, `focusAndOpenNode` from `useResearchStore`; builds a
+  parent→children map from `parentId` + `order`; renders the root's children as a
+  nested `<ul>`. Clicking a row calls `focusAndOpenNode(id)` (canvas smooth-scrolls
+  to the node, then its reading overlay opens after ~500ms). Renders a
+  "大纲生成中…" placeholder while the root has no children yet.
 - `OutlineRow` (file-local, recursive) — one node row + its indented children,
   mirroring `ResearchCanvas`'s `NodeBranch` pattern (recursive helper co-located
   with its connected parent).
 
 ## Dependencies
-- Upstream: `useResearchStore` (state + `openNode`), `research/outline`
+- Upstream: `useResearchStore` (state + `focusAndOpenNode`), `research/outline`
   (`buildChildrenMap`), `research/types` (`ResearchNode`).
 - Downstream: rendered by `sidebar/ResearchNavList` when a project is open on the
   research canvas.
@@ -34,6 +35,15 @@ This is the sidebar counterpart to the in-canvas outline drawn by
   leading status dot.
 
 ## Change history
+
+### 2026-06-14 — rows scroll-then-open instead of opening immediately
+- **Motivation**: clicking a row opened the reading overlay instantly, so the
+  canvas scroll to that node happened behind the modal and was never seen. The
+  user wanted to watch the canvas move to the node first.
+- **Goal**: smooth-scroll the canvas to the node, pause, then reveal the overlay.
+- **Key decision**: switch the row action from `openNode` to the store's
+  `focusAndOpenNode`, which sets `focusNodeId` (canvas eases to the node) and
+  opens the overlay ~500ms later. Canvas-card clicks still open immediately.
 
 ### 2026-06-14 — drop the leading status dots
 - **Motivation**: the user asked to remove the dots in front of each outline

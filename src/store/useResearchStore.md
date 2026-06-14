@@ -7,10 +7,10 @@ snapshot persistence.
 
 ## Core exports / API
 - `useResearchStore` with state (`phase`, `projectId`, `nodes`, `order`,
-  `activeNodeId`, `generating`, `projects`, `error`, `projectHighlighted`) and
-  actions: `listProjects`, `startResearch`, `openNode`, `growChild`,
-  `closeReading`, `loadProject(id, openNodeId?)`, `newResearch`,
-  `highlightProject`, `clearProjectHighlight`.
+  `activeNodeId`, `generating`, `projects`, `error`, `projectHighlighted`,
+  `focusNodeId`) and actions: `listProjects`, `startResearch`, `openNode`,
+  `growChild`, `closeReading`, `loadProject(id, openNodeId?)`, `newResearch`,
+  `highlightProject`, `clearProjectHighlight`, `focusAndOpenNode`.
 
 ## Dependencies
 - Upstream: `lib/api-client.ts` (typed RPC), `data/ids.ts`, `research/types.ts`,
@@ -30,6 +30,18 @@ snapshot persistence.
   user's chat provider config.
 
 ## Change history
+
+### 2026-06-14 — focusAndOpenNode (scroll-then-open for sidebar rows)
+- **Motivation**: clicking a sidebar outline row opened the overlay immediately,
+  hiding the canvas scroll behind the modal. The user wanted to see the canvas
+  move to the node first, then have the overlay appear.
+- **Goal**: a store action that scrolls the canvas, pauses, then opens the node.
+- **Key decision**: add `focusNodeId` + `focusAndOpenNode(id)`. The action sets
+  `focusNodeId` (the canvas eases to that node via an `.is-animating` transition),
+  then a module-level timer opens the overlay after `FOCUS_OPEN_DELAY_MS` (500ms)
+  and clears `focusNodeId`. The timer is cleared/`focusNodeId` reset by
+  `startResearch` / `loadProject` / `newResearch` so a pending open can't fire
+  into a different project.
 
 ### 2026-06-14 — projectHighlighted flag for the canvas selection ring
 - **Motivation**: the user wanted clicking a project in the sidebar to highlight

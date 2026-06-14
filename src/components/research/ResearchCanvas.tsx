@@ -36,6 +36,7 @@ export function ResearchCanvas() {
   const openNode = useResearchStore((s) => s.openNode);
   const projectHighlighted = useResearchStore((s) => s.projectHighlighted);
   const clearProjectHighlight = useResearchStore((s) => s.clearProjectHighlight);
+  const focusNodeId = useResearchStore((s) => s.focusNodeId);
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const [t, setT] = useState<Transform>({ tx: 0, ty: 0, scale: INITIAL_SCALE });
@@ -62,33 +63,42 @@ export function ResearchCanvas() {
     setT({ tx: Math.max(24, tx), ty: 40, scale: INITIAL_SCALE });
   }, [rootId, order.length]);
 
-  // Scroll the canvas to the active node (e.g. clicking a left outline row, a
-  // deep link, or growing a child). The world is positioned with a CSS
-  // transform, not a native scrollbar, so "scroll" means nudging `ty` so the
-  // active card sits a comfortable distance below the top of the viewport. Only
-  // vertical (the fixed-width column is already horizontally centered). rAF lets
-  // a just-created card lay out first.
+  // Nudge `ty` so the given node's card sits ~22% down the viewport. The world is
+  // positioned with a CSS transform, not a native scrollbar, so "scroll" means
+  // moving `ty`. Vertical-only (the fixed-width column is already centered); a
+  // small deadzone avoids tiny jumps when the card is already comfortably in view.
+  const nudgeToCard = useCallback((id: string) => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+    const card = vp.querySelector<HTMLElement>(`[data-testid="research-node-${id}"]`);
+    if (!card) return;
+    const vpRect = vp.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const targetTop = vpRect.height * 0.22;
+    const deltaY = targetTop - (cardRect.top - vpRect.top);
+    if (Math.abs(deltaY) < 8) return;
+    setT((prev) => ({ ...prev, ty: prev.ty + deltaY }));
+  }, []);
+
+  // Scroll to the active node (deep link, grown child, canvas card click). rAF
+  // lets a just-created card lay out first. This path is instant (the world has
+  // no transition unless a sidebar focus is in flight).
   useEffect(() => {
     if (!activeNodeId) return;
     if (scrolledTo.current === activeNodeId) return;
-    const vp = viewportRef.current;
-    if (!vp) return;
-    const raf = requestAnimationFrame(() => {
-      const card = vp.querySelector<HTMLElement>(
-        `[data-testid="research-node-${activeNodeId}"]`,
-      );
-      if (!card) return;
-      scrolledTo.current = activeNodeId;
-      const vpRect = vp.getBoundingClientRect();
-      const cardRect = card.getBoundingClientRect();
-      const targetTop = vpRect.height * 0.22;
-      const deltaY = targetTop - (cardRect.top - vpRect.top);
-      // Only move if it isn't already comfortably in view, to avoid tiny jumps.
-      if (Math.abs(deltaY) < 8) return;
-      setT((prev) => ({ ...prev, ty: prev.ty + deltaY }));
-    });
+    scrolledTo.current = activeNodeId;
+    const raf = requestAnimationFrame(() => nudgeToCard(activeNodeId));
     return () => cancelAnimationFrame(raf);
-  }, [activeNodeId]);
+  }, [activeNodeId, nudgeToCard]);
+
+  // Sidebar-row focus: smooth-scroll to the node *before* its overlay opens. The
+  // `.is-animating` class (driven by `focusNodeId`) makes this `ty` change ease
+  // instead of jump; the store opens the overlay ~500ms later.
+  useEffect(() => {
+    if (!focusNodeId) return;
+    const raf = requestAnimationFrame(() => nudgeToCard(focusNodeId));
+    return () => cancelAnimationFrame(raf);
+  }, [focusNodeId, nudgeToCard]);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -163,7 +173,7 @@ export function ResearchCanvas() {
       onPointerUp={endPan}
       onPointerLeave={endPan}>
       <div
-        className="rc-world"
+        className={`rc-world${focusNodeId ? " is-animating" : ""}`}
         style={{ transform: `translate(${t.tx}px, ${t.ty}px) scale(${t.scale})` }}>
         <div className="rc-outline" style={{ width: OUTLINE_WIDTH }}>
           <button

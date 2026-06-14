@@ -24,6 +24,16 @@ indented under its parent along a vertical rail.
 
 ## Change history
 
+### 2026-06-14 — Smooth focus-scroll before a sidebar-opened overlay
+- **Motivation**: pairs with the store's `focusAndOpenNode` — a sidebar outline
+  row should scroll the canvas to the node *visibly* before the reading overlay
+  covers it.
+- **Goal**: ease the scroll for that one move, leaving pan/zoom instant.
+- **Key decision**: extract the `ty`-nudge into `nudgeToCard(id)` shared by the
+  `activeNodeId` effect (instant) and a new `focusNodeId` effect (smooth); gate a
+  `transform` transition behind `.rc-world.is-animating`, toggled only while
+  `focusNodeId` is set.
+
 ### 2026-06-14 — Project-selection highlight on the banner
 - **Motivation**: the user wanted clicking a project in the left sidebar to mark
   it on the canvas with a purple border, and to clear that mark on the next
