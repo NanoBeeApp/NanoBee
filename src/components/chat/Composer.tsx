@@ -37,12 +37,31 @@ export function Composer({ topic, onSend, showQuick = true }: ComposerProps) {
   const [pop, setPop] = useState<Popover>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const activeChatId = useAppStore((s) => s.activeChatId);
+  const composerSeed = useAppStore((s) => s.composerSeed);
+  const clearComposerSeed = useAppStore((s) => s.clearComposerSeed);
 
   // Focus the input on mount and whenever the conversation changes
   // (new chat via ⌘N / sidebar button, or switching to another chat).
   useEffect(() => {
     taRef.current?.focus();
   }, [activeChatId]);
+
+  // A page-specific "new" action (新建任务 / 新建 Artifact) can pre-fill the
+  // composer with a starter prompt; consume it once, then focus with the caret
+  // at the end and grow the textarea so the user keeps typing from the seed.
+  useEffect(() => {
+    if (!composerSeed) return;
+    setVal(composerSeed);
+    clearComposerSeed();
+    requestAnimationFrame(() => {
+      const ta = taRef.current;
+      if (!ta) return;
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+      ta.style.height = 'auto';
+      ta.style.height = `${Math.min(ta.scrollHeight, TEXTAREA_MAX_HEIGHT)}px`;
+    });
+  }, [composerSeed, clearComposerSeed]);
 
   const autoGrow = () => {
     const ta = taRef.current;

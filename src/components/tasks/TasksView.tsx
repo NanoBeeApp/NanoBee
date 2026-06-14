@@ -64,11 +64,6 @@ export function TasksView() {
               {c.l}
             </button>
           ))}
-          <span className="nb-tool-ics">
-            <button className="btn btn-secondary btn-sm" style={{ gap: 6 }} data-testid="new-task-button">
-              <Icons.plus size={13} /> 新建任务
-            </button>
-          </span>
         </div>
 
         {showMonitor && (

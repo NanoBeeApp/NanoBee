@@ -32,9 +32,17 @@ Replaces the former `App.tsx` shell.
   (`view === 'research' && researchPhase === 'canvas'`). It makes the left rail
   float over a full-width, position-stable canvas (CSS in app.css). Reads
   `useResearchStore.phase` so the shell knows when the canvas is live.
-- Hosts the bootstrap effect (load D1 state) and the ⌘N new-chat shortcut.
+- Hosts the bootstrap effect (load D1 state) and the ⌘N shortcut, which triggers
+  the current page's "new" action (`newForView`), matching the sidebar button.
 
 ## Change history
+
+### 2026-06-14 — ⌘N becomes page-aware
+- **Motivation**: ⌘N always started a new chat, but the sidebar "new" button now
+  adapts to the page; the keyboard shortcut should match.
+- **Change**: the keydown handler calls `newForView()` instead of `newChat()`
+  (and depends on it), so ⌘N creates a chat / task / artifact / research project
+  depending on the active view.
 
 ### 2026-06-14 — quick chat floats; drop the reserved grid column
 - **Motivation**: the quick chat became a customer-service-style floating

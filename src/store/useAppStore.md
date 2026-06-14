@@ -22,6 +22,22 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ## Change history
 
+### 2026-06-14 — page-aware "new" action (`newForView`, `newTask`, `newArtifact`, `composerSeed`)
+- **Motivation**: the single sidebar "新建对话" button (and ⌘N) did the same thing
+  on every page, even though each page creates a different entity — tasks should
+  start a task, Artifacts an artifact, the research canvas a research project.
+- **Goal**: one button whose label + action follow the current page, without
+  scattering the dispatch across components.
+- **Key decisions**: added `NEW_ACTION` (per-`View` label + test id) and a single
+  `newForView()` dispatch bound to both the sidebar button and ⌘N. Tasks and
+  artifacts have no standalone form (they are produced by the chat agent's
+  tools), so `newTask` / `newArtifact` reuse the new-chat reset but set a one-shot
+  `composerSeed` (`帮我盯着 ` / `帮我做一组卡片：`) that the chat `Composer`
+  consumes once (`clearComposerSeed`) — dropping the user into a fresh chat
+  already primed. Research keeps its own welcome screen, so `newForView` calls
+  `useResearchStore.getState().newResearch()` directly (this store now imports the
+  research store; the dependency is one-way, no cycle).
+
 ### 2026-06-14 — quick chat folds by default (`rightCollapsed` semantics)
 - **Motivation**: the quick chat became a customer-service-style floating bubble
   + popup; it should start folded (bubble only) and the bubble toggles it.

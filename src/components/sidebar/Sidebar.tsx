@@ -1,11 +1,12 @@
 // Left rail: brand, the page nav grid (聊天 / 今日事项 / 任务 / Artifacts /
-// 研究画布 / 设置), the history/topics switch, and the new-chat button. The
-// scroll area below is context-aware: it shows the list that belongs to the
+// 研究画布 / 设置), the history/topics switch, and the page-aware "new" button.
+// The scroll area below is context-aware: it shows the list that belongs to the
 // current page — chats on the chat view, today's items on 今日事项, tasks on
 // 任务, decks on Artifacts, projects on 研究画布. The "聊天" tile is how you
 // return to the chat view from any other page; "设置" navigates to the
-// /settings page (AI model & web-search configuration).
-import { useAppStore } from '../../store/useAppStore';
+// /settings page (AI model & web-search configuration). The "new" button also
+// adapts to the current page: 新建对话 / 新建任务 / 新建 Artifact / 新建研究.
+import { useAppStore, NEW_ACTION } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
 import { ChatHistoryList } from './ChatHistoryList';
 import { TopicGroupList } from './TopicGroupList';
@@ -23,9 +24,8 @@ export function Sidebar() {
   const sessionMeta = useAppStore((s) => s.sessionMeta);
   const openTopics = useAppStore((s) => s.openTopics);
   const tasks = useAppStore((s) => s.tasks);
-  const updates = useAppStore((s) => s.updates);
   const selectChat = useAppStore((s) => s.selectChat);
-  const newChat = useAppStore((s) => s.newChat);
+  const newForView = useAppStore((s) => s.newForView);
   const openChat = useAppStore((s) => s.openChat);
   const openToday = useAppStore((s) => s.openToday);
   const openTasks = useAppStore((s) => s.openTasks);
@@ -37,8 +37,7 @@ export function Sidebar() {
   const endPeek = useAppStore((s) => s.endPeek);
 
   const isChatView = view === 'chat';
-  const activeTaskCount = tasks.filter((t) => t.status === 'active').length;
-  const todayCount = updates.filter((u) => u.group === '今天').length;
+  const newCfg = NEW_ACTION[view];
 
   return (
     // onMouseLeave only matters while peeking (endPeek is a no-op otherwise):
@@ -73,14 +72,12 @@ export function Sidebar() {
             data-testid="today-inbox-entry">
             <span className="ic"><Icons.news size={17} /></span>
             <span className="label">今日事项</span>
-            {todayCount > 0 && <span className="count" data-testid="today-count">{todayCount}</span>}
           </button>
 
           <button className={`nb-nav-tile${view === 'tasks' ? ' active' : ''}`} onClick={openTasks}
             data-testid="tasks-entry">
             <span className="ic"><Icons.bolt size={17} /></span>
             <span className="label">任务</span>
-            {activeTaskCount > 0 && <span className="count" data-testid="tasks-active-count">{activeTaskCount}</span>}
           </button>
 
           <button className={`nb-nav-tile${view === 'artifacts' ? ' active' : ''}`} onClick={() => openArtifacts()}
@@ -110,12 +107,13 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* New-chat lives at the foot of the fixed header, right above the list
-            it seeds — a quiet white affordance so the amber tiles stay the
-            visual anchor of the rail. */}
-        <button className="nb-newchat" onClick={newChat} data-testid="new-chat-button">
+        {/* The "new" button lives at the foot of the fixed header, right above
+            the list it seeds — a quiet white affordance so the amber tiles stay
+            the visual anchor of the rail. Its label + action follow the current
+            page (new chat / task / artifact / research); ⌘N triggers the same. */}
+        <button className="nb-newchat" onClick={newForView} data-testid={newCfg.testid}>
           <Icons.plus size={16} />
-          新建对话
+          {newCfg.label}
           <span className="kbd">⌘N</span>
         </button>
       </div>

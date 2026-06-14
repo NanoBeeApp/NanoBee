@@ -18,12 +18,20 @@ import type { Artifact, ArtifactRef } from '../artifacts/types';
 import { apiClient } from '../lib/api-client';
 import { UPDATE_TO_CHAT } from '../data/updates';
 import { nextId } from '../data/ids';
+import { useResearchStore } from './useResearchStore';
 
 /** Minimum visible duration of the thinking indicator while awaiting the API. */
 const MIN_THINKING_MS = 600;
 const TOAST_DURATION_MS = 3600;
 const JUST_ADDED_FLASH_MS = 700;
 const TITLE_MAX_CHARS = 22;
+
+/** Starter prompts the page-specific "new" actions drop into the chat composer.
+ *  They are seeds the user finishes typing, not auto-sent messages — tasks and
+ *  artifacts are born from the conversation, so we prime the chat instead of
+ *  offering a standalone form. */
+const TASK_SEED = '帮我盯着 ';
+const ARTIFACT_SEED = '帮我做一组卡片：';
 
 export type View = 'chat' | 'today' | 'tasks' | 'artifacts' | 'research' | 'settings';
 export type SidebarMode = 'history' | 'topics';
@@ -37,6 +45,17 @@ export const VIEW_PATH: Record<View, string> = {
   artifacts: '/artifacts',
   research: '/research',
   settings: '/settings',
+};
+
+/** Label + test id for the sidebar's page-aware "new" button. Today / Settings
+ *  have no "new" entity of their own, so they fall back to "new chat". */
+export const NEW_ACTION: Record<View, { label: string; testid: string }> = {
+  chat: { label: '新建对话', testid: 'new-chat-button' },
+  today: { label: '新建对话', testid: 'new-chat-button' },
+  tasks: { label: '新建任务', testid: 'new-task-button' },
+  artifacts: { label: '新建 Artifact', testid: 'new-artifact-button' },
+  research: { label: '新建研究', testid: 'new-research-button' },
+  settings: { label: '新建对话', testid: 'new-chat-button' },
 };
 
 /** Resolve a pathname back to its view (unknown paths fall back to chat). */
@@ -98,6 +117,9 @@ interface AppState {
   quickChatId: string | null;
   quickPending: boolean;
   quickCtx: ViewingContext | null;
+  /** One-shot starter text injected into the chat composer by a page-specific
+   *  "new" action (新建任务 / 新建 Artifact); the composer consumes and clears it. */
+  composerSeed: string | null;
   /** Bridge to the router's navigate(), bound once by the app layout so store
    *  actions can change the URL — the source of truth for the current view. */
   _navigate: ((to: string) => void) | null;
@@ -131,6 +153,15 @@ interface AppState {
   toggleTopic: (id: string) => void;
   selectChat: (id: string) => void;
   newChat: () => void;
+  /** Start a fresh chat seeded toward task creation (sidebar "新建任务"). */
+  newTask: () => void;
+  /** Start a fresh chat seeded toward artifact creation (sidebar "新建 Artifact"). */
+  newArtifact: () => void;
+  /** Page-aware "new" dispatch bound to the sidebar button + ⌘N: chat → new
+   *  chat, tasks → new task, artifacts → new artifact, research → new research. */
+  newForView: () => void;
+  /** Clear the one-shot composer seed once the composer has consumed it. */
+  clearComposerSeed: () => void;
   /** Return to the chat view keeping the current conversation (the sidebar "聊天" tile). */
   openChat: () => void;
   openToday: () => void;
@@ -230,6 +261,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   quickChatId: null,
   quickPending: false,
   quickCtx: null,
+  composerSeed: null,
   _navigate: null,
   artifacts: [],
   selectedArtifactId: null,
@@ -288,8 +320,35 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   newChat: () => {
-    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null });
+    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: null });
     get()._navigate?.(VIEW_PATH.chat);
+  },
+
+  // "新建任务" / "新建 Artifact" reuse the new-chat reset but seed the composer
+  // with a starter prompt, dropping the user into a fresh chat already primed to
+  // create that entity (both are produced by the chat agent's tools, not a form).
+  newTask: () => {
+    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: TASK_SEED });
+    get()._navigate?.(VIEW_PATH.chat);
+  },
+
+  newArtifact: () => {
+    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: ARTIFACT_SEED });
+    get()._navigate?.(VIEW_PATH.chat);
+  },
+
+  clearComposerSeed: () => { if (get().composerSeed !== null) set({ composerSeed: null }); },
+
+  // The sidebar "new" button and ⌘N adapt to the current page. Research keeps
+  // its own welcome screen in a separate store, so we reset that directly; the
+  // other entities all funnel through a seeded chat.
+  newForView: () => {
+    switch (get().view) {
+      case 'tasks': get().newTask(); break;
+      case 'artifacts': get().newArtifact(); break;
+      case 'research': useResearchStore.getState().newResearch(); break;
+      default: get().newChat(); break;
+    }
   },
 
   // The sidebar "聊天" tile: just switch back to the chat view, keeping whatever

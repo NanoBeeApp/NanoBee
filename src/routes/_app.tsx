@@ -38,7 +38,7 @@ function AppLayout() {
 	const sidePeek = useAppStore((s) => s.sidePeek);
 	const researchPhase = useResearchStore((s) => s.phase);
 	const notifOpen = useAppStore((s) => s.notifOpen);
-	const newChat = useAppStore((s) => s.newChat);
+	const newForView = useAppStore((s) => s.newForView);
 	const bootstrap = useAppStore((s) => s.bootstrap);
 	const bindNavigate = useAppStore((s) => s.bindNavigate);
 	const syncView = useAppStore((s) => s.syncView);
@@ -62,17 +62,18 @@ function AppLayout() {
 		void bootstrap();
 	}, [bootstrap]);
 
-	// ⌘N / Ctrl+N starts a new chat (shortcut shown on the sidebar button).
+	// ⌘N / Ctrl+N triggers the current page's "new" action (chat / task /
+	// artifact / research), matching the page-aware sidebar button.
 	useEffect(() => {
 		const onKeyDown = (e: KeyboardEvent) => {
 			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
 				e.preventDefault();
-				newChat();
+				newForView();
 			}
 		};
 		window.addEventListener("keydown", onKeyDown);
 		return () => window.removeEventListener("keydown", onKeyDown);
-	}, [newChat]);
+	}, [newForView]);
 
 	// The quick-chat widget floats over content as a bottom-right bubble + popup
 	// (see QuickChat), so the shell no longer reserves a grid column for it.

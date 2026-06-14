@@ -17,6 +17,27 @@ shows on the chat view. The account avatar lives in the top-right floating bar
 
 ## Change history
 
+### 2026-06-14 — page-aware "new" button (label + action follow the page)
+- **Motivation**: user feedback — the foot button always said "新建对话" and made
+  a chat, even on the 任务 / Artifacts / 研究画布 pages where "new" should create
+  that page's own entity.
+- **Change**: the button now reads its label + test id from `NEW_ACTION[view]`
+  (新建对话 / 新建任务 / 新建 Artifact / 新建研究) and its onClick calls the
+  store's `newForView()` dispatch (same action ⌘N triggers). Replaced the
+  `newChat` binding with `newForView`. The now-redundant "新研究" item was dropped
+  from `ResearchNavList` and the dead "新建任务" placeholder from `TasksView`, so
+  each page has a single canonical "new" affordance.
+
+### 2026-06-14 — drop nav count badges (今日事项 / 任务)
+- **Motivation**: user feedback — the "5" / "25" pills on the 今日事项 and 任务
+  tiles were unnecessary visual noise on the rail. Per the project's minimalism
+  rule (only keep elements that carry core function), badges that merely repeat a
+  count are decoration.
+- **Change**: removed both `count` spans (and their `today-count` /
+  `tasks-active-count` testids), the now-unused `activeTaskCount` / `todayCount`
+  derivations, the `updates` selector that only fed `todayCount`, and the
+  `.nb-nav-tile .count` CSS rule.
+
 ### 2026-06-13 — settings tile navigates to /settings (was: open modal)
 - **Motivation**: settings became a page with its own URL instead of a modal.
 - **Change**: the "设置" tile now calls `openSettings()` (router navigation) and
