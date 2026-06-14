@@ -1,10 +1,12 @@
 // Sidebar list for the Research Canvas page. Context-aware:
-//  - When a project is open on the canvas, it shows that project's node outline
-//    as a tree (研究目录) — ported from Curve's SidePanel — so the rail mirrors
-//    the canvas structure and lets you jump between nodes. A "研究项目" toggle
-//    peeks the saved-project list without leaving the canvas.
-//  - Otherwise (welcome screen, or while peeking), it shows the saved research
-//    projects. Clicking a project loads it onto the canvas.
+//  - When a project is open on the canvas, a segmented toggle switches between
+//    the project's node outline (研究目录) — ported from Curve's SidePanel, so
+//    the rail mirrors the canvas structure and lets you jump between nodes — and
+//    the saved-project list (研究项目), which you can peek without leaving the
+//    canvas. The two views are PEERS, so they share one segmented control rather
+//    than two contradictory "back" buttons.
+//  - On the welcome screen (no open project) there is no toggle: it just shows
+//    the saved research projects. Clicking a project loads it onto the canvas.
 // Starting a new research is the sidebar header's page-aware "new" button
 // (新建研究), so this list never repeats that affordance. Reads from the
 // dedicated research store and refreshes the list on mount so projects saved
@@ -13,8 +15,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useResearchStore } from '../../store/useResearchStore';
 import { ResearchOutlineTree } from '../research/ResearchOutlineTree';
 import { Icons } from '../../icons/icons';
-
-const BACK_ICON = { transform: 'rotate(180deg)' } as const;
 
 export function ResearchNavList() {
   const projects = useResearchStore((s) => s.projects);
@@ -42,38 +42,37 @@ export function ResearchNavList() {
   }, [projectId]);
 
   const hasOpenProject = phase === 'canvas' && order.length > 0;
+  const showOutline = hasOpenProject && !browsing;
 
-  // Outline view — the open project's node tree.
-  if (hasOpenProject && !browsing) {
-    return (
-      <div data-testid="sidebar-research-list">
-        <button type="button" className="nb-outline-back" onClick={() => setBrowsing(true)}
-          data-testid="research-nav-browse">
-          <span className="nb-item-ic"><Icons.chevR size={15} style={BACK_ICON} /></span>
-          研究项目
-        </button>
-        <div className="nb-grp">研究目录</div>
-        <ResearchOutlineTree />
-      </div>
-    );
-  }
-
-  // Project-list view.
   return (
     <div data-testid="sidebar-research-list">
+      {/* Peer toggle between the open project's outline and the project list.
+          Only meaningful when a project is open; otherwise the list is all
+          there is. */}
       {hasOpenProject && (
-        <button type="button" className="nb-outline-back" onClick={() => setBrowsing(false)}
-          data-testid="research-nav-back-outline">
-          <span className="nb-item-ic"><Icons.chevR size={15} style={BACK_ICON} /></span>
-          返回研究目录
-        </button>
+        <div className="nb-switch" role="tablist" aria-label="研究侧栏视图">
+          <button type="button" role="tab" aria-selected={showOutline}
+            className={showOutline ? 'active' : ''}
+            onClick={() => setBrowsing(false)} data-testid="research-nav-tab-outline">
+            研究目录
+          </button>
+          <button type="button" role="tab" aria-selected={!showOutline}
+            className={!showOutline ? 'active' : ''}
+            onClick={() => setBrowsing(true)} data-testid="research-nav-tab-projects">
+            研究项目
+          </button>
+        </div>
       )}
 
-      {projects.length === 0 ? (
+      {showOutline ? (
+        <ResearchOutlineTree />
+      ) : projects.length === 0 ? (
         <div className="nb-side-empty" data-testid="sidebar-research-empty">还没有研究项目</div>
       ) : (
         <>
-          <div className="nb-grp">研究项目</div>
+          {/* The active "研究项目" tab already names this list when a project is
+              open; only the welcome screen needs the standalone group label. */}
+          {!hasOpenProject && <div className="nb-grp">研究项目</div>}
           {projects.map((p) => (
             <div key={p.id} className={`nb-item${phase === 'canvas' && p.id === projectId ? ' active' : ''}`}
               onClick={() => void loadProject(p.id)} data-testid={`research-nav-item-${p.id}`}>

@@ -6,9 +6,11 @@ Context-aware:
 - **Outline view** — when a project is open on the canvas, it shows that
   project's node outline as a tree (研究目录, rendered by `ResearchOutlineTree`),
   so the rail mirrors the canvas structure and lets the user jump between nodes.
-  A "研究项目" toggle peeks the saved-project list without leaving the canvas.
-- **Project-list view** — otherwise (welcome screen, or while peeking) it lists
-  the saved research projects; clicking one loads it onto the canvas.
+- **Project-list view** — the saved research projects; clicking one loads it onto
+  the canvas. On the welcome screen this is the only view.
+- When a project is open, a **segmented toggle** (`研究目录 | 研究项目`) switches
+  between the two peer views, so the project list can be peeked without leaving
+  the canvas.
 
 Starting a new research is the sidebar header's page-aware "new" button
 (新建研究), so this list never repeats that affordance.
@@ -24,11 +26,12 @@ Starting a new research is the sidebar header's page-aware "new" button
 
 ## Key implementation notes
 - Calls `listProjects()` on mount so projects saved elsewhere appear.
-- `hasOpenProject = phase === 'canvas' && order.length > 0` gates the outline
-  view; loading a different project resets `browsing` (via a `lastProjectId` ref)
-  so the rail snaps back to that project's outline.
-- The back affordance reuses the `chevR` icon rotated 180° (no dedicated left
-  chevron in the icon set).
+- `hasOpenProject = phase === 'canvas' && order.length > 0` gates the toggle;
+  loading a different project resets `browsing` (via a `lastProjectId` ref) so the
+  rail snaps back to that project's outline.
+- The outline ↔ project-list switch reuses the shared `.nb-switch` segmented
+  control (the same component used elsewhere in the app), since the two views are
+  peers — not a parent/child stack.
 
 ## Change history
 
@@ -49,3 +52,14 @@ Starting a new research is the sidebar header's page-aware "new" button
 - **Key decision**: extract the tree into `ResearchOutlineTree`; keep this
   component as the state/decision layer (which view to show) and let the new
   component be the pure recursive renderer.
+
+### 2026-06-14 — segmented toggle replaces contradictory back buttons
+- **Motivation**: the user found the outline ↔ project-list switch confusing.
+  Each view had its own left-pointing "back" button ("← 研究项目" on the outline,
+  "← 返回研究目录" on the list), so it read as a back-stack where each side
+  claimed the other was the parent — a directionless two-step loop.
+- **Goal**: make it obvious the two views are peers and which one is active.
+- **Key decision**: replace both back buttons with one `.nb-switch` segmented
+  control (`研究目录 | 研究项目`); drop the now-redundant `研究目录` / `研究项目`
+  group labels and the `BACK_ICON` constant. The standalone `研究项目` group
+  label survives only on the welcome screen, where there is no toggle.
