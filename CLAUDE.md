@@ -31,6 +31,19 @@ This project is a **public open-source repository**. **The public repo must only
   - 🚫 Never commit files under `private/` to the main repo under any circumstances (`.gitignore` + pre-commit hook provide double protection — do not bypass them).
 - After cloning this repo, reinstall the protection hook: `cp scripts/git-hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`
 
+## 🔐 Pre-commit secret scan (important)
+
+**This is a public open-source repository: anything committed here is public forever — even a later force-push or delete cannot un-leak it (it stays in history, forks, mirrors, and crawler caches).** Treat every commit to the main repo as an irreversible publish.
+
+- **Before every `git add` / `git commit` to the main (public) repo, scan the staged changes for sensitive or private information.** Look at the actual diff (`git diff --staged`), not just the file list. Flag anything that must not be public, including but not limited to:
+  - Credentials & keys: passwords, API tokens / keys, secret keys, OAuth tokens, session tokens, JWTs, private keys (`-----BEGIN ... PRIVATE KEY-----`), `.pem` / `.p12` / keystore material, SSH keys, signing certs.
+  - Provider secrets: Cloudflare account IDs / API tokens, AWS / GCP / Azure keys, Stripe / Resend / Finnhub / Twelve Data / OpenAI / Anthropic keys, database connection strings with passwords, webhook secrets.
+  - Personal / private data: real email addresses, phone numbers, names, home addresses, internal-only hostnames / IPs / URLs, user data, chat logs.
+  - Config files that commonly hold the above: `.env`, `.dev.vars`, `wrangler.json` with inlined secrets, `*.local.*`, exported credentials JSON.
+- **If anything sensitive is detected, STOP — do not commit.** Surface a clear warning to the user that names each finding (file + line + what it is), and wait for the user to decide. Do not silently strip it and proceed, and do not bypass the hook.
+- **Resolution paths** (pick with the user): move the file/content into `private/` (ignored by the main repo); replace the literal with an environment variable / Cloudflare secret / `.dev.vars` reference; redact or use a placeholder; or, if the secret was already exposed, rotate it.
+- **Defense in depth, not a replacement for the hook**: the `.gitignore` + pre-commit hook still guard `private/` paths, but they do not catch a secret hard-coded inside an otherwise-public source file — that is exactly what this manual scan is for.
+
 ## 🚀 Domains & deployment
 
 - **Domain**: `nanobee.app` (Cloudflare zone in this account).
