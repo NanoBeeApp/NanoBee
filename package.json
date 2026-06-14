@@ -5,6 +5,11 @@
 	"description": "NanoBee — a proactive AI assistant for everyday users",
 	"scripts": {
 		"dev": "vite",
+		"dev:daemon:start": "launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/app.nanobee.dev.plist && echo 'NanoBee dev daemon loaded (port 3333, KeepAlive)'",
+		"dev:daemon:stop": "launchctl bootout gui/$(id -u)/app.nanobee.dev && echo 'NanoBee dev daemon stopped'",
+		"dev:daemon:restart": "launchctl kickstart -k gui/$(id -u)/app.nanobee.dev && echo 'NanoBee dev daemon restarted'",
+		"dev:daemon:status": "launchctl print gui/$(id -u)/app.nanobee.dev | grep -E 'state =|pid =|runs =' || echo 'daemon not loaded'",
+		"dev:daemon:logs": "tail -f private/logs/dev-server.log",
 		"build": "vite build",
 		"check": "vite build && wrangler deploy --dry-run",
 		"cf-typegen": "wrangler types",
