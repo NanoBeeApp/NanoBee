@@ -9,17 +9,17 @@ This is the sidebar counterpart to the in-canvas outline drawn by
 
 ## Core exports / API
 - `ResearchOutlineTree()` — connected component. Reads `nodes`, `order`,
-  `activeNodeId`, `focusAndOpenNode` from `useResearchStore`; builds a
+  `highlightedNodeId`, `openNode` from `useResearchStore`; builds a
   parent→children map from `parentId` + `order`; renders the root's children as a
-  nested `<ul>`. Clicking a row calls `focusAndOpenNode(id)` (canvas smooth-scrolls
-  to the node, then its reading overlay opens after ~1s). Renders a
+  nested `<ul>`. Clicking a row calls `openNode(id)` — the reading overlay opens
+  immediately (the canvas scrolls to the node behind it). Renders a
   "大纲生成中…" placeholder while the root has no children yet.
 - `OutlineRow` (file-local, recursive) — one node row + its indented children,
   mirroring `ResearchCanvas`'s `NodeBranch` pattern (recursive helper co-located
   with its connected parent).
 
 ## Dependencies
-- Upstream: `useResearchStore` (state + `focusAndOpenNode`), `research/outline`
+- Upstream: `useResearchStore` (state + `openNode`), `research/outline`
   (`buildChildrenMap`), `research/types` (`ResearchNode`).
 - Downstream: rendered by `sidebar/ResearchNavList` when a project is open on the
   research canvas.
@@ -33,11 +33,22 @@ This is the sidebar counterpart to the in-canvas outline drawn by
   are listed, matching Curve's `SidePanel`.
 - Rows are text-only; the current node is marked by an amber row background, not a
   leading status dot.
-- The highlighted row is `focusNodeId ?? activeNodeId` (`highlightId`), so the
-  clicked row lights up *immediately* (during the scroll-to-card phase) rather
-  than only once the reading overlay opens ~1s later.
+- The highlighted row is `highlightedNodeId`, which is set the instant a node is
+  opened and *persists after the reading overlay closes* (cleared only by a
+  blank-canvas press or opening another node) — so the row and its canvas card
+  stay lit together.
 
 ## Change history
+
+### 2026-06-14 — open the overlay immediately on a row click (drop the delay)
+- **Motivation**: the user found the scroll-then-wait (~1s) before the overlay
+  appeared annoying — clicking a row should show the article right away.
+- **Goal**: open the reading overlay instantly on a sidebar-row click.
+- **Key decision**: switch the row action back from `focusAndOpenNode` to
+  `openNode` (the canvas still scrolls to the node via its `activeNodeId`
+  effect, instantly, behind the overlay); the whole `focusNodeId` /
+  `focusAndOpenNode` delay machinery was removed store-wide. Highlight now reads
+  `highlightedNodeId`.
 
 ### 2026-06-14 — highlight the clicked row immediately
 - **Motivation**: clicking a row didn't mark it as current until the reading

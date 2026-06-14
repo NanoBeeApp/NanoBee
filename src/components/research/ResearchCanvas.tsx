@@ -37,7 +37,6 @@ export function ResearchCanvas() {
   const openNode = useResearchStore((s) => s.openNode);
   const projectHighlighted = useResearchStore((s) => s.projectHighlighted);
   const clearProjectHighlight = useResearchStore((s) => s.clearProjectHighlight);
-  const focusNodeId = useResearchStore((s) => s.focusNodeId);
   const highlightedNodeId = useResearchStore((s) => s.highlightedNodeId);
   const clearNodeHighlight = useResearchStore((s) => s.clearNodeHighlight);
   const projectId = useResearchStore((s) => s.projectId);
@@ -116,9 +115,8 @@ export function ResearchCanvas() {
     setT((prev) => ({ ...prev, ty: prev.ty + deltaY }));
   }, []);
 
-  // Scroll to the active node (deep link, grown child, canvas card click). rAF
-  // lets a just-created card lay out first. This path is instant (the world has
-  // no transition unless a sidebar focus is in flight).
+  // Scroll to the active node (sidebar row, deep link, grown child, canvas card
+  // click). rAF lets a just-created card lay out first.
   useEffect(() => {
     if (!activeNodeId) return;
     if (scrolledTo.current === activeNodeId) return;
@@ -126,15 +124,6 @@ export function ResearchCanvas() {
     const raf = requestAnimationFrame(() => nudgeToCard(activeNodeId));
     return () => cancelAnimationFrame(raf);
   }, [activeNodeId, nudgeToCard]);
-
-  // Sidebar-row focus: smooth-scroll to the node *before* its overlay opens. The
-  // `.is-animating` class (driven by `focusNodeId`) makes this `ty` change ease
-  // instead of jump; the store opens the overlay ~1s later.
-  useEffect(() => {
-    if (!focusNodeId) return;
-    const raf = requestAnimationFrame(() => nudgeToCard(focusNodeId));
-    return () => cancelAnimationFrame(raf);
-  }, [focusNodeId, nudgeToCard]);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -202,12 +191,10 @@ export function ResearchCanvas() {
 
   if (!root) return null;
   const rootLoading = root.status === "loading";
-  // The lit card. `focusNodeId` (set instantly on a sidebar click, during the
-  // scroll-to-card phase) takes precedence so the card lights immediately; once
-  // it clears, `highlightedNodeId` keeps the card lit. Unlike `activeNodeId`,
-  // `highlightedNodeId` survives closing the reading overlay — it only clears on
-  // a blank-canvas press or moves when another node is opened.
-  const highlightId = focusNodeId ?? highlightedNodeId;
+  // The lit card. Driven by `highlightedNodeId`, which (unlike `activeNodeId`)
+  // survives closing the reading overlay — it only clears on a blank-canvas
+  // press or moves when another node is opened.
+  const highlightId = highlightedNodeId;
 
   return (
     <div
@@ -219,7 +206,7 @@ export function ResearchCanvas() {
       onPointerUp={endPan}
       onPointerLeave={endPan}>
       <div
-        className={`rc-world${focusNodeId ? " is-animating" : ""}`}
+        className="rc-world"
         style={{ transform: `translate(${t.tx}px, ${t.ty}px) scale(${t.scale})` }}>
         <div className="rc-outline" style={{ width: OUTLINE_WIDTH }}>
           <button

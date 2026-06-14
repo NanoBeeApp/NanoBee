@@ -31,6 +31,15 @@ snapshot persistence.
 
 ## Change history
 
+### 2026-06-14 — Remove focusAndOpenNode / focusNodeId (open immediately)
+- **Motivation**: the user wants sidebar rows to open the reading overlay
+  instantly; the scroll-then-open delay was unwanted.
+- **Goal**: delete the focus-delay path entirely (no dead code).
+- **Key decision**: removed `focusNodeId` state, the `focusAndOpenNode` action,
+  `FOCUS_OPEN_DELAY_MS`, the module-level `focusTimer`, and all `focusNodeId`
+  resets. The sidebar now calls `openNode` directly; the canvas still scrolls to
+  the node via its `activeNodeId` effect.
+
 ### 2026-06-14 — highlightedNodeId: card highlight survives closing the overlay
 - **Motivation**: `closeReading` nulls `activeNodeId`, which also cleared the
   canvas card highlight; the user wants it to persist until a blank-canvas press

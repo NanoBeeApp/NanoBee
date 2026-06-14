@@ -33,6 +33,15 @@ indented under its parent along a vertical rail.
 
 ## Change history
 
+### 2026-06-14 — Remove the sidebar focus-scroll delay machinery
+- **Motivation**: the user wants a sidebar-row click to open the overlay
+  immediately, so the `focusNodeId` smooth-scroll-then-wait is gone.
+- **Goal**: drop the now-unused focus path; the canvas still scrolls to the node
+  instantly via the `activeNodeId` effect.
+- **Key decision**: removed the `focusNodeId` subscription + effect and the
+  `.rc-world.is-animating` transition; `highlightId` is now just
+  `highlightedNodeId`.
+
 ### 2026-06-14 — Card highlight persists after closing the reading overlay
 - **Motivation**: closing the reading overlay cleared the lit canvas card, but
   the user wants the highlight to stay until they click blank canvas or another

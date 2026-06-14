@@ -70,11 +70,6 @@
   transform-origin: 0 0;
   will-change: transform;
 }
-/* Panning/zooming stay instant; only a sidebar-row focus eases the scroll, so the
-   transition is gated behind a class toggled just for that move. */
-.rc-world.is-animating {
-  transition: transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
 
 /* ---------- Outline (hierarchical view) ---------- */
 .rc-outline {

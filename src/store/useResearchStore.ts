@@ -38,9 +38,6 @@ interface ResearchState {
    *  ONLY by clicking a project in the sidebar list; any other interaction
    *  (opening a node, loading/creating a project, clicking the canvas) clears it. */
   projectHighlighted: boolean;
-  /** Node the canvas should smooth-scroll to *before* its reading overlay opens
-   *  (set by clicking a sidebar outline row). Cleared once the overlay opens. */
-  focusNodeId: string | null;
   /** Card lit on the canvas. Unlike `activeNodeId` it does NOT clear when the
    *  reading overlay closes — it persists until the user presses blank canvas
    *  (clearNodeHighlight) or opens another node (which moves it). */
@@ -65,9 +62,6 @@ interface ResearchState {
   clearProjectHighlight: () => void;
   /** Drop the canvas node highlight (a press on blank canvas). */
   clearNodeHighlight: () => void;
-  /** Smooth-scroll the canvas to a node, then open its reading overlay after a
-   *  short pause. Used by the sidebar outline rows. */
-  focusAndOpenNode: (id: string) => void;
 }
 
 /** Recursively flatten an outline tree into canvas nodes under `parentId`. */
@@ -98,10 +92,6 @@ function outlineToNodes(
 }
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
-/** Pending sidebar focus → open timer (see `focusAndOpenNode`). */
-let focusTimer: ReturnType<typeof setTimeout> | null = null;
-/** Delay between scrolling the canvas to a node and opening its overlay. */
-const FOCUS_OPEN_DELAY_MS = 1000;
 
 export const useResearchStore = create<ResearchState>((set, get) => {
   /** Debounced snapshot save. */
@@ -272,7 +262,6 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     projects: [],
     error: null,
     projectHighlighted: false,
-    focusNodeId: null,
     highlightedNodeId: null,
 
     listProjects: async () => {
@@ -289,7 +278,6 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     startResearch: async (topicRaw) => {
       const topic = topicRaw.trim();
       if (!topic) return;
-      if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
       const projectId = nextId("rp");
       const rootId = nextId("rn");
       const root: ResearchNode = {
@@ -311,7 +299,6 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         generating: true,
         error: null,
         projectHighlighted: false,
-        focusNodeId: null,
         highlightedNodeId: null,
       });
 
@@ -504,7 +491,6 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     closeReading: () => set({ activeNodeId: null }),
 
     loadProject: async (id, openNodeId) => {
-      if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
       try {
         const res = await apiClient.research.snapshots[":id"].$get({ param: { id } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -526,7 +512,6 @@ export const useResearchStore = create<ResearchState>((set, get) => {
           // Programmatic / deep-link load starts unhighlighted; the sidebar
           // click handler re-enables the highlight after this resolves.
           projectHighlighted: false,
-          focusNodeId: null,
           // Deep-link opens a node → light it; a bare project load lights nothing.
           highlightedNodeId: willOpen,
         });
@@ -538,7 +523,6 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     },
 
     newResearch: () => {
-      if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
       set({
         phase: "welcome",
         projectId: null,
@@ -550,7 +534,6 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         generating: false,
         error: null,
         projectHighlighted: false,
-        focusNodeId: null,
         highlightedNodeId: null,
       });
     },
@@ -561,20 +544,6 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     },
     clearNodeHighlight: () => {
       if (get().highlightedNodeId) set({ highlightedNodeId: null });
-    },
-
-    focusAndOpenNode: (id) => {
-      if (!get().nodes[id]) return;
-      if (focusTimer) clearTimeout(focusTimer);
-      // 1) Point the canvas at the node so it smooth-scrolls into view (overlay
-      //    stays closed) and light its card. 2) After a deliberate pause, open
-      //    the reading overlay.
-      set({ focusNodeId: id, highlightedNodeId: id });
-      focusTimer = setTimeout(() => {
-        focusTimer = null;
-        set({ focusNodeId: null });
-        void get().openNode(id);
-      }, FOCUS_OPEN_DELAY_MS);
     },
   };
 });

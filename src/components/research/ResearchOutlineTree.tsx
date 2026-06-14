@@ -1,11 +1,11 @@
 // Left-rail outline tree (研究目录) for an open research project — a recursive,
 // depth-indented table of contents of the project's nodes, ported from Curve's
 // SidePanel (overlays.tsx → `outline-list/outline-row/outline-sub`). Each row
-// jumps to that node's reading overlay via the store's openNode; the active node
-// is highlighted. Structure
-// comes purely from each node's parentId + the store's `order` (same derivation
-// as ResearchCanvas) — there are no per-row coordinates; the browser nests the
-// <ul>s in normal flow.
+// opens that node's reading overlay immediately via the store's `openNode` (the
+// canvas also scrolls to the node behind it); the current node is highlighted.
+// Structure comes purely from each node's parentId + the store's `order` (same
+// derivation as ResearchCanvas) — there are no per-row coordinates; the browser
+// nests the <ul>s in normal flow.
 
 import { useMemo } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
@@ -15,17 +15,15 @@ import type { ResearchNode } from "../../research/types";
 export function ResearchOutlineTree() {
   const nodes = useResearchStore((s) => s.nodes);
   const order = useResearchStore((s) => s.order);
-  const activeNodeId = useResearchStore((s) => s.activeNodeId);
-  const focusNodeId = useResearchStore((s) => s.focusNodeId);
-  // Sidebar rows scroll the canvas to the node, pause, then open the overlay.
-  const focusAndOpenNode = useResearchStore((s) => s.focusAndOpenNode);
+  const highlightedNodeId = useResearchStore((s) => s.highlightedNodeId);
+  // Clicking a row opens the reading overlay immediately (no scroll-then-wait).
+  const openNode = useResearchStore((s) => s.openNode);
 
   const childrenOf = useMemo(() => buildChildrenMap(nodes, order), [nodes, order]);
 
-  // Light the clicked row instantly: `focusNodeId` is set the moment a row is
-  // clicked (during the scroll-to-card phase); `activeNodeId` only once the
-  // reading overlay opens ~1s later. Favouring focus lights it immediately.
-  const highlightId = focusNodeId ?? activeNodeId;
+  // The lit row mirrors the canvas highlight, which persists after the overlay
+  // closes (cleared only by a blank-canvas press or opening another node).
+  const highlightId = highlightedNodeId;
 
   const rootId = order[0];
   const rootChildren = rootId ? (childrenOf[rootId] ?? []) : [];
@@ -47,7 +45,7 @@ export function ResearchOutlineTree() {
           nodes={nodes}
           childrenOf={childrenOf}
           highlightId={highlightId}
-          onOpen={focusAndOpenNode}
+          onOpen={openNode}
         />
       ))}
     </ul>
