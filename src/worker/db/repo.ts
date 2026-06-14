@@ -47,8 +47,13 @@ function rowToTask(r: TaskRow): Task {
 }
 
 export async function listChats(db: D1Database): Promise<ChatMeta[]> {
+	// Pinned first, then newest chats on top (a freshly created chat must land at
+	// the head of its time-group, not the tail). Seed rows share a timestamp and
+	// keep their authored order via the rowid tie-breaker. Mirrors listTasks.
 	const { results } = await db
-		.prepare("SELECT id, topic_id, title, sub, grp, pinned FROM chats ORDER BY rowid ASC")
+		.prepare(
+			"SELECT id, topic_id, title, sub, grp, pinned FROM chats ORDER BY pinned DESC, created_at DESC, rowid ASC",
+		)
 		.all<ChatRow>();
 	return results.map((r) => ({
 		id: r.id,
