@@ -38,6 +38,8 @@ export function ResearchCanvas() {
   const projectHighlighted = useResearchStore((s) => s.projectHighlighted);
   const clearProjectHighlight = useResearchStore((s) => s.clearProjectHighlight);
   const focusNodeId = useResearchStore((s) => s.focusNodeId);
+  const highlightedNodeId = useResearchStore((s) => s.highlightedNodeId);
+  const clearNodeHighlight = useResearchStore((s) => s.clearNodeHighlight);
   const projectId = useResearchStore((s) => s.projectId);
 
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -143,10 +145,14 @@ export function ResearchCanvas() {
       // interactive element (a node card or the topic banner), so their clicks
       // aren't swallowed by a pan/pointer-capture.
       if ((e.target as HTMLElement).closest(".rc-node, .rc-outline-banner")) return;
+      // Pressing blank canvas (not a card/banner) clears the node highlight —
+      // closing the reading overlay keeps it, only a blank press or opening
+      // another card moves/clears it.
+      clearNodeHighlight();
       pan.current = { x: e.clientX, y: e.clientY, tx: t.tx, ty: t.ty };
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [t.tx, t.ty, clearProjectHighlight],
+    [t.tx, t.ty, clearProjectHighlight, clearNodeHighlight],
   );
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
@@ -196,11 +202,12 @@ export function ResearchCanvas() {
 
   if (!root) return null;
   const rootLoading = root.status === "loading";
-  // Highlight the card the moment a sidebar row is clicked: `focusNodeId` is set
-  // instantly (during the scroll-to-card phase), `activeNodeId` only once the
-  // reading overlay actually opens ~1s later. Favouring focus → exactly one
-  // card is lit, and it lights up immediately on the sidebar click.
-  const highlightId = focusNodeId ?? activeNodeId;
+  // The lit card. `focusNodeId` (set instantly on a sidebar click, during the
+  // scroll-to-card phase) takes precedence so the card lights immediately; once
+  // it clears, `highlightedNodeId` keeps the card lit. Unlike `activeNodeId`,
+  // `highlightedNodeId` survives closing the reading overlay — it only clears on
+  // a blank-canvas press or moves when another node is opened.
+  const highlightId = focusNodeId ?? highlightedNodeId;
 
   return (
     <div

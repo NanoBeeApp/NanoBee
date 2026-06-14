@@ -71,14 +71,17 @@ function writeMap(map: ViewportMap): void {
 }
 
 /** The saved pan/zoom for a topic, or null if never saved (or stored invalid). */
-export function loadViewport(projectId: string): CanvasViewport | null {
+export function loadViewport(projectId: string | null | undefined): CanvasViewport | null {
   if (!projectId) return null;
   const v = readMap()[projectId];
   return isViewport(v) ? { tx: v.tx, ty: v.ty, scale: v.scale } : null;
 }
 
 /** Remember a topic's pan/zoom. Re-inserts the key so it counts as most-recent. */
-export function saveViewport(projectId: string, viewport: CanvasViewport): void {
+export function saveViewport(
+  projectId: string | null | undefined,
+  viewport: CanvasViewport,
+): void {
   if (!projectId || !isViewport(viewport)) return;
   const map = readMap();
   // Re-insert at the end so it ranks as most-recently-used for eviction.

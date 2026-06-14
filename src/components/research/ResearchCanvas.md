@@ -33,6 +33,17 @@ indented under its parent along a vertical rail.
 
 ## Change history
 
+### 2026-06-14 — Card highlight persists after closing the reading overlay
+- **Motivation**: closing the reading overlay cleared the lit canvas card, but
+  the user wants the highlight to stay until they click blank canvas or another
+  card.
+- **Goal**: decouple the canvas highlight from `activeNodeId` (which nulls on
+  close) so it survives closing the overlay.
+- **Key decision**: drive the lit card off the store's new `highlightedNodeId`
+  (`highlightId = focusNodeId ?? highlightedNodeId`); a press on blank canvas
+  (not a card/banner) in `onPointerDown` calls `clearNodeHighlight()`. Opening
+  another node moves the highlight (the store sets `highlightedNodeId`).
+
 ### 2026-06-14 — Per-topic canvas viewport memory + instant card highlight
 - **Motivation**: switching research topics reset the canvas to center, losing
   where each topic was scrolled/zoomed; and clicking a sidebar row didn't light

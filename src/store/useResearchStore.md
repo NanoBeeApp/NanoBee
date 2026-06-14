@@ -31,6 +31,16 @@ snapshot persistence.
 
 ## Change history
 
+### 2026-06-14 — highlightedNodeId: card highlight survives closing the overlay
+- **Motivation**: `closeReading` nulls `activeNodeId`, which also cleared the
+  canvas card highlight; the user wants it to persist until a blank-canvas press
+  or opening another node.
+- **Goal**: a highlight source independent of "which overlay is open".
+- **Key decision**: add `highlightedNodeId` (+ `clearNodeHighlight`). It is set
+  wherever a node is opened/focused (`openNode`, `growChild`, `focusAndOpenNode`,
+  deep-link `loadProject`) but, unlike `activeNodeId`, `closeReading` leaves it
+  alone; reset on new-research/new-project. The canvas clears it on a blank press.
+
 ### 2026-06-14 — focus→open delay raised 500ms → 1s
 - **Motivation**: the user found the half-second pause too short.
 - **Key decision**: bump `FOCUS_OPEN_DELAY_MS` to 1000ms; the scroll easing is
