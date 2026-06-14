@@ -18,7 +18,7 @@ export const CONFIG = {
 	DEFAULT_LIST_LIMIT: 50,
 
 	// AI chat-completion settings (provider catalog lives in src/lib/ai-providers.ts;
-	// the backend default is OpenRouter + DeepSeek V4 Flash via OPENROUTER_API_KEY)
+	// the backend default is OpenRouter + Gemini 3.5 Flash via OPENROUTER_API_KEY)
 	AI: {
 		// Abort slow provider calls so the chat request never hangs
 		REQUEST_TIMEOUT_MS: 30_000,

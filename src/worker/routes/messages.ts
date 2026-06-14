@@ -42,7 +42,7 @@ export const messageRoutes = new Hono<{ Bindings: Env }>().post(
 			await ensureSeeded(c.env);
 
 			// Resolve the AI config: the signed-in user's provider settings,
-			// or the backend default (OpenRouter + DeepSeek V4 Flash).
+			// or the backend default (OpenRouter + Gemini 3.5 Flash).
 			const token = getSessionToken(c);
 			const user = token ? await getUserBySessionToken(c.env.DB, token) : null;
 			const aiConfig = await resolveAiConfig(c.env, user?.id ?? null);

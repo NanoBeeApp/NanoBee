@@ -22,7 +22,7 @@ and the frontend (setup dialog UI), so the two can never disagree.
   `lib/useAiSettings.ts`, `components/onboarding/*`
 
 ## Notes
-- The backend default model is `deepseek/deepseek-v4-flash` on OpenRouter
+- The backend default model is `google/gemini-3.5-flash` on OpenRouter
   (verified live against the OpenRouter models API).
 - `hint` strings are zh-CN UI copy rendered under the provider picker.
 - `canListModels` gates the "auto-fetch models" button; Zhipu and DashScope
@@ -55,3 +55,13 @@ and the frontend (setup dialog UI), so the two can never disagree.
   `getWebSearchProviderInfo`, and `webSearchSecretParam` (`<id>_api_key`).
 - **Key decision**: ids match the data-hub websearch source's secret-param
   names exactly, so the worker can inject the chosen key without a mapping.
+
+### 2026-06-14 — switch backend default model to Gemini 3.5 Flash
+- **Motivation**: make the built-in (no-key) experience run on Gemini 3.5 Flash
+  instead of DeepSeek V4 Flash on OpenRouter.
+- **Change**: `openrouter.defaultModel` → `google/gemini-3.5-flash` (slug
+  verified live against the OpenRouter models API); zh-CN `hint` updated to
+  match. `DEFAULT_AI_PROVIDER` stays `"openrouter"`.
+- **Key decision**: change only the single source-of-truth `defaultModel`; the
+  worker `defaultConfig`/fallback and the frontend setup form both read it, so
+  no other code paths need touching.
