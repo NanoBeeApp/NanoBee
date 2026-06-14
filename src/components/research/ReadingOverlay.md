@@ -26,6 +26,24 @@ backdrop.
 
 ## Change history
 
+### 2026-06-14 — Port Curve reading-flow features (Phase A)
+- **Motivation**: the port had stripped the reading overlay down to title +
+  body + follow-ups, dropping several Curve reading-flow behaviors the user
+  wanted back.
+- **Goal**: restore, as a first low-risk batch, the frontend-only features.
+- **Key decisions / what landed**:
+  - **Scroll memory**: `reading-progress.ts` saves/restores `scrollTop` per
+    `project+node` (rAF restore on open, debounced save on scroll).
+  - **Image lightbox**: pass `onOpenImage` to `<Markdown>` and render
+    `ImageLightbox` (Escape / backdrop-click closes).
+  - **Back-to-parent**: a button (flows above the title) that `openNode`s the
+    parent, so deep-diving a term is reversible without closing.
+  - **Summary positioning**: track `openedAsLoading` (adjust-state-during-render
+    keyed by node id). Revisit → summary as a top intro; first visit (watched it
+    generate) → summary as a bottom "本篇摘要" takeaway before the follow-ups.
+  - **Awaiting-body pending state**: outline stub with no filled body shows a
+    "生成正文" prompt instead of silently blank.
+
 ### 2026-06-14 — Restore Curve's streaming blank-area buffer
 - **Motivation**: the port dropped Curve's `streaming-bottom-spacer`. Without it,
   the newest streamed line always hugged the bottom edge of the sheet, forcing

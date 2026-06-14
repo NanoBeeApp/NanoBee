@@ -1,26 +1,102 @@
 // Reading panel for the active node: shows the generated article, makes bold
 // terms clickable (deep-dive → grow a child), and renders the three follow-up
-// questions as chips (click → grow a child along that question). Rendered as a
-// centered modal (mirrors Curve's reading sheet) over a dimmed backdrop —
-// clicking the backdrop closes it, clicking the sheet does not. White
-// background, chrome minimized (floating close button, no header/footer bars).
+// questions as chips. Rendered as a centered modal (mirrors Curve's reading
+// sheet) over a dimmed backdrop — clicking the backdrop closes it, clicking the
+// sheet does not. White background, chrome minimized (floating close button, no
+// header/footer bars).
+//
+// Ported reading-flow behaviors from Curve: a back-to-parent button, per-node
+// scroll-position memory, an intro/takeaway summary that flips position
+// depending on whether this visit watched the article generate, a streaming
+// bottom buffer, an awaiting-body pending state, and an image lightbox.
 
+import { useEffect, useRef, useState } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
 import { Icons } from "../../icons/icons";
 import { Markdown } from "../common/Markdown";
+import { ImageLightbox } from "./ImageLightbox";
+import { loadReadingProgress, saveReadingProgress } from "./reading-progress";
 
 export function ReadingOverlay() {
   const activeNodeId = useResearchStore((s) => s.activeNodeId);
   const node = useResearchStore((s) => (activeNodeId ? s.nodes[activeNodeId] : null));
+  const parentNode = useResearchStore((s) =>
+    node?.parentId ? s.nodes[node.parentId] : null,
+  );
+  const projectId = useResearchStore((s) => s.projectId);
   const closeReading = useResearchStore((s) => s.closeReading);
   const growChild = useResearchStore((s) => s.growChild);
   const openNode = useResearchStore((s) => s.openNode);
+
+  // The scrolling element — used for per-node scroll-position memory.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const saveTimer = useRef<number | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  // Restore the saved scroll position when a node opens. rAF waits a frame so
+  // the markdown has laid out and scrollHeight is tall enough not to clamp us
+  // back to 0. Re-runs per node id.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !activeNodeId) return;
+    const saved = loadReadingProgress(projectId, activeNodeId);
+    const raf = requestAnimationFrame(() => {
+      el.scrollTop = saved;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [activeNodeId, projectId]);
+
+  // Persist scroll position (debounced) as the reader scrolls.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !activeNodeId) return;
+    const onScroll = () => {
+      const top = el.scrollTop;
+      if (saveTimer.current !== null) clearTimeout(saveTimer.current);
+      saveTimer.current = window.setTimeout(() => {
+        saveReadingProgress(projectId, activeNodeId, top);
+      }, 250);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (saveTimer.current !== null) clearTimeout(saveTimer.current);
+    };
+  }, [activeNodeId, projectId]);
+
+  // Close the lightbox whenever the open node changes.
+  useEffect(() => {
+    setLightboxSrc(null);
+  }, [activeNodeId]);
+
+  // Summary-position strategy needs to know whether THIS visit started while the
+  // article was still generating. Tracked with React's "adjust state during
+  // render" pattern, re-evaluated whenever the open node changes, so switching
+  // to a freshly-grown child immediately flips the summary to the bottom.
+  const [trackedNodeId, setTrackedNodeId] = useState<string | null>(null);
+  const [openedAsLoading, setOpenedAsLoading] = useState(false);
 
   if (!activeNodeId || !node) return null;
 
   const loading = node.status === "loading";
   const failed = node.status === "failed";
   const hasContent = Boolean(node.content);
+  // Outline stub opened but its article never got filled in (not loading / not
+  // failed, still flagged needsContent with no body).
+  const isAwaitingBody =
+    !loading && !failed && !node.isRoot && Boolean(node.needsContent) && !hasContent;
+  const hasGeneratedBody = !loading && !failed && !isAwaitingBody && hasContent;
+
+  if (trackedNodeId !== activeNodeId) {
+    setTrackedNodeId(activeNodeId);
+    setOpenedAsLoading(loading || isAwaitingBody);
+  }
+
+  // Card summary: once the body exists prefer the AI-written `summary` (a recap
+  // of the real article); before that fall back to `brief` (the outline blurb).
+  const displaySummary = hasGeneratedBody
+    ? node.summary || node.brief
+    : node.brief || node.summary;
 
   return (
     <div className="rc-reading-scrim" onClick={closeReading} data-testid="research-reading-scrim">
@@ -36,8 +112,33 @@ export function ReadingOverlay() {
           <Icons.x size={18} />
         </button>
 
-        <div className="rc-reading-scroll">
+        <div className="rc-reading-scroll" ref={scrollRef}>
+          {/* Back to the parent node: only when this node has a parent. Lets the
+              reader pop up one level (after deep-diving a term) without closing.
+              Flows above the title so it never overlaps it. */}
+          {parentNode && (
+            <button
+              className="rc-reading-back"
+              onClick={() => openNode(parentNode.id)}
+              title={`返回上级：${parentNode.title}`}
+              data-testid="research-reading-back">
+              <span className="rc-reading-back-icon">
+                <Icons.chevR size={15} />
+              </span>
+              <span className="rc-reading-back-label">{parentNode.title}</span>
+            </button>
+          )}
+
           <h1 className="rc-reading-title">{node.title}</h1>
+
+          {/* Revisit intro: the reader already watched this generate before, so
+              the summary sits under the title as a quick opening recap. (On the
+              first visit it appears at the bottom as a takeaway instead.) */}
+          {!openedAsLoading && displaySummary && (
+            <p className="rc-reading-summary" data-testid="research-reading-summary">
+              {displaySummary}
+            </p>
+          )}
 
           {/* First token hasn't landed yet → spinner; once text starts
               streaming we show the body below instead. */}
@@ -57,8 +158,19 @@ export function ReadingOverlay() {
             </div>
           )}
 
+          {/* Outline stub whose body was never filled — offer to generate it. */}
+          {isAwaitingBody && (
+            <div className="rc-reading-pending" data-testid="research-reading-pending">
+              <p>这个节点还没有正文。</p>
+              <button className="rc-chip" onClick={() => openNode(node.id)}>
+                <Icons.arrowRight size={14} /> 生成正文
+              </button>
+            </div>
+          )}
+
           {/* Render the article as soon as any text exists — partial while
-              streaming, full once the `final` event lands. */}
+              streaming, full once the `final` event lands. Images become
+              clickable (open the lightbox). */}
           {!failed && hasContent && (
             <Markdown
               className="rc-prose"
@@ -66,6 +178,7 @@ export function ReadingOverlay() {
               content={node.content!}
               streaming={loading}
               onTermClick={(term) => growChild(node.id, { focusTerm: term })}
+              onOpenImage={setLightboxSrc}
             />
           )}
 
@@ -96,6 +209,16 @@ export function ReadingOverlay() {
             />
           )}
 
+          {/* First-visit takeaway: when this visit watched the article generate,
+              the summary lands at the end as a closing recap that flows into the
+              follow-ups, instead of interrupting the just-finished read up top. */}
+          {hasGeneratedBody && openedAsLoading && displaySummary && (
+            <div className="rc-reading-takeaway" data-testid="research-reading-takeaway">
+              <div className="rc-followups-label">本篇摘要</div>
+              <p className="rc-reading-summary">{displaySummary}</p>
+            </div>
+          )}
+
           {!loading && !failed && node.isRoot && !node.content && (
             <p className="rc-reading-roothint">
               这是你的研究方向。点击画布上的任意节点开始深入阅读，或从下面的问题继续探索。
@@ -119,6 +242,8 @@ export function ReadingOverlay() {
           )}
         </div>
       </aside>
+
+      <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
   );
 }
