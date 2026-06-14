@@ -16,10 +16,16 @@ export function ResearchOutlineTree() {
   const nodes = useResearchStore((s) => s.nodes);
   const order = useResearchStore((s) => s.order);
   const activeNodeId = useResearchStore((s) => s.activeNodeId);
+  const focusNodeId = useResearchStore((s) => s.focusNodeId);
   // Sidebar rows scroll the canvas to the node, pause, then open the overlay.
   const focusAndOpenNode = useResearchStore((s) => s.focusAndOpenNode);
 
   const childrenOf = useMemo(() => buildChildrenMap(nodes, order), [nodes, order]);
+
+  // Light the clicked row instantly: `focusNodeId` is set the moment a row is
+  // clicked (during the scroll-to-card phase); `activeNodeId` only once the
+  // reading overlay opens ~1s later. Favouring focus lights it immediately.
+  const highlightId = focusNodeId ?? activeNodeId;
 
   const rootId = order[0];
   const rootChildren = rootId ? (childrenOf[rootId] ?? []) : [];
@@ -40,7 +46,7 @@ export function ResearchOutlineTree() {
           id={id}
           nodes={nodes}
           childrenOf={childrenOf}
-          activeNodeId={activeNodeId}
+          highlightId={highlightId}
           onOpen={focusAndOpenNode}
         />
       ))}
@@ -52,16 +58,17 @@ interface OutlineRowProps {
   id: string;
   nodes: Record<string, ResearchNode>;
   childrenOf: Record<string, string[]>;
-  activeNodeId: string | null;
+  /** The row to light up: the focused (being-scrolled-to) or active node. */
+  highlightId: string | null;
   onOpen: (id: string) => void;
 }
 
 /** One outline node + its indented children (a nested <ul> rail). */
-function OutlineRow({ id, nodes, childrenOf, activeNodeId, onOpen }: OutlineRowProps) {
+function OutlineRow({ id, nodes, childrenOf, highlightId, onOpen }: OutlineRowProps) {
   const node = nodes[id];
   if (!node) return null;
   const kids = childrenOf[id] ?? [];
-  const current = id === activeNodeId;
+  const current = id === highlightId;
 
   return (
     <li>
@@ -81,7 +88,7 @@ function OutlineRow({ id, nodes, childrenOf, activeNodeId, onOpen }: OutlineRowP
               id={cid}
               nodes={nodes}
               childrenOf={childrenOf}
-              activeNodeId={activeNodeId}
+              highlightId={highlightId}
               onOpen={onOpen}
             />
           ))}

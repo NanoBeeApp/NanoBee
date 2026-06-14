@@ -23,8 +23,22 @@ chrome is a transient generation-status / error pill. Imports the scoped
   global top-right FloatingControls cluster. CSS is imported here.
 - Calls `useResearchUrlSync()` once at the top (unconditionally, before the
   phase branch) to keep `?project=&node=` and the store in sync.
+- Renders the canvas with `key={projectId}` so it re-mounts per topic — each
+  project initialises/restores its own saved pan/zoom independently (see
+  `ResearchCanvas` viewport memory).
 
 ## Change history
+
+### 2026-06-14 — Re-mount the canvas per topic (`key={projectId}`)
+- **Motivation**: per-topic canvas pan/zoom memory needs each project to start
+  from its own saved viewport; keeping one long-lived canvas across topic
+  switches made restore-on-switch fight React's setState-in-effect rules.
+- **Goal**: give each topic a clean mount so its viewport simply *initialises*
+  from storage.
+- **Key decision**: key `ResearchCanvas` by `projectId`; switching topics
+  unmounts the old canvas (flushing its viewport) and mounts a fresh one.
+
+### 2026-06-14 — Mount the URL ↔ store sync hook
 
 ### 2026-06-14 — Mount the URL ↔ store sync hook
 - **Motivation**: opening an article (or a project) only mutated the store, so

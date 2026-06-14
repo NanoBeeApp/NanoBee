@@ -12,7 +12,7 @@ This is the sidebar counterpart to the in-canvas outline drawn by
   `activeNodeId`, `focusAndOpenNode` from `useResearchStore`; builds a
   parent→children map from `parentId` + `order`; renders the root's children as a
   nested `<ul>`. Clicking a row calls `focusAndOpenNode(id)` (canvas smooth-scrolls
-  to the node, then its reading overlay opens after ~500ms). Renders a
+  to the node, then its reading overlay opens after ~1s). Renders a
   "大纲生成中…" placeholder while the root has no children yet.
 - `OutlineRow` (file-local, recursive) — one node row + its indented children,
   mirroring `ResearchCanvas`'s `NodeBranch` pattern (recursive helper co-located
@@ -31,10 +31,23 @@ This is the sidebar counterpart to the in-canvas outline drawn by
   per-row coordinates.
 - The root node (`order[0]`, carries the topic) is skipped; only its descendants
   are listed, matching Curve's `SidePanel`.
-- Rows are text-only; the active node is marked by an amber row background, not a
+- Rows are text-only; the current node is marked by an amber row background, not a
   leading status dot.
+- The highlighted row is `focusNodeId ?? activeNodeId` (`highlightId`), so the
+  clicked row lights up *immediately* (during the scroll-to-card phase) rather
+  than only once the reading overlay opens ~1s later.
 
 ## Change history
+
+### 2026-06-14 — highlight the clicked row immediately
+- **Motivation**: clicking a row didn't mark it as current until the reading
+  overlay opened ~1s later, so the click felt unacknowledged (and the matching
+  canvas card stayed un-lit too).
+- **Goal**: light the clicked row the instant it's pressed.
+- **Key decision**: highlight off `focusNodeId ?? activeNodeId` instead of just
+  `activeNodeId` — `focusNodeId` is set synchronously by `focusAndOpenNode`,
+  `activeNodeId` only when the overlay opens. Mirrors the same change in
+  `ResearchCanvas` so the row and its canvas card light up together.
 
 ### 2026-06-14 — rows scroll-then-open instead of opening immediately
 - **Motivation**: clicking a row opened the reading overlay instantly, so the
@@ -43,7 +56,7 @@ This is the sidebar counterpart to the in-canvas outline drawn by
 - **Goal**: smooth-scroll the canvas to the node, pause, then reveal the overlay.
 - **Key decision**: switch the row action from `openNode` to the store's
   `focusAndOpenNode`, which sets `focusNodeId` (canvas eases to the node) and
-  opens the overlay ~500ms later. Canvas-card clicks still open immediately.
+  opens the overlay ~1s later. Canvas-card clicks still open immediately.
 
 ### 2026-06-14 — drop the leading status dots
 - **Motivation**: the user asked to remove the dots in front of each outline

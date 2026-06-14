@@ -20,6 +20,9 @@ export function ResearchView() {
   const phase = useResearchStore((s) => s.phase);
   const generating = useResearchStore((s) => s.generating);
   const error = useResearchStore((s) => s.error);
+  // Re-mount the canvas per topic so each project initialises (and restores) its
+  // own saved pan/zoom independently — see ResearchCanvas' viewport memory.
+  const projectId = useResearchStore((s) => s.projectId);
 
   if (phase === "welcome") {
     return (
@@ -31,7 +34,7 @@ export function ResearchView() {
 
   return (
     <div className="rc-root" data-testid="research-view">
-      <ResearchCanvas />
+      <ResearchCanvas key={projectId ?? "none"} />
 
       {(generating || error) && (
         <div className="rc-actions">

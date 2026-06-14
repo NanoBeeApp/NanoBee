@@ -19,10 +19,33 @@ indented under its parent along a vertical rail.
   outline out in normal document flow.
 - Transform (`tx/ty/scale`) lives in local state for performance. The
   fixed-width outline column (`OUTLINE_WIDTH`) is horizontally centered the first
-  time a project's nodes arrive. Drag background to pan; ctrl/⌘+wheel (or pinch)
-  zooms around the cursor, plain wheel pans.
+  time a *new* project's nodes arrive. Drag background to pan; ctrl/⌘+wheel (or
+  pinch) zooms around the cursor, plain wheel pans.
+- **Per-topic viewport memory**: the canvas is re-mounted per topic
+  (`key={projectId}` in ResearchView), so the transform is simply *initialised*
+  from that topic's saved pan/zoom (`canvas-viewport.ts` → `loadViewport`). A
+  debounced effect saves on every change and an unmount cleanup flushes the
+  latest, so each topic restores its own scroll position + zoom across switches
+  and full reloads. The centering effect bails when a saved viewport exists.
+- The lit card is `focusNodeId ?? activeNodeId` (`highlightId`), so clicking a
+  sidebar outline row highlights the matching canvas card *immediately* (during
+  the scroll phase), not only once the reading overlay opens ~1s later.
 
 ## Change history
+
+### 2026-06-14 — Per-topic canvas viewport memory + instant card highlight
+- **Motivation**: switching research topics reset the canvas to center, losing
+  where each topic was scrolled/zoomed; and clicking a sidebar row didn't light
+  the matching canvas card until the overlay opened ~1s later.
+- **Goal**: remember each topic's pan + zoom separately (across switches and
+  reloads) and highlight the target card the instant a sidebar row is clicked.
+- **Key decision**: re-mount the canvas per topic via `key={projectId}` so the
+  transform initialises from `loadViewport(projectId)` (no `setState`-in-effect,
+  which react-hooks v7 flags when fed an external value); a brand-new topic with
+  no saved viewport still centers via the literal-`setT` effect. Persist with a
+  debounced save + an unmount flush (`canvas-viewport.ts`, localStorage — view
+  state is per-device and far too hot for the D1 snapshot). Drive the card
+  highlight off `focusNodeId ?? activeNodeId`.
 
 ### 2026-06-14 — Smooth focus-scroll before a sidebar-opened overlay
 - **Motivation**: pairs with the store's `focusAndOpenNode` — a sidebar outline

@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
 import { ResearchNodeCard } from "./ResearchNodeCard";
 import { buildChildrenMap } from "../../research/outline";
+import { loadViewport, saveViewport } from "./canvas-viewport";
 import type { ResearchNode } from "../../research/types";
 
 interface Transform {
@@ -37,10 +38,24 @@ export function ResearchCanvas() {
   const projectHighlighted = useResearchStore((s) => s.projectHighlighted);
   const clearProjectHighlight = useResearchStore((s) => s.clearProjectHighlight);
   const focusNodeId = useResearchStore((s) => s.focusNodeId);
+  const projectId = useResearchStore((s) => s.projectId);
 
   const viewportRef = useRef<HTMLDivElement>(null);
-  const [t, setT] = useState<Transform>({ tx: 0, ty: 0, scale: INITIAL_SCALE });
+  // Each topic remembers its own pan/zoom (see canvas-viewport.ts). The canvas is
+  // re-mounted per topic (`key={projectId}` in ResearchView), so we can simply
+  // *initialise* the transform from this topic's saved viewport — no effect, no
+  // switch-time bookkeeping. A topic with no saved viewport starts at a sentinel
+  // and gets centered by the effect below.
+  const [t, setT] = useState<Transform>(
+    () => loadViewport(projectId) ?? { tx: 0, ty: 0, scale: INITIAL_SCALE },
+  );
   const centeredFor = useRef<string>("");
+  // Mirror of `t` (written in an effect, never during render) so the unmount
+  // flush below can persist the latest transform without re-subscribing.
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
   const scrolledTo = useRef<string>("");
   const pan = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
 
@@ -48,20 +63,39 @@ export function ResearchCanvas() {
   const root = rootId ? nodes[rootId] : null;
   const childrenOf = useMemo(() => buildChildrenMap(nodes, order), [nodes, order]);
 
-  // Horizontally center the fixed-width outline column. Re-center twice per
-  // project: once on the bare root ("seed") and once when the full outline first
-  // lands ("tree"); growing children afterwards keeps the same key so the view
-  // doesn't jump on every follow-up.
+  // Center the fixed-width outline column for a *new* topic (no saved viewport):
+  // once on the bare root ("seed") and once when the full outline lands ("tree");
+  // growing children afterwards keeps the same key so the view doesn't jump. A
+  // topic restored from a saved viewport keeps its initialised transform untouched.
   useEffect(() => {
     if (!rootId) return;
-    const key = `${rootId}:${order.length <= 1 ? "seed" : "tree"}`;
+    if (loadViewport(projectId)) return; // restored topic → don't re-center over it
+    const key = order.length <= 1 ? "seed" : "tree";
     if (centeredFor.current === key) return;
     const vp = viewportRef.current;
     if (!vp) return;
-    const tx = (vp.clientWidth - OUTLINE_WIDTH * INITIAL_SCALE) / 2;
     centeredFor.current = key;
+    const tx = (vp.clientWidth - OUTLINE_WIDTH * INITIAL_SCALE) / 2;
     setT({ tx: Math.max(24, tx), ty: 40, scale: INITIAL_SCALE });
-  }, [rootId, order.length]);
+  }, [rootId, order.length, projectId]);
+
+  // Persist this topic's pan/zoom (debounced) on every change, so the per-topic
+  // memory survives a full page reload, not just in-session switches.
+  useEffect(() => {
+    if (!projectId) return;
+    const id = setTimeout(() => saveViewport(projectId, t), 350);
+    return () => clearTimeout(id);
+  }, [projectId, t]);
+
+  // Flush on unmount (switching topics re-mounts via the key; starting a new
+  // research unmounts the canvas) so a just-made pan/zoom isn't lost to the
+  // debounce window.
+  useEffect(
+    () => () => {
+      if (projectId) saveViewport(projectId, tRef.current);
+    },
+    [projectId],
+  );
 
   // Nudge `ty` so the given node's card sits ~22% down the viewport. The world is
   // positioned with a CSS transform, not a native scrollbar, so "scroll" means
@@ -93,7 +127,7 @@ export function ResearchCanvas() {
 
   // Sidebar-row focus: smooth-scroll to the node *before* its overlay opens. The
   // `.is-animating` class (driven by `focusNodeId`) makes this `ty` change ease
-  // instead of jump; the store opens the overlay ~500ms later.
+  // instead of jump; the store opens the overlay ~1s later.
   useEffect(() => {
     if (!focusNodeId) return;
     const raf = requestAnimationFrame(() => nudgeToCard(focusNodeId));
@@ -162,6 +196,11 @@ export function ResearchCanvas() {
 
   if (!root) return null;
   const rootLoading = root.status === "loading";
+  // Highlight the card the moment a sidebar row is clicked: `focusNodeId` is set
+  // instantly (during the scroll-to-card phase), `activeNodeId` only once the
+  // reading overlay actually opens ~1s later. Favouring focus → exactly one
+  // card is lit, and it lights up immediately on the sidebar click.
+  const highlightId = focusNodeId ?? activeNodeId;
 
   return (
     <div
@@ -199,7 +238,7 @@ export function ResearchCanvas() {
                 id={cid}
                 nodes={nodes}
                 childrenOf={childrenOf}
-                activeNodeId={activeNodeId}
+                highlightId={highlightId}
                 onOpen={openNode}
               />
             ))}
@@ -214,18 +253,19 @@ interface BranchProps {
   id: string;
   nodes: Record<string, ResearchNode>;
   childrenOf: Record<string, string[]>;
-  activeNodeId: string | null;
+  /** The node to light up: the focused (being-scrolled-to) or active node. */
+  highlightId: string | null;
   onOpen: (id: string) => void;
 }
 
 /** One outline node + its indented children, joined by a vertical rail. */
-function NodeBranch({ id, nodes, childrenOf, activeNodeId, onOpen }: BranchProps) {
+function NodeBranch({ id, nodes, childrenOf, highlightId, onOpen }: BranchProps) {
   const node = nodes[id];
   if (!node) return null;
   const kids = childrenOf[id] ?? [];
   return (
     <div className="rc-branch" data-depth={node.depth}>
-      <ResearchNodeCard node={node} active={id === activeNodeId} onOpen={onOpen} />
+      <ResearchNodeCard node={node} active={id === highlightId} onOpen={onOpen} />
       {kids.length > 0 && (
         <div className="rc-rail">
           <div className="rc-rail-line" aria-hidden="true" />
@@ -236,7 +276,7 @@ function NodeBranch({ id, nodes, childrenOf, activeNodeId, onOpen }: BranchProps
                 id={cid}
                 nodes={nodes}
                 childrenOf={childrenOf}
-                activeNodeId={activeNodeId}
+                highlightId={highlightId}
                 onOpen={onOpen}
               />
             ))}
