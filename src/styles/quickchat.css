@@ -4,16 +4,20 @@
    opens above it. Replaces the docked right rail: the popup floats over content
    (no grid column reserved) and the panel internals reuse the existing
    `.nb-rc-*` / `.nb-qc` styles from app.css.
-   z-index sits above content + the floating corner controls (app.css `.nb-float`
-   z-index 25) but below page dropdowns / the research reading modal, so a
-   focused reading view still covers it.
+   z-index (35) sits above content, the floating corner controls (app.css
+   `.nb-float` z-index 25) and the research reading overlay (`.rc-reading-scrim`
+   z-index 30) — so the bubble + popup stay reachable while reading an article
+   and you can ask about what you're looking at. It deliberately stays below the
+   system layers that should fully own the screen: notification scrim (40),
+   the image lightbox (60), modal scrims (80), the selection float (200) and
+   toasts (300).
    ============================================================ */
 
 .nb-qc-bubble {
   position: fixed;
   right: 22px;
   bottom: 22px;
-  z-index: 28;
+  z-index: 35;
   width: 54px;
   height: 54px;
   border-radius: 50%;
@@ -44,7 +48,7 @@
   position: fixed;
   right: 22px;
   bottom: 88px;
-  z-index: 28;
+  z-index: 35;
   width: 384px;
   max-width: calc(100vw - 32px);
   height: 560px;

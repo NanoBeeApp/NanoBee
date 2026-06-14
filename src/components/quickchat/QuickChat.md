@@ -17,6 +17,10 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 
 ## Change history
 
+### 2026-06-14 — float above the research reading overlay (z-index 28 → 35)
+- **Motivation**: while reading a research article (the centered reading overlay, `.rc-reading-scrim` z-index 30), the bubble + popup were hidden behind it, so you couldn't pop open the assistant to ask about what you're reading.
+- **Fix**: raised `.nb-qc-bubble` / `.nb-qc-pop` z-index from 28 to 35 (in `styles/quickchat.css`) so they sit above the reading overlay, while staying below the system layers that should fully own the screen (notification scrim 40, image lightbox 60, modal scrims 80, selection float 200, toasts 300).
+
 ### 2026-06-14 — open shortcut changed from ⌘J to Space (non-input only)
 - **Motivation**: the user wanted to open the bubble by simply pressing Space, explicitly only when not in an input state.
 - **Goal**: Space opens the popup without ever interfering with typing, focused controls, or scrolling.
