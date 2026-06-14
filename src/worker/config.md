@@ -59,3 +59,19 @@ default list limit). Route files must reference this instead of hardcoding.
 ### 2026-06-13 — AGENT.TRACE_MAX_OUTPUT_CHARS
 - **Motivation**: traces persist inside message payloads; stored tool
   outputs need a tighter cap (2k) than what the model sees (8k).
+
+### 2026-06-14 — raise AI.MAX_COMPLETION_TOKENS 800 → 4096
+- **Motivation**: after the default model became OpenRouter Gemini 3.5 Flash,
+  chat replies came back truncated mid-sentence (or as a leaked reasoning
+  fragment). Root cause: Gemini 3.5 Flash reasons mandatorily (~1000-1300
+  tokens/turn, not disableable nor meaningfully cappable on OpenRouter), and
+  the OpenAI-style `max_tokens` budgets the hidden reasoning trace AND the
+  visible answer together — so an 800 cap was eaten by reasoning before the
+  answer was written (`finish_reason: "length"`).
+- **Goal**: give completions enough headroom that reasoning + a full answer
+  both fit; verified live against OpenRouter that 4096 yields a clean
+  `finish_reason: "stop"` for a verbose answer.
+- **Key decision**: treat the cap as a safety ceiling, not a length target —
+  answer brevity, if ever wanted, belongs in the prompt, not in a tiny cap
+  that truncates output. Provider-agnostic (non-reasoning models simply stop
+  when done).
