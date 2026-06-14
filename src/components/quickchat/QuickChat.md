@@ -4,7 +4,7 @@
 Customer-service-style floating quick-chat widget, present on every non-chat surface (today / tasks / artifacts / research). A launcher bubble pinned bottom-right; clicking it opens a popup chat panel above it. Popup, top-to-bottom: header (bee glyph + "快速对话" + "在聊天页打开" handoff once there are messages + close ×), context chip ("正在看 · …" with clear button), message feed reusing MessageView (or a centered empty state), composer. Styles live in `styles/quickchat.css` (`.nb-qc-bubble` / `.nb-qc-pop`); panel internals reuse the `.nb-rc-*` / `.nb-qc` styles from app.css.
 
 ## Dependencies
-- Upstream: store, icons, MessageView, ThinkingIndicator, `styles/quickchat.css`
+- Upstream: store, icons, MessageView, ThinkingIndicator, `lib/useImeComposition`, `styles/quickchat.css`
 - Downstream: `_app` layout (rendered as a fixed-position overlay; the layout no longer reserves a grid column for it)
 
 ## Key notes
@@ -16,6 +16,16 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 - Quick conversations get session metadata so they appear in the sidebar's "刚刚" group.
 
 ## Change history
+
+### 2026-06-14 — extract the IME guard into a shared hook
+- **Motivation**: the same composition guard was needed in the main chat
+  composer and the research entry input, which were still re-sending on an IME
+  Enter. Re-implementing it three times invites drift.
+- **Change**: moved the inline `composingRef` + compositionStart/End handlers
+  into `lib/useImeComposition`. QuickChat now consumes `composingRef` (for its
+  window-level keydown listener), `compositionProps` (spread on the textarea)
+  and `isSubmitEnter` (for the Enter-to-send guard). Behaviour is unchanged here
+  — the logic is now shared rather than duplicated.
 
 ### 2026-06-14 — float above the research reading overlay (z-index 28 → 35)
 - **Motivation**: while reading a research article (the centered reading overlay, `.rc-reading-scrim` z-index 30), the bubble + popup were hidden behind it, so you couldn't pop open the assistant to ask about what you're reading.

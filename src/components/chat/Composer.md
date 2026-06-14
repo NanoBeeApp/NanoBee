@@ -4,14 +4,23 @@
 Main chat composer: auto-growing textarea, contextual quick-suggestion chips, slash (/任务 /提醒 /盯盘 /早报) and mention (@) popovers, toolbar (attach / slash / voice / model) and send button.
 
 ## Dependencies
-- Upstream: types (Topic), icons
+- Upstream: types (Topic), icons, `lib/useImeComposition`
 - Downstream: ChatView
 
 ## Key notes
 - Popover triggers mirror the prototype: exact "/" opens slash, trailing "@" opens mentions, Escape closes.
-- Enter sends, Shift+Enter adds a newline.
+- Enter sends, Shift+Enter adds a newline — but Enter while an IME composition is active confirms the candidate (it does not send), via the shared `useImeComposition` guard.
 
 ## Change history
+
+### 2026-06-14 — IME-safe Enter (shared composition guard)
+- **Motivation**: under a Chinese IME, pressing Enter to confirm a pinyin
+  candidate was captured as "send", firing the message before the word was even
+  committed. This composer's `onKeyDown` checked only `Enter && !Shift`, with no
+  composition guard.
+- **Fix**: route Enter through the new shared `useImeComposition` hook —
+  `isSubmitEnter(e)` is false while composing, and `compositionProps` is spread
+  onto the textarea. Same guard now used by QuickChat and ResearchWelcome.
 
 ### 2026-06-14 — consume the one-shot composer seed
 - **Motivation**: the sidebar's page-aware "新建任务" / "新建 Artifact" actions

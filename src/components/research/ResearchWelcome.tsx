@@ -4,12 +4,14 @@
 
 import { useEffect, useState } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
+import { useImeComposition } from "../../lib/useImeComposition";
 import { Icons } from "../../icons/icons";
 
 const EXAMPLES = ["量子力学入门", "罗马帝国的衰亡", "大语言模型原理", "免疫系统如何工作"];
 
 export function ResearchWelcome() {
   const [value, setValue] = useState("");
+  const { compositionProps, isSubmitEnter } = useImeComposition();
   const startResearch = useResearchStore((s) => s.startResearch);
   const projects = useResearchStore((s) => s.projects);
   const listProjects = useResearchStore((s) => s.listProjects);
@@ -41,8 +43,10 @@ export function ResearchWelcome() {
             value={value}
             placeholder="例如：量子力学入门、罗马帝国的衰亡…"
             onChange={(e) => setValue(e.target.value)}
+            {...compositionProps}
             onKeyDown={(e) => {
-              if (e.key === "Enter") submit();
+              // Skip Enter that confirms an IME candidate (Chinese / kana / hangul).
+              if (isSubmitEnter(e)) submit();
             }}
             data-testid="research-topic-input"
             autoFocus

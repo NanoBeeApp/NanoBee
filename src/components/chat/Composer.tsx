@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Topic } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
+import { useImeComposition } from '../../lib/useImeComposition';
 import { Icon, Icons } from '../../icons/icons';
 
 const SLASH_COMMANDS = [
@@ -41,6 +42,7 @@ export function Composer({ topic, onSend, showQuick = true }: ComposerProps) {
   const [val, setVal] = useState(() => seededRef.current ?? '');
   const [pop, setPop] = useState<Popover>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const { compositionProps, isSubmitEnter } = useImeComposition();
   const activeChatId = useAppStore((s) => s.activeChatId);
   const clearComposerSeed = useAppStore((s) => s.clearComposerSeed);
 
@@ -97,7 +99,9 @@ export function Composer({ topic, onSend, showQuick = true }: ComposerProps) {
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+    // Don't send while an IME composition is active — there Enter confirms the
+    // candidate (e.g. picking a Chinese word), it is not a "send".
+    if (isSubmitEnter(e)) { e.preventDefault(); submit(); }
     if (e.key === 'Escape') setPop(null);
   };
 
@@ -153,6 +157,7 @@ export function Composer({ topic, onSend, showQuick = true }: ComposerProps) {
             </div>
           )}
           <textarea ref={taRef} rows={1} value={val} onChange={onChange} onKeyDown={onKeyDown}
+            {...compositionProps}
             placeholder="问点什么，或者让 NanoBee 帮你盯着一件事…   输入 / 创建任务，@ 引用关注"
             data-testid="chat-message-input" />
           <div className="nb-composer-bar">
