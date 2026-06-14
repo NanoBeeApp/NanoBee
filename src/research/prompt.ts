@@ -115,13 +115,21 @@ function contentUserPrompt(input: ResearchGenerationInput): string {
   const contextBlock = input.context?.trim()
     ? `已有上下文：\n${input.context.trim()}\n`
     : "";
+  const anchorParagraph = input.focusParagraph?.trim();
   const anchorBlock = input.focusTerm?.trim()
     ? [
         "==【本次为深入探究：用户在阅读中点击了正文里的高亮关键词】==",
         `用户点击的锚点：「${input.focusTerm.trim()}」`,
+        // The paragraph the anchor sat in — grounds the deep-dive in the reader's
+        // actual point of interest rather than the bare phrase.
+        anchorParagraph
+          ? `锚点所在原文段落（仅作背景，理解用户从什么语境点进来；不要逐句复述）：\n${anchorParagraph}`
+          : "",
         "请围绕这个锚点生长一篇独立成文的新节点：开篇承接用户的兴趣点（不要复读原文、不要字典式定义），内容同时覆盖纵向深入（更深机制/数据/前沿/具体人物事件）与横向拓展（相邻领域/跨学科类比/对立观点/历史脉络）。",
         "",
-      ].join("\n")
+      ]
+        .filter(Boolean)
+        .join("\n")
     : "";
   const questionLine = input.question
     ? `当前问题：${input.question}`

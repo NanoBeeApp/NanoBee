@@ -32,3 +32,9 @@ either outline mode (title tree + brief tree) or content mode (one article).
 - **Key decision**: Single-call generation for the MVP (skip Curve's two-layer
   meta-prompt) to halve latency/cost; can be reintroduced later if quality needs
   it. Deep-dive is supported via an optional `focusTerm` anchor block.
+
+### 2026-06-14 — Ground deep-dives in their paragraph (Phase B)
+- **Motivation**: the bare `focusTerm` lost the context the reader clicked from.
+- **Goal**: include the anchor's enclosing paragraph in the content prompt.
+- **Key decision**: add an optional `focusParagraph` line inside the existing
+  anchor block (background only — the model must not just restate it).
