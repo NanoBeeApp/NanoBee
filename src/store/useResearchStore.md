@@ -31,6 +31,11 @@ snapshot persistence.
 
 ## Change history
 
+### 2026-06-14 — focus→open delay raised 500ms → 1s
+- **Motivation**: the user found the half-second pause too short.
+- **Key decision**: bump `FOCUS_OPEN_DELAY_MS` to 1000ms; the scroll easing is
+  unchanged, so the canvas settles well before the overlay now opens.
+
 ### 2026-06-14 — focusAndOpenNode (scroll-then-open for sidebar rows)
 - **Motivation**: clicking a sidebar outline row opened the overlay immediately,
   hiding the canvas scroll behind the modal. The user wanted to see the canvas
@@ -38,7 +43,7 @@ snapshot persistence.
 - **Goal**: a store action that scrolls the canvas, pauses, then opens the node.
 - **Key decision**: add `focusNodeId` + `focusAndOpenNode(id)`. The action sets
   `focusNodeId` (the canvas eases to that node via an `.is-animating` transition),
-  then a module-level timer opens the overlay after `FOCUS_OPEN_DELAY_MS` (500ms)
+  then a module-level timer opens the overlay after `FOCUS_OPEN_DELAY_MS` (1s)
   and clears `focusNodeId`. The timer is cleared/`focusNodeId` reset by
   `startResearch` / `loadProject` / `newResearch` so a pending open can't fire
   into a different project.

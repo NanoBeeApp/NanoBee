@@ -95,7 +95,7 @@ let persistTimer: ReturnType<typeof setTimeout> | null = null;
 /** Pending sidebar focus → open timer (see `focusAndOpenNode`). */
 let focusTimer: ReturnType<typeof setTimeout> | null = null;
 /** Delay between scrolling the canvas to a node and opening its overlay. */
-const FOCUS_OPEN_DELAY_MS = 500;
+const FOCUS_OPEN_DELAY_MS = 1000;
 
 export const useResearchStore = create<ResearchState>((set, get) => {
   /** Debounced snapshot save. */
