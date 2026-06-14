@@ -204,17 +204,10 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 /* Nesting rail: the faintest possible 1px line, never a visual anchor. */
 .nb-outline-sub { margin: 1px 0 1px 8px; padding-left: 9px; border-left: 1px solid var(--border); }
 
-.nb-outline-row { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 9px; border: none; background: transparent; border-radius: 8px; font-family: inherit; text-align: left; color: var(--ink-2); cursor: pointer; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+.nb-outline-row { display: flex; align-items: center; width: 100%; padding: 6px 9px; border: none; background: transparent; border-radius: 8px; font-family: inherit; text-align: left; color: var(--ink-2); cursor: pointer; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
 .nb-outline-row:hover { background: var(--surface-2); color: var(--ink); }
 .nb-outline-row.is-current { background: var(--nb-amber-soft); color: var(--nb-amber-ink); font-weight: 600; }
 .nb-outline-text { flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.nb-outline-dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; box-sizing: border-box; border: 1.5px solid var(--ink-4); }
-.nb-outline-row.status-ready .nb-outline-dot { background: var(--ink-4); }
-.nb-outline-row.status-loading .nb-outline-dot { border-color: var(--nb-amber); background: var(--nb-amber); animation: nbpulse 1s ease-in-out infinite; }
-.nb-outline-row.status-failed .nb-outline-dot { border-color: var(--danger); background: var(--danger); }
-/* Current node wins the dot colour regardless of status. */
-.nb-outline-row.is-current .nb-outline-dot { border-color: var(--nb-amber); background: var(--nb-amber); }
 
 /* Topic group card */
 .nb-topic { border-radius: 11px; margin-bottom: 6px; overflow: hidden; border: 1px solid transparent; transition: border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out); }

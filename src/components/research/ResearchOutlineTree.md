@@ -3,9 +3,9 @@
 ## Responsibility
 Renders the left-rail outline tree (研究目录) for the currently open research
 project: a recursive, depth-indented table of contents of the project's nodes.
-Each row jumps to that node's reading overlay; the active node is highlighted and
-a leading dot reflects load status. This is the sidebar counterpart to the
-in-canvas outline drawn by `ResearchCanvas`.
+Each row jumps to that node's reading overlay; the active node is highlighted.
+This is the sidebar counterpart to the in-canvas outline drawn by
+`ResearchCanvas`.
 
 ## Core exports / API
 - `ResearchOutlineTree()` — connected component. Reads `nodes`, `order`,
@@ -30,9 +30,18 @@ in-canvas outline drawn by `ResearchCanvas`.
   per-row coordinates.
 - The root node (`order[0]`, carries the topic) is skipped; only its descendants
   are listed, matching Curve's `SidePanel`.
-- Status → dot styling via a `status-{idle|loading|ready|failed}` class.
+- Rows are text-only; the active node is marked by an amber row background, not a
+  leading status dot.
 
 ## Change history
+
+### 2026-06-14 — drop the leading status dots
+- **Motivation**: the user asked to remove the dots in front of each outline
+  entry; they read as a redundant status badge against the minimalist rail.
+- **Goal**: a cleaner text-only tree.
+- **Key decision**: rely on the amber row background for the current node;
+  loading/failed status still shows on the canvas node cards, so the rail no
+  longer needs per-row dots (removed `.nb-outline-dot` and the `status-*` class).
 
 ### 2026-06-14 — created
 - **Motivation**: the user wanted the research canvas's left rail to stop showing

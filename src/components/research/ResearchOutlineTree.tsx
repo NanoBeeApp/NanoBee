@@ -2,7 +2,7 @@
 // depth-indented table of contents of the project's nodes, ported from Curve's
 // SidePanel (overlays.tsx → `outline-list/outline-row/outline-sub`). Each row
 // jumps to that node's reading overlay via the store's openNode; the active node
-// is highlighted and a leading dot reflects the node's load status. Structure
+// is highlighted. Structure
 // comes purely from each node's parentId + the store's `order` (same derivation
 // as ResearchCanvas) — there are no per-row coordinates; the browser nests the
 // <ul>s in normal flow.
@@ -66,11 +66,10 @@ function OutlineRow({ id, nodes, childrenOf, activeNodeId, onOpen }: OutlineRowP
     <li>
       <button
         type="button"
-        className={`nb-outline-row status-${node.status}${current ? " is-current" : ""}`}
+        className={`nb-outline-row${current ? " is-current" : ""}`}
         onClick={() => onOpen(id)}
         title={node.title}
         data-testid={`sidebar-outline-row-${id}`}>
-        <span className="nb-outline-dot" aria-hidden="true" />
         <span className="nb-outline-text">{node.title}</span>
       </button>
       {kids.length > 0 && (
