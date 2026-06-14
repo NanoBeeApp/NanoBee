@@ -75,3 +75,20 @@ snapshot persistence.
 - **Goal**: One store that runs the whole canvas closed loop.
 - **Key decision**: Snapshot-per-project persistence (debounced); a separate
   store rather than extending `useAppStore`.
+
+### 2026-06-14 — Thread `focusParagraph` through deep-dive (Phase B)
+- **Motivation**: deep-dive should grow the child around the reader's in-context
+  interest, not the bare term.
+- **Goal**: accept `focusParagraph` on `growChild` and forward it to
+  `/generate-stream`.
+- **Key decision**: optional param on `growChild` + the stream body; no change
+  to the snapshot shape (it's per-call generation context, not node state).
+
+### 2026-06-14 — Add `askInReading` for inline Q&A turns (Phase C)
+- **Motivation**: custom follow-ups should be answered inline below the article,
+  not grow a new child node.
+- **Goal**: an action that appends a loading turn to `node.userQuestionTurns`,
+  streams the answer into it, and persists.
+- **Key decision**: reuse `generateContentStream` (content mode) grounded in the
+  node's own article as context; a concise dedicated Q&A prompt is a possible
+  later refinement (today the answer is a full-length article).

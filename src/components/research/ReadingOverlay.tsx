@@ -13,7 +13,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
 import { Icons } from "../../icons/icons";
-import { Markdown } from "../common/Markdown";
+import { ReadingArticle } from "./ReadingArticle";
+import { ReadingQnaTurns } from "./ReadingQnaTurns";
 import { ImageLightbox } from "./ImageLightbox";
 import { loadReadingProgress, saveReadingProgress } from "./reading-progress";
 
@@ -27,11 +28,22 @@ export function ReadingOverlay() {
   const closeReading = useResearchStore((s) => s.closeReading);
   const growChild = useResearchStore((s) => s.growChild);
   const openNode = useResearchStore((s) => s.openNode);
+  const askInReading = useResearchStore((s) => s.askInReading);
+
+  // Compact signature of the latest Q&A turn — changes id→status→answer length as
+  // it streams, so the auto-scroll effect can follow a live answer to the bottom.
+  const latestTurnSig = useResearchStore((s) => {
+    const n = s.activeNodeId ? s.nodes[s.activeNodeId] : null;
+    const turns = n?.userQuestionTurns;
+    const t = turns && turns.length ? turns[turns.length - 1] : null;
+    return t ? `${t.id}:${t.status}:${t.answer.length}` : "";
+  });
 
   // The scrolling element — used for per-node scroll-position memory.
   const scrollRef = useRef<HTMLDivElement>(null);
   const saveTimer = useRef<number | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [customQuestion, setCustomQuestion] = useState("");
 
   // Restore the saved scroll position when a node opens. rAF waits a frame so
   // the markdown has laid out and scrollHeight is tall enough not to clamp us
@@ -64,10 +76,24 @@ export function ReadingOverlay() {
     };
   }, [activeNodeId, projectId]);
 
-  // Close the lightbox whenever the open node changes.
+  // Close the lightbox and clear the custom-question draft when the node changes.
   useEffect(() => {
     setLightboxSrc(null);
+    setCustomQuestion("");
   }, [activeNodeId]);
+
+  // Follow a live Q&A answer to the bottom as it streams in, so the reader sees
+  // the new turn appear and grow without scrolling. Fires whenever the latest
+  // turn's signature changes (new turn added or tokens landing).
+  useEffect(() => {
+    if (!latestTurnSig) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const raf = requestAnimationFrame(() => {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [latestTurnSig]);
 
   // Summary-position strategy needs to know whether THIS visit started while the
   // article was still generating. Tracked with React's "adjust state during
@@ -169,15 +195,21 @@ export function ReadingOverlay() {
           )}
 
           {/* Render the article as soon as any text exists — partial while
-              streaming, full once the `final` event lands. Images become
-              clickable (open the lightbox). */}
+              streaming, full once the `final` event lands. Keyed by node id so
+              switching nodes fully remounts the decorated body (avoids React
+              reconciling the manually-decorated DOM across nodes). Auto-terms,
+              the selection bubble, highlights and image lightbox live inside. */}
           {!failed && hasContent && (
-            <Markdown
-              className="rc-prose"
-              data-testid="research-article-body"
+            <ReadingArticle
+              key={node.id}
               content={node.content!}
+              nodeId={node.id}
+              projectId={projectId}
+              tags={node.tags}
               streaming={loading}
-              onTermClick={(term) => growChild(node.id, { focusTerm: term })}
+              onDeepDive={(term, focusParagraph) =>
+                growChild(node.id, { focusTerm: term, focusParagraph })
+              }
               onOpenImage={setLightboxSrc}
             />
           )}
@@ -219,6 +251,12 @@ export function ReadingOverlay() {
             </div>
           )}
 
+          {/* The reader's own custom follow-ups, answered inline (chat-style)
+              right below the article they were asked about. */}
+          {node.userQuestionTurns && node.userQuestionTurns.length > 0 && (
+            <ReadingQnaTurns turns={node.userQuestionTurns} />
+          )}
+
           {!loading && !failed && node.isRoot && !node.content && (
             <p className="rc-reading-roothint">
               这是你的研究方向。点击画布上的任意节点开始深入阅读，或从下面的问题继续探索。
@@ -239,6 +277,40 @@ export function ReadingOverlay() {
                 </button>
               ))}
             </div>
+          )}
+
+          {/* Custom follow-up: appears once the article exists. AI's preset
+              questions grow child nodes; the reader's own question is answered
+              inline above (appended to userQuestionTurns), not as a new node. */}
+          {hasGeneratedBody && (
+            <form
+              className="rc-ask"
+              data-testid="research-custom-question-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const q = customQuestion.trim();
+                if (!q) return;
+                void askInReading(node.id, q);
+                setCustomQuestion("");
+              }}>
+              <input
+                type="text"
+                className="rc-ask-input"
+                value={customQuestion}
+                onChange={(e) => setCustomQuestion(e.target.value)}
+                placeholder="还想问点别的？写下你自己的问题…"
+                aria-label="自定义追问"
+                maxLength={200}
+                data-testid="research-custom-question-input"
+              />
+              <button
+                type="submit"
+                className="rc-ask-btn"
+                disabled={!customQuestion.trim()}
+                data-testid="research-custom-question-btn">
+                问 AI
+              </button>
+            </form>
           )}
         </div>
       </aside>

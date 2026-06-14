@@ -28,6 +28,12 @@ export interface ResearchGenerationInput {
    * treating it as a generic question.
    */
   focusTerm?: string;
+  /**
+   * The paragraph of article text that surrounded the deep-dive anchor (the
+   * `focusTerm` / selected phrase). Sent so the model grows the child around the
+   * reader's actual point of interest in context, not the bare phrase.
+   */
+  focusParagraph?: string;
 }
 
 /** One item in the generated outline tree (title + optional brief + children). */
@@ -61,6 +67,20 @@ export interface ResearchGenerationResult {
 export type ResearchNodeStatus = "idle" | "loading" | "ready" | "failed";
 
 /**
+ * One in-place Q&A turn appended below a node's article. The reader's own
+ * custom follow-up questions are answered inline (chat-style) rather than
+ * growing a new child node, so they stay attached to the article they were
+ * asked about.
+ */
+export interface ResearchQnaTurn {
+  id: string;
+  question: string;
+  /** The streamed/final answer markdown ("" until the first token lands). */
+  answer: string;
+  status: ResearchNodeStatus;
+}
+
+/**
  * One knowledge node on the canvas. The root node carries the research topic;
  * concept nodes carry generated articles. The canvas renders nodes as a nested
  * outline (hierarchical view), so structure comes entirely from `parentId` +
@@ -86,6 +106,8 @@ export interface ResearchNode {
   needsContent?: boolean;
   /** The follow-up question / focus term this node grew from. */
   sourceQuestion?: string;
+  /** The reader's own custom follow-up questions, answered inline (chat-style). */
+  userQuestionTurns?: ResearchQnaTurn[];
 }
 
 /** A full research project snapshot — what gets saved to / loaded from D1. */

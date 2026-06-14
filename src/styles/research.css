@@ -503,6 +503,64 @@
   color: var(--brand-2);
 }
 
+/* ---------- Article body wrapper (auto-terms + selection bubble) ---------- */
+/* position:relative so the selection bubble can be absolutely placed against
+   the article box. */
+.rc-article {
+  position: relative;
+}
+/* In-body deep-dive anchors (《...》/「...」/tags/bold), decorated after render.
+   Lowest possible resting weight per the "强调词最低视觉重量" rule — no color or
+   underline at rest, just a hover hint once intent is shown, like .rc-term. */
+.rc-autoterm {
+  cursor: pointer;
+  border-radius: 3px;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.rc-autoterm:hover {
+  color: var(--brand-2);
+  background: var(--brand-soft);
+}
+/* Saved reader highlights. Soft brand wash, no border. */
+.rc-highlight {
+  background: color-mix(in srgb, var(--brand-2) 18%, transparent);
+  border-radius: 3px;
+  padding: 0 1px;
+  color: inherit;
+}
+
+/* ---------- Selection bubble (highlight / research deeper) ---------- */
+.rc-selbubble {
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: 0 8px 24px rgba(15, 17, 23, 0.16);
+  white-space: nowrap;
+}
+.rc-selbubble-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--ink-2);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.rc-selbubble-btn:hover { background: var(--surface-2); }
+.rc-selbubble-primary { color: var(--brand-2); }
+.rc-selbubble-primary:hover { background: var(--brand-soft); }
+.rc-selbubble-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+}
+
 /* ---------- Follow-ups ---------- */
 .rc-followups {
   margin-top: 26px;
@@ -533,6 +591,66 @@
 }
 .rc-followup:hover { background: var(--brand-soft); border-color: var(--brand-2); }
 .rc-followup svg { color: var(--brand-2); flex-shrink: 0; }
+
+/* ---------- In-place Q&A turns ---------- */
+.rc-qna {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.rc-qna-turn {
+  margin-bottom: 18px;
+}
+.rc-qna-turn:last-child { margin-bottom: 0; }
+/* The reader's question: a quiet inset block, distinct from the answer prose by
+   background rather than a border (per the "区分用背景色" rule). */
+.rc-qna-question {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.rc-qna-answer { padding: 0 2px; }
+.rc-qna-failed { color: var(--ink-3); font-size: 14px; margin: 0; }
+
+/* ---------- Custom follow-up input ---------- */
+.rc-ask {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+.rc-ask-input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  font-size: 14px;
+  color: var(--ink);
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.rc-ask-input::placeholder { color: var(--ink-4); }
+.rc-ask-input:focus {
+  outline: none;
+  background: var(--surface);
+  border-color: var(--brand-2);
+}
+.rc-ask-btn {
+  flex-shrink: 0;
+  padding: 0 18px;
+  border-radius: 10px;
+  background: var(--brand-2);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.12s ease, opacity 0.12s ease;
+}
+.rc-ask-btn:hover { background: var(--brand-2-hover); }
+.rc-ask-btn:disabled { opacity: 0.45; cursor: default; }
 
 /* ---------- Back to parent ---------- */
 /* Flows above the title; capped width with the parent title elided so a long

@@ -41,6 +41,7 @@ const generateSchema = z.object({
   question: z.string().trim().min(1).max(400).optional(),
   context: z.string().trim().max(8000).optional(),
   focusTerm: z.string().trim().min(1).max(200).optional(),
+  focusParagraph: z.string().trim().min(1).max(2000).optional(),
   generationMode: z.enum(["outline", "content"]).optional(),
   locale: z.string().trim().min(2).max(10).optional(),
 });
@@ -61,6 +62,16 @@ const nodeSchema = z.object({
   isRoot: z.boolean().optional(),
   needsContent: z.boolean().optional(),
   sourceQuestion: z.string().optional(),
+  userQuestionTurns: z
+    .array(
+      z.object({
+        id: z.string(),
+        question: z.string(),
+        answer: z.string(),
+        status: z.enum(["idle", "loading", "ready", "failed"]),
+      }),
+    )
+    .optional(),
 });
 
 const snapshotSchema = z.object({

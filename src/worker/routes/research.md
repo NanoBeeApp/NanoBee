@@ -44,3 +44,17 @@ Hono routes for the Research Canvas: AI node generation + project snapshot CRUD.
   opening the stream (an opened SSE response can't change its HTTP status); use
   `hono/streaming` `streamSSE`; JSON-encode every event's `data` so embedded
   newlines in tokens can't be mis-read as SSE frame boundaries.
+
+### 2026-06-14 — Accept `focusParagraph` in the generate schema (Phase B)
+- **Motivation**: the client now sends the deep-dive anchor's enclosing
+  paragraph; the route must let it through to the prompt.
+- **Goal**: add `focusParagraph` (≤2000 chars) to `generateSchema`.
+- **Key decision**: validated input flows unchanged into `buildResearchMessages`,
+  so no other route logic changes.
+
+### 2026-06-14 — Allow `userQuestionTurns` in the snapshot schema (Phase C)
+- **Motivation**: inline Q&A turns live on the node; without a schema entry the
+  zod-validated snapshot would strip them on save, losing them on reload.
+- **Goal**: add an optional `userQuestionTurns` array to `nodeSchema`.
+- **Key decision**: mirror the `ResearchQnaTurn` shape exactly so persisted
+  turns round-trip through D1.

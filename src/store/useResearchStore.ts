@@ -15,6 +15,7 @@ import type {
   ResearchNode,
   ResearchOutlineItem,
   ResearchProjectMeta,
+  ResearchQnaTurn,
   ResearchSnapshot,
 } from "../research/types";
 
@@ -37,7 +38,12 @@ interface ResearchState {
   listProjects: () => Promise<void>;
   startResearch: (topic: string) => Promise<void>;
   openNode: (id: string) => Promise<void>;
-  growChild: (parentId: string, opts: { question?: string; focusTerm?: string }) => Promise<void>;
+  growChild: (
+    parentId: string,
+    opts: { question?: string; focusTerm?: string; focusParagraph?: string },
+  ) => Promise<void>;
+  /** Ask a custom follow-up answered inline (chat-style) below the node's article. */
+  askInReading: (nodeId: string, question: string) => Promise<void>;
   closeReading: () => void;
   /** Load a project; optionally open `openNodeId`'s reading overlay (deep link). */
   loadProject: (id: string, openNodeId?: string) => Promise<void>;
@@ -124,7 +130,13 @@ export const useResearchStore = create<ResearchState>((set, get) => {
    * above still backs outline mode (a tree, not a typed-out body).
    */
   async function generateContentStream(
-    body: { topic: string; question?: string; context?: string; focusTerm?: string },
+    body: {
+      topic: string;
+      question?: string;
+      context?: string;
+      focusTerm?: string;
+      focusParagraph?: string;
+    },
     onContent: (partial: string) => void,
   ): Promise<ResearchGenerationResult | null> {
     try {
@@ -369,6 +381,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
           topic: get().topic,
           question: opts.question,
           focusTerm: opts.focusTerm,
+          focusParagraph: opts.focusParagraph,
           context: context || undefined,
         },
         (partial) =>
@@ -402,6 +415,55 @@ export const useResearchStore = create<ResearchState>((set, get) => {
           },
         };
       });
+      schedulePersist();
+    },
+
+    askInReading: async (nodeId, questionRaw) => {
+      const question = questionRaw.trim();
+      if (!question) return;
+      const node = get().nodes[nodeId];
+      if (!node) return;
+
+      // Append a loading turn immediately (optimistic), keyed so streamed
+      // partials and the final answer can target just this turn.
+      const turnId = nextId("qt");
+      const turn: ResearchQnaTurn = { id: turnId, question, answer: "", status: "loading" };
+      const patchTurn = (
+        patch: (t: ResearchQnaTurn) => ResearchQnaTurn,
+      ) =>
+        set((s) => {
+          const n = s.nodes[nodeId];
+          if (!n) return {};
+          const turns = (n.userQuestionTurns ?? []).map((t) =>
+            t.id === turnId ? patch(t) : t,
+          );
+          return { nodes: { ...s.nodes, [nodeId]: { ...n, userQuestionTurns: turns } } };
+        });
+
+      set((s) => {
+        const n = s.nodes[nodeId];
+        if (!n) return {};
+        return {
+          nodes: {
+            ...s.nodes,
+            [nodeId]: { ...n, userQuestionTurns: [...(n.userQuestionTurns ?? []), turn] },
+          },
+        };
+      });
+
+      // Ground the answer in this node's own article, not a fresh topic search.
+      const context = [get().topic, node.title, node.summary, node.content?.slice(0, 2000)]
+        .filter(Boolean)
+        .join(" / ");
+      const result = await generateContentStream(
+        { topic: get().topic, question, context: context || undefined },
+        (partial) => patchTurn((t) => ({ ...t, answer: partial })),
+      );
+      patchTurn((t) =>
+        result
+          ? { ...t, answer: result.content, status: "ready" }
+          : { ...t, status: "failed" },
+      );
       schedulePersist();
     },
 

@@ -44,3 +44,17 @@ worker (AI generation + D1 persistence) and the client (canvas + store).
   whole snapshot as JSON (simpler than Curve's relational nodes/edges tables)
   for the MVP closed loop; relational normalization can come later for
   cross-view querying.
+
+### 2026-06-14 — Add `focusParagraph` to the generation input (Phase B)
+- **Motivation**: deep-diving a term/selection should grow the child around the
+  reader's in-context point of interest, not the bare phrase.
+- **Goal**: carry the enclosing paragraph through to the content prompt.
+- **Key decision**: optional `focusParagraph` beside the existing `focusTerm`;
+  the content prompt uses it only as background context.
+
+### 2026-06-14 — Add `ResearchQnaTurn` + `node.userQuestionTurns` (Phase C)
+- **Motivation**: the reader's custom follow-ups are answered inline (chat-style)
+  rather than growing a child node, so they need to live on the node.
+- **Goal**: a per-node list of `{ question, answer, status }` turns.
+- **Key decision**: store turns on the node so they persist in the snapshot and
+  re-render on reopen, alongside the article they were asked about.

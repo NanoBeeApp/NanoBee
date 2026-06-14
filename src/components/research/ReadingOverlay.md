@@ -26,6 +26,26 @@ backdrop.
 
 ## Change history
 
+### 2026-06-14 — Custom follow-up + in-place Q&A turns (Phase C)
+- **Motivation**: only AI-preset follow-ups (which grow children) existed; the
+  reader couldn't ask their own question and get an inline answer.
+- **Goal**: a custom-question input whose answer appends below the article as a
+  chat-style turn, following Curve's "你自己的追问会追加在本篇下方".
+- **Key decisions**: a `.rc-ask` form calls `askInReading(node.id, q)` (store
+  streams the answer into `node.userQuestionTurns`); `<ReadingQnaTurns>` renders
+  them; an auto-scroll effect keyed on a compact latest-turn signature follows a
+  streaming answer to the bottom. The form shows only once the article exists.
+
+### 2026-06-14 — Rich article body + paragraph-grounded deep dives (Phase B)
+- **Motivation**: the body was a bare `<Markdown>` that only made literal bold
+  clickable; Curve's body had broader auto-terms, a selection bubble, and
+  highlights, and fed the surrounding paragraph to the AI on deep-dive.
+- **Goal**: swap the body for `<ReadingArticle>` (keyed by node id) and thread
+  the deep-dive paragraph through to generation.
+- **Key decisions**: `onDeepDive(term, focusParagraph)` → `growChild({ focusTerm,
+  focusParagraph })`; the store + `/generate-stream` + content prompt now carry
+  `focusParagraph` so the child grows around the reader's in-context interest.
+
 ### 2026-06-14 — Port Curve reading-flow features (Phase A)
 - **Motivation**: the port had stripped the reading overlay down to title +
   body + follow-ups, dropping several Curve reading-flow behaviors the user
