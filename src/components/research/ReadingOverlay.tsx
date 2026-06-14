@@ -37,15 +37,6 @@ export function ReadingOverlay() {
         </button>
 
         <div className="rc-reading-scroll">
-          {node.tags && node.tags.length > 0 && (
-            <div className="rc-reading-tags">
-              {node.tags.map((tag) => (
-                <span key={tag} className="rc-tag">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
           <h1 className="rc-reading-title">{node.title}</h1>
 
           {/* First token hasn't landed yet → spinner; once text starts

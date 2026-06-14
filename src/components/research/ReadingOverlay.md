@@ -26,6 +26,14 @@ backdrop.
 
 ## Change history
 
+### 2026-06-14 — Drop the tag row above the article title
+- **Motivation**: the row of tag chips at the top of the reading detail added
+  visual noise above the title without carrying core reading value.
+- **Goal**: maximize the reading content area and cut distraction per the
+  "极简优先 · 禁止多余干扰元素" rule.
+- **Key decision**: removed the `.rc-reading-tags` block (and its + `.rc-tag`
+  CSS); `node.tags` data is kept on the model, only its display is dropped.
+
 ### 2026-06-14 — Stop the layout jumping while streaming
 - **Motivation**: with the typewriter render in place, each token re-parsed
   incomplete markdown, so unclosed markers snapped into styled elements as their
