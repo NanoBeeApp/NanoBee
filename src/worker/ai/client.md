@@ -66,3 +66,15 @@ diagnosable error (status + truncated body).
   / Anthropic `content_block_delta`) over `res.body.getReader()` — no SDK; and
   make `onDelta` awaitable so the route can forward each token in order with
   proper backpressure instead of firing un-awaited writes.
+
+### 2026-06-14 — `streamAgentTurn` (streaming agent turn with tools)
+- **Motivation**: chat replies were non-streamed (one-shot JSON), so the
+  default Gemini 3.5 Flash answer appeared all at once after a long wait. The
+  agent loop needed a turn that streams content AND still collects tool calls.
+- **Goal**: `streamAgentTurn` streams OpenAI `choices[].delta.content` through
+  `onToken` while reassembling `delta.tool_calls` fragments (keyed by `index`)
+  into the same `AgentTurn` shape; Anthropic falls back to one non-streamed
+  turn emitted via a single `onToken`.
+- **Key decision**: extract `toOpenAiChatBody` and share it with
+  `generateAgentTurn` so streaming/non-streaming never drift on tools/caps/
+  message mapping; reuse the same inline SSE parser style as `streamAgentText`.

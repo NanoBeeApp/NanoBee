@@ -111,6 +111,13 @@ export interface AiMessage {
   model?: string;
   /** Artifacts (card decks) the agent generated while producing this reply. */
   artifacts?: ArtifactRef[];
+  /**
+   * Client-only, transient: true while the reply is still streaming in token
+   * by token. Drives the live typewriter (Markdown `streaming` prop). The
+   * authoritative message that replaces this placeholder on the `final` event
+   * never carries it, and it is never persisted.
+   */
+  streaming?: boolean;
 }
 
 export type ChatMessage = UserMessage | AiMessage;

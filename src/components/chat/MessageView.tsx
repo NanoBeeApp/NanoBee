@@ -21,7 +21,7 @@ export function MessageView({ m }: MessageViewProps) {
 
   if (m.role === 'user') {
     return (
-      <div className="nb-msg nb-user" data-testid="chat-user-message">
+      <div className="nb-msg nb-user" data-msg-id={m.id} data-testid="chat-user-message">
         <div className="bubble">{m.text}</div>
       </div>
     );
@@ -31,11 +31,14 @@ export function MessageView({ m }: MessageViewProps) {
 
   // AI replies are markdown: prefer the raw `md` (LLM output); otherwise
   // serialize the legacy structured paragraphs. One render path via <Markdown>.
+  // While `streaming`, partial markers are closed each frame so the structure
+  // stays stable instead of reflowing on every token.
   const body = (
     <Markdown
       className="nb-body nb-selectable"
       data-ai-text="1"
       content={m.md ?? parasToMarkdown(m.paras)}
+      streaming={m.streaming}
     />
   );
 

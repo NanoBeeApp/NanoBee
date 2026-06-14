@@ -51,3 +51,10 @@ All interfaces/types listed above plus `IconName`.
   needs to carry that source instead of only the pre-split `paras`.
 - **Goal**: optional `md?: string` on `AiMessage`, preferred by `MessageView`;
   when absent, `paras` is serialized via `lib/paras-to-markdown`.
+
+### 2026-06-14 — `AiMessage.streaming` (transient typewriter flag)
+- **Motivation**: the chat now streams replies; the in-flight message must tell
+  `MessageView` to render with the `<Markdown streaming>` mode.
+- **Goal**: optional client-only `streaming?: boolean` on `AiMessage`, set on the
+  placeholder while tokens arrive and dropped when the authoritative message
+  replaces it; never persisted.

@@ -45,3 +45,10 @@ Renders one chat message: user bubble / AI reply (minimal "NanoBee" role row, ri
   shared component.
 - **Goal**: body now renders `<Markdown content={m.md ?? parasToMarkdown(m.paras)} />`.
   `InlineSegments` is no longer used by chat.
+
+### 2026-06-14 — streaming prop + scroll anchor
+- **Motivation**: streamed replies need stable structure while typing, and the
+  feed needs to locate the just-sent question to pin it to the top.
+- **Goal**: forward `streaming={m.streaming}` to `<Markdown>` (closes partial
+  markers per frame) and stamp `data-msg-id={m.id}` on the user bubble so
+  `ChatView` can scroll the question into place.

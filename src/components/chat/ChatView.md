@@ -25,3 +25,15 @@ Center chat surface: auto-scrolling message feed, pending indicator, composer, a
 ### 2026-06-12 — drop task-card plumbing
 - **Motivation**: MessageView became text-only, so the createdTaskIds/createTask/onSuggest wiring had no consumer.
 - **Goal**: pass only the message to MessageView; remove the knownTaskIds memo.
+
+### 2026-06-14 — scroll to the question, not the bottom
+- **Motivation**: with streamed replies, the old "pin to bottom on every
+  message-count change" forced the view to the tail, so a long answer had to be
+  scrolled back up to read from the start.
+- **Goal**: when a question is sent (last message is the user's, no reply yet),
+  pin THAT question near the top (`FEED_TOP_PAD`) so the reply streams in below
+  and reads top-down; do not auto-follow while it streams; opening an existing
+  chat from history still jumps to the latest message.
+- **Key decision**: drive it off the last user-message id changing (tracked via
+  refs) rather than `messages.length`/`pending`; locate the question by
+  `[data-msg-id]` and measure with `getBoundingClientRect` (offsetParent-safe).

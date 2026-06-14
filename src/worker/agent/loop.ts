@@ -24,6 +24,7 @@ import type {
 } from "../../lib/agent-trace";
 import {
 	generateAgentTurn,
+	streamAgentTurn,
 	type AgentChatMessage,
 	type AiToolCall,
 } from "../ai/client";
@@ -109,12 +110,18 @@ async function executeToolCall(
 /**
  * Run the agent loop over `baseMessages` and return the final reply text,
  * a flat tool-usage summary, and the full execution trace.
+ *
+ * When `onToken` is supplied, each turn streams its assistant content tokens
+ * through it as they arrive (live typewriter); tool-only turns emit nothing, so
+ * in the common case only the final answer types out. Without it the loop uses
+ * plain non-streamed completions (e.g. the quick chat / fallback JSON path).
  */
 export async function runAgentLoop(
 	env: Env,
 	cfg: AiRuntimeConfig,
 	baseMessages: AgentChatMessage[],
 	ctx: AgentContext = EMPTY_AGENT_CONTEXT,
+	onToken?: (delta: string) => void | Promise<void>,
 ): Promise<AgentRunResult> {
 	const startedAt = Date.now();
 	const tools = await collectAgentTools(env, ctx);
@@ -138,7 +145,9 @@ export async function runAgentLoop(
 	for (let i = 0; i < CONFIG.AGENT.MAX_ITERATIONS; i++) {
 		// On the final iteration no tools are offered, forcing a plain answer.
 		const offered = i === CONFIG.AGENT.MAX_ITERATIONS - 1 ? [] : tools;
-		const turn = await generateAgentTurn(cfg, messages, offered);
+		const turn = onToken
+			? await streamAgentTurn(cfg, messages, offered, onToken)
+			: await generateAgentTurn(cfg, messages, offered);
 
 		if (turn.toolCalls.length === 0) {
 			if (!turn.text) throw new Error("agent loop ended without a reply");

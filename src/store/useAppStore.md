@@ -156,3 +156,15 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
   canned prompt through `/api/messages` (so the create_card_artifact agent tool
   runs), records the exchange to a chat, then refreshes + selects the new deck
   while staying on the Artifacts page.
+
+### 2026-06-14 — streaming chat replies (`deliverMessageStream`)
+- **Motivation**: the main chat needed a live typewriter; `deliverMessage`
+  waited for the whole JSON reply before showing anything.
+- **Goal**: `deliverMessageStream` POSTs to `/api/messages/stream`, consumes the
+  SSE response, lazily inserts one AI placeholder on the first `token` (clearing
+  `pending`), grows its `md` per animation frame, then replaces it with the
+  authoritative message on `final`. `send` now uses it; `sendQuick` stays on the
+  non-streamed `deliverMessage`.
+- **Key decision**: rAF-coalesce token updates (markdown reflow is costly); on
+  any stream failure remove the placeholder so a failed turn leaves no empty
+  bubble; share a small `patchConvo` helper for immutable per-chat updates.

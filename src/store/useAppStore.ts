@@ -235,6 +235,145 @@ async function deliverMessage(
   return { topicId: data.topicId, artifacts: data.aiMessage.artifacts };
 }
 
+/** Apply a fn to one chat's message list (immutably). */
+function patchConvo(
+  set: (fn: (s: AppState) => Partial<AppState>) => void,
+  chatId: string,
+  fn: (msgs: ChatMessage[]) => ChatMessage[],
+): void {
+  set((st) => ({ convos: { ...st.convos, [chatId]: fn(st.convos[chatId] ?? []) } }));
+}
+
+/**
+ * Streaming variant of {@link deliverMessage} for the main chat: POSTs to
+ * /api/messages/stream and consumes the SSE response, growing one AI message
+ * token by token (live typewriter), then replacing it with the authoritative
+ * persisted message on the `final` event. Clears `pending` as soon as the
+ * first token (or the final reply) arrives. Returns null on transport/stream
+ * failure (the placeholder is removed so a failed turn leaves no empty bubble).
+ */
+async function deliverMessageStream(
+  set: (fn: (s: AppState) => Partial<AppState>) => void,
+  args: {
+    chatId: string; userMessageId: string; title?: string;
+    text: string; ctxTitle?: string | null; ctxTopicId?: string | null;
+  },
+): Promise<{ topicId: string; artifacts?: ArtifactRef[] } | null> {
+  // The placeholder is created lazily on the first token so the thinking
+  // indicator (pending) stays up until the reply actually starts.
+  let placeholderId: string | null = null;
+  let acc = '';
+
+  // Coalesce token updates to one render per frame: tokens can arrive faster
+  // than the browser paints, and each update reflows the markdown.
+  const canRaf = typeof requestAnimationFrame === 'function';
+  let rafQueued = false;
+  const flush = () => {
+    rafQueued = false;
+    if (!placeholderId) return;
+    patchConvo(set, args.chatId, (msgs) =>
+      msgs.map((m) => (m.id === placeholderId ? { ...(m as AiMessage), md: acc } : m)),
+    );
+  };
+  const scheduleFlush = () => {
+    if (!canRaf) { flush(); return; }
+    if (!rafQueued) { rafQueued = true; requestAnimationFrame(flush); }
+  };
+
+  try {
+    const res = await fetch('/api/messages/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(args),
+    });
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let finalData: { topicId: string; aiMessage: AiMessage } | null = null;
+    let streamError: string | null = null;
+
+    const handleFrame = (frame: string) => {
+      let event = 'message';
+      const dataParts: string[] = [];
+      for (const line of frame.split('\n')) {
+        if (line.startsWith('event:')) event = line.slice(6).trim();
+        else if (line.startsWith('data:')) dataParts.push(line.slice(5).trim());
+      }
+      const data = dataParts.join('');
+      if (!data) return;
+      if (event === 'token') {
+        try {
+          acc += JSON.parse(data) as string;
+        } catch { return; }
+        if (!placeholderId) {
+          // First token: drop the thinking indicator and insert the bubble.
+          placeholderId = nextId('m');
+          const placeholder: AiMessage = {
+            id: placeholderId, role: 'ai', md: acc, paras: [], streaming: true,
+          };
+          set((st) => ({
+            pending: false,
+            convos: {
+              ...st.convos,
+              [args.chatId]: [...(st.convos[args.chatId] ?? []), placeholder],
+            },
+          }));
+        } else {
+          scheduleFlush();
+        }
+      } else if (event === 'final') {
+        try { finalData = JSON.parse(data) as { topicId: string; aiMessage: AiMessage }; }
+        catch { streamError = 'Malformed final payload'; }
+      } else if (event === 'error') {
+        try { streamError = JSON.parse(data) as string; } catch { streamError = data; }
+      }
+    };
+
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let sep: number;
+      while ((sep = buffer.indexOf('\n\n')) >= 0) {
+        const frame = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        if (frame.trim()) handleFrame(frame);
+      }
+    }
+    if (buffer.trim()) handleFrame(buffer);
+    flush(); // land the last partial before the swap-in
+
+    if (streamError) throw new Error(streamError);
+    if (!finalData) throw new Error('stream ended without a final reply');
+    const final = finalData as { topicId: string; aiMessage: AiMessage };
+
+    set((st) => {
+      const msgs = st.convos[args.chatId] ?? [];
+      const next = placeholderId
+        ? msgs.map((m) => (m.id === placeholderId ? final.aiMessage : m))
+        : [...msgs, final.aiMessage];
+      return {
+        pending: false,
+        sessionMeta: st.sessionMeta[args.chatId]
+          ? { ...st.sessionMeta, [args.chatId]: { ...st.sessionMeta[args.chatId], topicId: final.topicId } }
+          : st.sessionMeta,
+        convos: { ...st.convos, [args.chatId]: next },
+      };
+    });
+    return { topicId: final.topicId, artifacts: final.aiMessage.artifacts };
+  } catch (error) {
+    console.error('[send] stream failed:', String(error));
+    if (placeholderId) {
+      const id = placeholderId;
+      patchConvo(set, args.chatId, (msgs) => msgs.filter((m) => m.id !== id));
+    }
+    return null;
+  }
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   view: 'chat',
   sidebarMode: 'history',
@@ -489,7 +628,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set(patch);
     get()._navigate?.(VIEW_PATH.chat);
 
-    const result = await deliverMessage(set, {
+    const result = await deliverMessageStream(set, {
       chatId, userMessageId, title: truncateTitle(text), text,
     }).catch((error) => {
       console.error('[send] network error:', String(error));

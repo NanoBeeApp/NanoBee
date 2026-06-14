@@ -51,3 +51,12 @@ MCP calls and decides on its own when it has enough to answer.
   by the global 20s tool timeout.
 - **Goal**: `executeToolCall` uses `tool.timeoutMs ?? CONFIG.AGENT.TOOL_TIMEOUT_MS`,
   so a slow tool can opt into a longer ceiling without raising it for all.
+
+### 2026-06-14 — optional `onToken` for streaming replies
+- **Motivation**: the chat send pipeline needs to stream the answer token by
+  token (live typewriter) while keeping the agent's tool-calling intact.
+- **Goal**: `runAgentLoop` takes an optional `onToken`; when present each turn
+  uses `streamAgentTurn` (content tokens forwarded as they arrive), otherwise
+  the existing non-streamed `generateAgentTurn`.
+- **Key decision**: tool-only turns emit no content, so in the common case only
+  the final answer types out; the loop/trace logic is otherwise unchanged.

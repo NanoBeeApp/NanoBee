@@ -96,6 +96,38 @@ function toOpenAiMessages(messages: AgentChatMessage[]): unknown[] {
 	});
 }
 
+/**
+ * Build the OpenAI `/chat/completions` request body shared by the streaming
+ * and non-streaming turn callers, so the two never drift on how tools, token
+ * caps, or the message mapping are sent.
+ */
+function toOpenAiChatBody(
+	cfg: AiRuntimeConfig,
+	messages: AgentChatMessage[],
+	tools: AiToolDef[],
+	maxTokens: number,
+	stream: boolean,
+): Record<string, unknown> {
+	return {
+		model: cfg.model,
+		max_tokens: maxTokens,
+		...(stream ? { stream: true } : {}),
+		...(tools.length
+			? {
+					tools: tools.map((t) => ({
+						type: "function",
+						function: {
+							name: t.name,
+							description: t.description,
+							parameters: t.parameters,
+						},
+					})),
+				}
+			: {}),
+		messages: toOpenAiMessages(messages),
+	};
+}
+
 /** Map neutral agent messages to the Anthropic content-block wire format. */
 function toAnthropicMessages(messages: AgentChatMessage[]): unknown[] {
 	const out: { role: "user" | "assistant"; content: unknown[] }[] = [];
@@ -212,23 +244,7 @@ export async function generateAgentTurn(
 			// OpenRouter app-attribution headers (ignored by other providers).
 			"X-Title": "NanoBee",
 		};
-		payload = {
-			model: cfg.model,
-			max_tokens: maxTokens,
-			...(tools.length
-				? {
-						tools: tools.map((t) => ({
-							type: "function",
-							function: {
-								name: t.name,
-								description: t.description,
-								parameters: t.parameters,
-							},
-						})),
-					}
-				: {}),
-			messages: toOpenAiMessages(messages),
-		};
+		payload = toOpenAiChatBody(cfg, messages, tools, maxTokens, false);
 	}
 
 	const res = await fetch(url, {
@@ -252,6 +268,133 @@ export async function generateAgentTurn(
 		throw new Error(`AI provider ${cfg.provider} returned an empty reply`);
 	}
 	return turn;
+}
+
+/** One streamed tool-call fragment in an OpenAI delta (keyed by `index`). */
+interface OpenAiStreamToolDelta {
+	index: number;
+	id?: string;
+	function?: { name?: string; arguments?: string };
+}
+interface OpenAiTurnStreamChunk {
+	choices?: {
+		delta?: { content?: string | null; tool_calls?: OpenAiStreamToolDelta[] };
+	}[];
+}
+
+/**
+ * Streaming sibling of {@link generateAgentTurn} for the OpenAI wire protocol:
+ * forwards each assistant content token through `onToken` as it arrives AND
+ * reassembles any tool calls (whose name/arguments stream in fragments keyed by
+ * `index`), so the agent loop can run with a live typewriter. Anthropic has no
+ * streaming-with-tools path here, so it falls back to a single non-streamed
+ * turn whose text is emitted in one `onToken` call. Returns the same
+ * {@link AgentTurn} shape, so the loop treats both protocols uniformly.
+ */
+export async function streamAgentTurn(
+	cfg: AiRuntimeConfig,
+	messages: AgentChatMessage[],
+	tools: AiToolDef[],
+	onToken: (delta: string) => void | Promise<void>,
+	opts?: { maxTokens?: number; timeoutMs?: number },
+): Promise<AgentTurn> {
+	if (!cfg.apiKey) throw new Error("No API key available for AI provider");
+	if (!cfg.baseUrl) throw new Error("No base URL configured for AI provider");
+
+	// Anthropic streaming with tool use is a different event shape; rather than
+	// maintain a second parser, run one plain turn and surface its text at once.
+	if (cfg.protocol === "anthropic") {
+		const turn = await generateAgentTurn(cfg, messages, tools, opts);
+		if (turn.text) await onToken(turn.text);
+		return turn;
+	}
+
+	const maxTokens = opts?.maxTokens ?? CONFIG.AI.MAX_COMPLETION_TOKENS;
+	const signal = AbortSignal.timeout(opts?.timeoutMs ?? CONFIG.AI.REQUEST_TIMEOUT_MS);
+	const url = joinUrl(cfg.baseUrl, "/chat/completions");
+	const res = await fetch(url, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${cfg.apiKey}`,
+			"X-Title": "NanoBee",
+		},
+		body: JSON.stringify(toOpenAiChatBody(cfg, messages, tools, maxTokens, true)),
+		signal,
+	});
+	if (!res.ok) {
+		const body = (await res.text()).slice(0, 500);
+		throw new Error(`AI provider ${cfg.provider} returned ${res.status}: ${body}`);
+	}
+	if (!res.body) throw new Error(`AI provider ${cfg.provider} returned no stream body`);
+
+	const reader = res.body.getReader();
+	const decoder = new TextDecoder();
+	let buffer = "";
+	let text = "";
+	// Tool calls arrive as fragments keyed by `index`; accumulate the name and
+	// the (string) arguments, then JSON-parse each once the stream ends.
+	const toolAcc = new Map<number, { id?: string; name?: string; args: string }>();
+
+	async function handleFrame(frame: string): Promise<void> {
+		const data = frame
+			.split("\n")
+			.filter((l) => l.startsWith("data:"))
+			.map((l) => l.slice(5).trim())
+			.join("");
+		if (!data || data === "[DONE]") return;
+		let json: OpenAiTurnStreamChunk;
+		try {
+			json = JSON.parse(data);
+		} catch {
+			return; // partial / non-JSON keepalive
+		}
+		const delta = json.choices?.[0]?.delta;
+		if (!delta) return;
+		if (typeof delta.content === "string" && delta.content) {
+			text += delta.content;
+			await onToken(delta.content);
+		}
+		for (const tc of delta.tool_calls ?? []) {
+			const slot = toolAcc.get(tc.index) ?? { args: "" };
+			if (tc.id) slot.id = tc.id;
+			if (tc.function?.name) slot.name = tc.function.name;
+			if (tc.function?.arguments) slot.args += tc.function.arguments;
+			toolAcc.set(tc.index, slot);
+		}
+	}
+
+	while (true) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		buffer += decoder.decode(value, { stream: true });
+		let sep: number;
+		while ((sep = buffer.indexOf("\n\n")) >= 0) {
+			const frame = buffer.slice(0, sep);
+			buffer = buffer.slice(sep + 2);
+			await handleFrame(frame);
+		}
+	}
+	if (buffer.trim()) await handleFrame(buffer); // trailing frame without blank line
+
+	const toolCalls: AiToolCall[] = [...toolAcc.entries()]
+		.sort((a, b) => a[0] - b[0])
+		.flatMap(([index, slot]) => {
+			if (!slot.name) return [];
+			let args: Record<string, unknown> = {};
+			try {
+				args = slot.args ? JSON.parse(slot.args) : {};
+			} catch {
+				console.warn("[AI] unparseable streamed tool arguments:", slot.args);
+			}
+			return [{ id: slot.id ?? `call_${index}`, name: slot.name, arguments: args }];
+		});
+
+	const finalText = text.trim() || null;
+	if (!finalText && toolCalls.length === 0) {
+		throw new Error(`AI provider ${cfg.provider} returned an empty reply`);
+	}
+	return { text: finalText, toolCalls };
 }
 
 /**

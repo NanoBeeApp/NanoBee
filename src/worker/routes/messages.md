@@ -103,3 +103,17 @@ it and returns it.
 - **Change**: the per-request web-search key is now injected under
   `<provider>_api_key` (from `resolveWebSearchKey`'s `{provider,key}`), not
   hardcoded `tavily_api_key`, so Brave/Serper/Exa keys reach the data-hub source.
+
+### 2026-06-14 — streaming sibling `POST /stream` (SSE)
+- **Motivation**: chat replies arrived all at once after a long wait (no
+  streaming). The reading experience needed a live typewriter.
+- **Change**: refactored the shared steps into `buildAgentMessages` /
+  `prepareRun` / `persistTurn`, then added `POST /stream` using Hono `streamSSE`:
+  it runs `runAgentLoop` with an `onToken` that emits `token` events, then a
+  `final` event with the same payload `POST "/"` returns. `POST "/"` stays for
+  the quick chat / non-streaming fallback.
+- **Key decision**: persist the accumulated streamed text (what the user
+  watched type out) so the `final` swap-in never jumps; chat never breaks — an
+  LLM/agent failure still falls back to the rule-based reply via `final`, and
+  config/secrets resolve before the stream opens so setup errors stay clean
+  HTTP errors.
