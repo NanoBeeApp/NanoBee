@@ -34,6 +34,10 @@ interface ResearchState {
   /** Saved projects for the sidebar list. */
   projects: ResearchProjectMeta[];
   error: string | null;
+  /** Transient purple-border highlight on the canvas project banner. Turned on
+   *  ONLY by clicking a project in the sidebar list; any other interaction
+   *  (opening a node, loading/creating a project, clicking the canvas) clears it. */
+  projectHighlighted: boolean;
 
   listProjects: () => Promise<void>;
   startResearch: (topic: string) => Promise<void>;
@@ -48,6 +52,10 @@ interface ResearchState {
   /** Load a project; optionally open `openNodeId`'s reading overlay (deep link). */
   loadProject: (id: string, openNodeId?: string) => Promise<void>;
   newResearch: () => void;
+  /** Highlight the open project's banner on the canvas (sidebar selection). */
+  highlightProject: () => void;
+  /** Drop the project-banner highlight. */
+  clearProjectHighlight: () => void;
 }
 
 /** Recursively flatten an outline tree into canvas nodes under `parentId`. */
@@ -247,6 +255,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     generating: false,
     projects: [],
     error: null,
+    projectHighlighted: false,
 
     listProjects: async () => {
       try {
@@ -282,6 +291,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         activeNodeId: null,
         generating: true,
         error: null,
+        projectHighlighted: false,
       });
 
       const result = await generate({ topic, generationMode: "outline" });
@@ -311,7 +321,8 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     openNode: async (id) => {
       const node = get().nodes[id];
       if (!node) return;
-      set({ activeNodeId: id });
+      // Opening any node is "clicking elsewhere" → drop the project highlight.
+      set({ activeNodeId: id, projectHighlighted: false });
       // Already has content (or is the empty root) → just open it.
       if (!node.needsContent || node.content || node.isRoot) return;
 
@@ -488,6 +499,9 @@ export const useResearchStore = create<ResearchState>((set, get) => {
           activeNodeId: willOpen,
           generating: false,
           error: null,
+          // Programmatic / deep-link load starts unhighlighted; the sidebar
+          // click handler re-enables the highlight after this resolves.
+          projectHighlighted: false,
         });
         // A bookmarked node that was never filled in still needs its article.
         if (willOpen) void get().openNode(willOpen);
@@ -507,6 +521,12 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         activeNodeId: null,
         generating: false,
         error: null,
+        projectHighlighted: false,
       }),
+
+    highlightProject: () => set({ projectHighlighted: true }),
+    clearProjectHighlight: () => {
+      if (get().projectHighlighted) set({ projectHighlighted: false });
+    },
   };
 });

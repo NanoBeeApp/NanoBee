@@ -35,6 +35,10 @@ Starting a new research is the sidebar header's page-aware "new" button
   rotated `chevR` arrow stays muted.
 - Clicking the already-open project in the list just `setBrowsing(false)` (drills
   back in without a reload); any other project calls `loadProject`.
+- Clicking a project also calls `highlightProject()` so the canvas banner shows a
+  purple selection ring. For a fresh load it is set in `loadProject(id).then(...)`
+  (loadProject clears the flag while swapping snapshots, so setting it after the
+  promise resolves avoids the race); the already-open branch sets it synchronously.
 
 ## Change history
 

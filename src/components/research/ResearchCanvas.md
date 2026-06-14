@@ -24,6 +24,18 @@ indented under its parent along a vertical rail.
 
 ## Change history
 
+### 2026-06-14 — Project-selection highlight on the banner
+- **Motivation**: the user wanted clicking a project in the left sidebar to mark
+  it on the canvas with a purple border, and to clear that mark on the next
+  interaction.
+- **Goal**: render a brand-purple ring on the topic banner driven by the store's
+  `projectHighlighted` flag, and drop it as soon as the user touches the canvas.
+- **Key decision**: read `projectHighlighted` to toggle `.is-selected` on the
+  banner (a layout-neutral `outline`, so the title stays grid-aligned); call
+  `clearProjectHighlight()` at the top of `onPointerDown` so any press on the
+  canvas (background, node, or banner) counts as "clicking elsewhere". The flag
+  is only ever set by the sidebar project click, never here.
+
 ### 2026-06-14 — Scroll the canvas to the active node
 - **Motivation**: clicking a left-rail outline row opened the node but left the
   canvas wherever it was, so the picked card was often off-screen behind the

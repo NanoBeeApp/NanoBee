@@ -24,6 +24,7 @@ export function ResearchNavList() {
   const order = useResearchStore((s) => s.order);
   const listProjects = useResearchStore((s) => s.listProjects);
   const loadProject = useResearchStore((s) => s.loadProject);
+  const highlightProject = useResearchStore((s) => s.highlightProject);
 
   // When a project is open we default to its outline; `browsing` pops back up to
   // the project list (Level 0) without unloading the canvas.
@@ -60,9 +61,16 @@ export function ResearchNavList() {
 
   // Level 0 — the saved-project list. Clicking the already-open project just
   // drills back into it (no reload); any other project loads onto the canvas.
+  // Either way, flag the canvas to highlight the project banner. For a fresh
+  // load we set the flag *after* loadProject resolves, since loadProject clears
+  // it as part of swapping in the new snapshot.
   const openProject = (id: string) => {
-    if (id === projectId) setBrowsing(false);
-    else void loadProject(id);
+    if (id === projectId) {
+      setBrowsing(false);
+      highlightProject();
+    } else {
+      void loadProject(id).then(() => highlightProject());
+    }
   };
 
   return (

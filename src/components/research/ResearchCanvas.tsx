@@ -34,6 +34,8 @@ export function ResearchCanvas() {
   const order = useResearchStore((s) => s.order);
   const activeNodeId = useResearchStore((s) => s.activeNodeId);
   const openNode = useResearchStore((s) => s.openNode);
+  const projectHighlighted = useResearchStore((s) => s.projectHighlighted);
+  const clearProjectHighlight = useResearchStore((s) => s.clearProjectHighlight);
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const [t, setT] = useState<Transform>({ tx: 0, ty: 0, scale: INITIAL_SCALE });
@@ -90,6 +92,9 @@ export function ResearchCanvas() {
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
+      // Any press on the canvas counts as "clicking elsewhere" → drop the
+      // sidebar-driven project highlight.
+      clearProjectHighlight();
       // Only pan when the bare background is grabbed — never when starting on an
       // interactive element (a node card or the topic banner), so their clicks
       // aren't swallowed by a pan/pointer-capture.
@@ -97,7 +102,7 @@ export function ResearchCanvas() {
       pan.current = { x: e.clientX, y: e.clientY, tx: t.tx, ty: t.ty };
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [t.tx, t.ty],
+    [t.tx, t.ty, clearProjectHighlight],
   );
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
@@ -163,7 +168,7 @@ export function ResearchCanvas() {
         <div className="rc-outline" style={{ width: OUTLINE_WIDTH }}>
           <button
             type="button"
-            className="rc-outline-banner"
+            className={`rc-outline-banner${projectHighlighted ? " is-selected" : ""}`}
             onClick={() => openNode(root.id)}
             data-testid="research-banner"
             title={root.title}>

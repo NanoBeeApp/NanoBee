@@ -7,9 +7,10 @@ snapshot persistence.
 
 ## Core exports / API
 - `useResearchStore` with state (`phase`, `projectId`, `nodes`, `order`,
-  `activeNodeId`, `generating`, `projects`, `error`) and actions:
-  `listProjects`, `startResearch`, `openNode`, `growChild`, `closeReading`,
-  `loadProject(id, openNodeId?)`, `newResearch`.
+  `activeNodeId`, `generating`, `projects`, `error`, `projectHighlighted`) and
+  actions: `listProjects`, `startResearch`, `openNode`, `growChild`,
+  `closeReading`, `loadProject(id, openNodeId?)`, `newResearch`,
+  `highlightProject`, `clearProjectHighlight`.
 
 ## Dependencies
 - Upstream: `lib/api-client.ts` (typed RPC), `data/ids.ts`, `research/types.ts`,
@@ -29,6 +30,19 @@ snapshot persistence.
   user's chat provider config.
 
 ## Change history
+
+### 2026-06-14 — projectHighlighted flag for the canvas selection ring
+- **Motivation**: the user wanted clicking a project in the sidebar to highlight
+  it on the canvas with a purple border, shown *only* after that click and
+  cleared by any other interaction.
+- **Goal**: a single source of truth the sidebar can turn on and the canvas can
+  render + turn off.
+- **Key decision**: add `projectHighlighted` (default false) with
+  `highlightProject` / `clearProjectHighlight`. It is set true ONLY by the
+  sidebar project-item click; `openNode`, `loadProject`, `startResearch`, and
+  `newResearch` all reset it to false so deep-links / refreshes / new research
+  never show it. `loadProject` clears it, so the sidebar sets the flag in a
+  `.then()` after the load resolves to avoid the clear racing the highlight.
 
 ### 2026-06-14 — loadProject can open a node (deep-link support)
 - **Motivation**: with `?project=&node=` now in the URL, a refresh/deep-link must
