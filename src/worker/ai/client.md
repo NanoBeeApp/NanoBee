@@ -13,6 +13,9 @@ diagnosable error (status + truncated body).
   tool/function calling on both protocols
 - `generateChatText(cfg: AiRuntimeConfig, messages: AiChatMessage[])` → `string`
   (tool-free wrapper around `generateAgentTurn`)
+- `streamAgentText(cfg, messages, onDelta, opts?)` → `string` — tool-free
+  streaming completion; awaits `onDelta(delta)` for each text chunk (so callers
+  can apply backpressure / forward in order) and returns the full text
 - Types: `AiChatMessage`, `AgentChatMessage` (adds assistant tool-call and
   tool-result roles), `AiToolDef`, `AiToolCall`, `AgentTurn`
 
@@ -51,3 +54,15 @@ diagnosable error (status + truncated body).
 - **出发点**：连接测试要覆盖没有 /models 端点的 provider（智谱、通义）。
 - **目标**：发一个 max_tokens:1 的最小 chat 请求验证 key/host/model 连通性。
 - **关键决策**：复用两种协议的 URL/header 构造，2xx 即视为连通，失败抛带状态码的可诊断错误。
+
+### 2026-06-14 — add streamAgentText (SSE streaming)
+- **Motivation**: the research reading detail page lost its typewriter output —
+  the whole stack was one-shot (`await res.json()`), so the article only
+  appeared after full generation.
+- **Goal**: a tool-free streaming completion that yields text deltas as they
+  arrive, reusing the same per-protocol payload construction as the non-stream
+  path so research generation can pipe tokens to the client.
+- **Key decision**: parse the provider SSE inline (OpenAI `choices[].delta.content`
+  / Anthropic `content_block_delta`) over `res.body.getReader()` — no SDK; and
+  make `onDelta` awaitable so the route can forward each token in order with
+  proper backpressure instead of firing un-awaited writes.

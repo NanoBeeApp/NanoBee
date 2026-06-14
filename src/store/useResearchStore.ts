@@ -9,6 +9,7 @@
 import { create } from "zustand";
 import { apiClient } from "../lib/api-client";
 import { nextId } from "../data/ids";
+import { extractStreamingContent } from "../research/streaming";
 import type {
   ResearchGenerationResult,
   ResearchNode,
@@ -114,6 +115,87 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     }
   }
 
+  /**
+   * Stream a content-mode generation. Calls `onContent` with the article body
+   * decoded so far on every token (drives the reading overlay's typewriter), and
+   * resolves with the authoritative validated result once the `final` event
+   * arrives. Returns null on transport/stream error. The non-streamed `generate`
+   * above still backs outline mode (a tree, not a typed-out body).
+   */
+  async function generateContentStream(
+    body: { topic: string; question?: string; context?: string; focusTerm?: string },
+    onContent: (partial: string) => void,
+  ): Promise<ResearchGenerationResult | null> {
+    try {
+      const res = await fetch("/api/research/generate-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ ...body, generationMode: "content" }),
+      });
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let raw = ""; // accumulated decoded token text → live content extraction
+      let result: ResearchGenerationResult | null = null;
+      let streamError: string | null = null;
+
+      // Parse one SSE frame: `event:` + one or more `data:` lines. Token/final/
+      // error data are all JSON-encoded, so a single data line per frame.
+      const handleFrame = (frame: string) => {
+        let event = "message";
+        const dataParts: string[] = [];
+        for (const line of frame.split("\n")) {
+          if (line.startsWith("event:")) event = line.slice(6).trim();
+          else if (line.startsWith("data:")) dataParts.push(line.slice(5).trim());
+        }
+        const data = dataParts.join("");
+        if (!data) return;
+        if (event === "token") {
+          try {
+            raw += JSON.parse(data) as string;
+            onContent(extractStreamingContent(raw));
+          } catch {
+            /* ignore a malformed token frame */
+          }
+        } else if (event === "final") {
+          try {
+            result = JSON.parse(data) as ResearchGenerationResult;
+          } catch {
+            streamError = "Malformed final payload";
+          }
+        } else if (event === "error") {
+          try {
+            streamError = JSON.parse(data) as string;
+          } catch {
+            streamError = data;
+          }
+        }
+      };
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let sep: number;
+        while ((sep = buffer.indexOf("\n\n")) >= 0) {
+          const frame = buffer.slice(0, sep);
+          buffer = buffer.slice(sep + 2);
+          if (frame.trim()) handleFrame(frame);
+        }
+      }
+      if (buffer.trim()) handleFrame(buffer);
+
+      if (streamError) throw new Error(streamError);
+      return result;
+    } catch (error) {
+      console.error("[research] generateContentStream failed:", String(error));
+      return null;
+    }
+  }
+
   return {
     phase: "welcome",
     projectId: null,
@@ -196,17 +278,22 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       set((s) => ({ nodes: { ...s.nodes, [id]: { ...s.nodes[id], status: "loading" } } }));
       const parent = node.parentId ? get().nodes[node.parentId] : null;
       const context = [get().topic, parent?.brief, parent?.summary].filter(Boolean).join(" / ");
-      const result = await generate({
-        topic: get().topic,
-        question: node.title,
-        context: context || undefined,
-        generationMode: "content",
-      });
+      const result = await generateContentStream(
+        { topic: get().topic, question: node.title, context: context || undefined },
+        (partial) =>
+          set((s) => {
+            const prev = s.nodes[id];
+            if (!prev) return {};
+            return { nodes: { ...s.nodes, [id]: { ...prev, content: partial } } };
+          }),
+      );
       set((s) => {
         const prev = s.nodes[id];
         if (!prev) return {};
         if (!result) {
-          return { nodes: { ...s.nodes, [id]: { ...prev, status: "failed" } } };
+          // Clear any partial streamed text so the openNode guard
+          // (`|| node.content`) doesn't short-circuit a retry.
+          return { nodes: { ...s.nodes, [id]: { ...prev, content: undefined, status: "failed" } } };
         }
         return {
           nodes: {
@@ -249,18 +336,27 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       const context = [get().topic, parent.brief, parent.summary, parent.content?.slice(0, 1200)]
         .filter(Boolean)
         .join(" / ");
-      const result = await generate({
-        topic: get().topic,
-        question: opts.question,
-        focusTerm: opts.focusTerm,
-        context: context || undefined,
-        generationMode: "content",
-      });
+      const result = await generateContentStream(
+        {
+          topic: get().topic,
+          question: opts.question,
+          focusTerm: opts.focusTerm,
+          context: context || undefined,
+        },
+        (partial) =>
+          set((s) => {
+            const prev = s.nodes[childId];
+            if (!prev) return {};
+            return { nodes: { ...s.nodes, [childId]: { ...prev, content: partial } } };
+          }),
+      );
       set((s) => {
         const prev = s.nodes[childId];
         if (!prev) return {};
         if (!result) {
-          return { nodes: { ...s.nodes, [childId]: { ...prev, status: "failed" } } };
+          // Drop partial streamed text so a failed child shows a clean error
+          // state rather than half an article.
+          return { nodes: { ...s.nodes, [childId]: { ...prev, content: undefined, status: "failed" } } };
         }
         return {
           nodes: {

@@ -20,6 +20,7 @@ export function ReadingOverlay() {
 
   const loading = node.status === "loading";
   const failed = node.status === "failed";
+  const hasContent = Boolean(node.content);
 
   return (
     <div className="rc-reading-scrim" onClick={closeReading} data-testid="research-reading-scrim">
@@ -47,7 +48,9 @@ export function ReadingOverlay() {
           )}
           <h1 className="rc-reading-title">{node.title}</h1>
 
-          {loading && (
+          {/* First token hasn't landed yet → spinner; once text starts
+              streaming we show the body below instead. */}
+          {loading && !hasContent && (
             <div className="rc-reading-loading" data-testid="research-reading-loading">
               <span className="rc-node-spinner" />
               AI 正在生成内容…
@@ -63,13 +66,25 @@ export function ReadingOverlay() {
             </div>
           )}
 
-          {!loading && !failed && node.content && (
+          {/* Render the article as soon as any text exists — partial while
+              streaming, full once the `final` event lands. */}
+          {!failed && hasContent && (
             <Markdown
               className="rc-prose"
               data-testid="research-article-body"
-              content={node.content}
+              content={node.content!}
               onTermClick={(term) => growChild(node.id, { focusTerm: term })}
             />
+          )}
+
+          {loading && hasContent && (
+            <div
+              className="rc-reading-streaming"
+              data-testid="research-streaming"
+              aria-live="polite">
+              <span className="rc-stream-cursor" />
+              正在生成…
+            </div>
           )}
 
           {!loading && !failed && node.isRoot && !node.content && (

@@ -18,9 +18,24 @@ backdrop.
 - Structure: a `.rc-reading-scrim` backdrop flex-centers the `.rc-reading` sheet;
   clicking the backdrop closes, clicking the sheet `stopPropagation`s. White
   background, chrome minimized (floating close button, no header/footer bars).
-- Shows loading / failed / root-hint states.
+- Shows loading / failed / root-hint states. While the article streams, the
+  body renders its partial content (any text → `<Markdown>`); the spinner only
+  shows before the first token lands (`loading && !content`), and a blinking
+  `.rc-stream-cursor` "正在生成…" footer shows while `loading && content`.
+  Follow-up chips appear only after generation finishes (`!loading`).
 
 ## Change history
+
+### 2026-06-14 — Render streaming article (typewriter)
+- **Motivation**: the overlay only knew "loading (spinner)" vs "ready (full
+  body)", so even after the store began streaming tokens it would hide the body
+  until generation finished.
+- **Goal**: show the body the moment any text exists and surface a live
+  "generating" affordance, so the typed-out output is visible again.
+- **Key decision**: gate the body on `hasContent` (not `!loading`), keep the
+  spinner only for `loading && !content`, and add a blinking-cursor footer for
+  `loading && content`. Follow-ups still wait for `!loading` since the contract
+  emits `content` before `questions`.
 
 ### 2026-06-13 — Switch to the shared `<Markdown>` component
 - **Motivation**: chat and reading should share one markdown renderer

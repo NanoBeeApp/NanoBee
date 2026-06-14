@@ -11,13 +11,14 @@
 
 import { Hono } from "hono";
 import type { Context } from "hono";
+import { streamSSE } from "hono/streaming";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { Env } from "../api-worker";
 import { resolveAiConfig } from "../ai/settings";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
-import { generateResearchNode } from "../research/generate";
+import { generateResearchNode, generateResearchNodeStream } from "../research/generate";
 import {
   ANON_OWNER,
   deleteResearchProject,
@@ -88,6 +89,32 @@ export const researchRoutes = new Hono<{ Bindings: Env }>()
       console.error("[API] POST /api/research/generate failed:", String(error));
       return c.json({ error: "Generation failed" }, 502);
     }
+  })
+  // Streaming sibling of /generate (content mode): emits `token` events as the
+  // article body streams, then a `final` event with the validated result, or an
+  // `error` event. Tokens are JSON-encoded so newlines never break SSE framing.
+  // Config is checked BEFORE opening the stream — an opened SSE response can no
+  // longer change its HTTP status, so a missing provider returns a clean 400.
+  .post("/generate-stream", zValidator("json", generateSchema), async (c) => {
+    const input = c.req.valid("json");
+    console.log("[API] POST /api/research/generate-stream, topic:", input.topic);
+    const token = getSessionToken(c);
+    const user = token ? await getUserBySessionToken(c.env.DB, token) : null;
+    const aiConfig = await resolveAiConfig(c.env, user?.id ?? null);
+    if (!aiConfig.apiKey) {
+      return c.json({ error: "No AI provider configured" }, 400);
+    }
+    return streamSSE(c, async (stream) => {
+      try {
+        const result = await generateResearchNodeStream(aiConfig, input, (delta) =>
+          stream.writeSSE({ event: "token", data: JSON.stringify(delta) }),
+        );
+        await stream.writeSSE({ event: "final", data: JSON.stringify(result) });
+      } catch (error) {
+        console.error("[API] POST /api/research/generate-stream failed:", String(error));
+        await stream.writeSSE({ event: "error", data: JSON.stringify(String(error).slice(0, 300)) });
+      }
+    });
   })
   .get("/projects", async (c) => {
     try {

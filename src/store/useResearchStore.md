@@ -12,7 +12,8 @@ snapshot persistence.
   `loadProject`, `newResearch`.
 
 ## Dependencies
-- Upstream: `lib/api-client.ts` (typed RPC), `data/ids.ts`, `research/types.ts`.
+- Upstream: `lib/api-client.ts` (typed RPC), `data/ids.ts`, `research/types.ts`,
+  `research/streaming.ts` (`extractStreamingContent`).
 - Downstream: every `components/research/*` component.
 
 ## Key implementation notes
@@ -28,7 +29,19 @@ snapshot persistence.
 
 ## Change history
 
-### 2026-06-13 — Drop tidy-tree relayout
+### 2026-06-14 — Stream content-mode generation (typewriter)
+- **Motivation**: `openNode` / `growChild` filled a node's article via the
+  one-shot `POST /generate` (`await res.json()`), so the reading overlay showed
+  a spinner until the whole article popped in — the user noticed the streaming
+  output was gone.
+- **Goal**: type the body out live while the model generates, then settle the
+  authoritative result (questions/summary/tags) from the stream's `final` event.
+- **Key decision**: read `POST /api/research/generate-stream` via raw `fetch` +
+  `getReader()` (the typed RPC client can't model SSE), reconstruct the model's
+  raw JSON from `token` events and feed it through `extractStreamingContent` to
+  update `node.content` per token. Outline mode keeps the non-stream `generate`
+  (a tree, not a typed-out body). On stream failure, clear the partial
+  `content` so the `openNode` guard (`|| node.content`) can't block a retry.
 - **Motivation**: The canvas switched to a nested-outline hierarchical view that
   lays nodes out in document flow, so the `layoutNodes`/`relayout` pass that
   stamped `x`/`y` onto every node was dead work.

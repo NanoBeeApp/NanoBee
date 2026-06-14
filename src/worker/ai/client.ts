@@ -304,3 +304,130 @@ export async function generateChatText(
 	if (!trimmed) throw new Error(`AI provider ${cfg.provider} returned an empty reply`);
 	return trimmed;
 }
+
+interface OpenAiStreamChunk {
+	choices?: { delta?: { content?: string | null } }[];
+}
+interface AnthropicStreamEvent {
+	type?: string;
+	delta?: { text?: string };
+}
+
+/**
+ * Stream a tool-free completion. Invokes `onDelta` for each text chunk as it
+ * arrives (awaited, so the caller can apply backpressure / forward to its own
+ * stream in order) and returns the full concatenated text. Powers the research
+ * reading overlay's live typewriter; tools are not supported because research
+ * generation is tool-free. Throws on transport / HTTP / empty-stream errors so
+ * the caller can fall back to a non-streamed retry.
+ */
+export async function streamAgentText(
+	cfg: AiRuntimeConfig,
+	messages: AiChatMessage[],
+	onDelta: (delta: string) => void | Promise<void>,
+	opts?: { maxTokens?: number; timeoutMs?: number },
+): Promise<string> {
+	if (!cfg.apiKey) throw new Error("No API key available for AI provider");
+	if (!cfg.baseUrl) throw new Error("No base URL configured for AI provider");
+
+	const maxTokens = opts?.maxTokens ?? CONFIG.AI.MAX_COMPLETION_TOKENS;
+	const signal = AbortSignal.timeout(opts?.timeoutMs ?? CONFIG.AI.REQUEST_TIMEOUT_MS);
+	const isAnthropic = cfg.protocol === "anthropic";
+
+	let url: string;
+	let headers: Record<string, string>;
+	let payload: unknown;
+
+	if (isAnthropic) {
+		url = joinUrl(cfg.baseUrl, "/messages");
+		headers = {
+			"Content-Type": "application/json",
+			"x-api-key": cfg.apiKey,
+			"anthropic-version": "2023-06-01",
+		};
+		const system = messages
+			.filter((m) => m.role === "system")
+			.map((m) => m.content)
+			.join("\n");
+		payload = {
+			model: cfg.model,
+			max_tokens: maxTokens,
+			stream: true,
+			...(system ? { system } : {}),
+			messages: toAnthropicMessages(messages),
+		};
+	} else {
+		url = joinUrl(cfg.baseUrl, "/chat/completions");
+		headers = {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${cfg.apiKey}`,
+			"X-Title": "NanoBee",
+		};
+		payload = {
+			model: cfg.model,
+			max_tokens: maxTokens,
+			stream: true,
+			messages: toOpenAiMessages(messages),
+		};
+	}
+
+	const res = await fetch(url, {
+		method: "POST",
+		headers,
+		body: JSON.stringify(payload),
+		signal,
+	});
+	if (!res.ok) {
+		const body = (await res.text()).slice(0, 500);
+		throw new Error(`AI provider ${cfg.provider} returned ${res.status}: ${body}`);
+	}
+	if (!res.body) throw new Error(`AI provider ${cfg.provider} returned no stream body`);
+
+	const reader = res.body.getReader();
+	const decoder = new TextDecoder();
+	let buffer = "";
+	let full = "";
+
+	// Pull the text delta out of one SSE frame (provider-specific) and forward
+	// it. Comment lines (`:` keepalives) and `[DONE]` carry no text.
+	async function handleFrame(frame: string): Promise<void> {
+		const data = frame
+			.split("\n")
+			.filter((l) => l.startsWith("data:"))
+			.map((l) => l.slice(5).trim())
+			.join("");
+		if (!data || data === "[DONE]") return;
+		let json: OpenAiStreamChunk & AnthropicStreamEvent;
+		try {
+			json = JSON.parse(data);
+		} catch {
+			return; // partial / non-JSON keepalive
+		}
+		const delta = isAnthropic
+			? json.type === "content_block_delta"
+				? json.delta?.text
+				: undefined
+			: json.choices?.[0]?.delta?.content;
+		if (typeof delta === "string" && delta) {
+			full += delta;
+			await onDelta(delta);
+		}
+	}
+
+	while (true) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		buffer += decoder.decode(value, { stream: true });
+		let sep: number;
+		while ((sep = buffer.indexOf("\n\n")) >= 0) {
+			const frame = buffer.slice(0, sep);
+			buffer = buffer.slice(sep + 2);
+			await handleFrame(frame);
+		}
+	}
+	if (buffer.trim()) await handleFrame(buffer); // trailing frame without blank line
+
+	const trimmed = full.trim();
+	if (!trimmed) throw new Error(`AI provider ${cfg.provider} returned an empty stream`);
+	return trimmed;
+}
