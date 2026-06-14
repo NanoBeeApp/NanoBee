@@ -38,6 +38,7 @@ export function ResearchCanvas() {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [t, setT] = useState<Transform>({ tx: 0, ty: 0, scale: INITIAL_SCALE });
   const centeredFor = useRef<string>("");
+  const scrolledTo = useRef<string>("");
   const pan = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
 
   const rootId = order[0];
@@ -58,6 +59,34 @@ export function ResearchCanvas() {
     centeredFor.current = key;
     setT({ tx: Math.max(24, tx), ty: 40, scale: INITIAL_SCALE });
   }, [rootId, order.length]);
+
+  // Scroll the canvas to the active node (e.g. clicking a left outline row, a
+  // deep link, or growing a child). The world is positioned with a CSS
+  // transform, not a native scrollbar, so "scroll" means nudging `ty` so the
+  // active card sits a comfortable distance below the top of the viewport. Only
+  // vertical (the fixed-width column is already horizontally centered). rAF lets
+  // a just-created card lay out first.
+  useEffect(() => {
+    if (!activeNodeId) return;
+    if (scrolledTo.current === activeNodeId) return;
+    const vp = viewportRef.current;
+    if (!vp) return;
+    const raf = requestAnimationFrame(() => {
+      const card = vp.querySelector<HTMLElement>(
+        `[data-testid="research-node-${activeNodeId}"]`,
+      );
+      if (!card) return;
+      scrolledTo.current = activeNodeId;
+      const vpRect = vp.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const targetTop = vpRect.height * 0.22;
+      const deltaY = targetTop - (cardRect.top - vpRect.top);
+      // Only move if it isn't already comfortably in view, to avoid tiny jumps.
+      if (Math.abs(deltaY) < 8) return;
+      setT((prev) => ({ ...prev, ty: prev.ty + deltaY }));
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [activeNodeId]);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {

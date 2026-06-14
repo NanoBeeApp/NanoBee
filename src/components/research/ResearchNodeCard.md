@@ -21,6 +21,16 @@ laid out in normal flow by the parent canvas.
 
 ## Change history
 
+### 2026-06-14 — All-white cards, no gray depth fill, no hover lift
+- **Motivation**: user asked to drop the gray card backgrounds (depth-2/3 used
+  `--surface-2`/`--surface-3`) and the hover shadow/border lift; the grays also
+  conflicted with NanoBee's "white background, minimize card chrome" rule.
+- **Goal**: keep cards white and quiet; convey nesting via indentation +
+  connector rails + title-size step instead of background color.
+- **Key decision**: in `research.css`, removed the `.rc-node.depth-2/-3`
+  background overrides and the `.rc-node:hover` rule (active/root states keep
+  their brand styling).
+
 ### 2026-06-14 — Strip redundant chrome to reduce visual noise
 - **Motivation**: The "待展开/已展开" status badge and the "点击阅读/继续阅读"
   footer CTA (with book icon) restated what the clickable card already conveys —

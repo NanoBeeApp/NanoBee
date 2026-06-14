@@ -24,6 +24,17 @@ indented under its parent along a vertical rail.
 
 ## Change history
 
+### 2026-06-14 — Scroll the canvas to the active node
+- **Motivation**: clicking a left-rail outline row opened the node but left the
+  canvas wherever it was, so the picked card was often off-screen behind the
+  reading overlay and out of place once it closed.
+- **Goal**: make the canvas follow the active node (outline click, deep link,
+  grown child) so the card is in view.
+- **Key decision**: an effect on `activeNodeId` nudges `ty` (the world is
+  transform-positioned, not natively scrolled) so the active card sits ~22% down
+  the viewport; guarded by a `scrolledTo` ref + an 8px deadzone to avoid tiny
+  jumps, vertical-only since the column is already centered.
+
 ### 2026-06-14 — Share buildChildrenMap with the sidebar outline
 - **Motivation**: The new left-rail `ResearchOutlineTree` needed the exact same
   parent→children derivation, which had been a file-local copy here.

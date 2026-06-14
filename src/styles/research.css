@@ -160,14 +160,9 @@
   text-align: left;
   transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
-/* Depth is read through a subtle cool-tone background step (not heavier
-   borders), so nesting stays legible without visual noise. */
-.rc-node.depth-2 { background: var(--surface-2); }
-.rc-node.depth-3 { background: var(--surface-3); }
-.rc-node:hover {
-  border-color: var(--border-2);
-  box-shadow: 0 2px 4px rgba(15, 17, 23, 0.06), 0 8px 22px rgba(15, 17, 23, 0.08);
-}
+/* All node cards stay white (no gray depth fills); nesting is read through the
+   left indentation + connector lines and the title-size step, not background
+   color or a hover lift. */
 .rc-node.is-root {
   border-color: var(--brand-2);
   background: var(--brand-soft);
