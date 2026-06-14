@@ -17,6 +17,10 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 
 ## Change history
 
+### 2026-06-14 — IME-safe Escape / Enter (composition guard)
+- **Motivation**: under a Chinese IME the Esc that cancels an in-progress composition was also closing the popup (and Enter while picking a candidate would prematurely send). `KeyboardEvent.isComposing` is unreliable for Escape across browsers.
+- **Fix**: track composition state ourselves via `onCompositionStart` / `onCompositionEnd` on the textarea (a `composingRef`); the window keydown handler and the Enter-to-send guard both bail while `composingRef.current` is true (with `isComposing` / keyCode 229 as fallback). So the first Esc only cancels the IME; Esc closes the popup on a single press when not composing, and Enter only sends once a candidate is committed.
+
 ### 2026-06-14 — Escape closes the popup
 - **Motivation**: the user asked that Escape also dismiss the popup, matching the standard "close overlay" gesture.
 - **Change**: the same widget `keydown` listener now closes the popup on `Escape` when it's open; the close button's tooltip notes `Esc`.

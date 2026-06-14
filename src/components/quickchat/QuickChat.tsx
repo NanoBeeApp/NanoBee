@@ -31,6 +31,11 @@ export function QuickChat() {
   const [val, setVal] = useState('');
   const taRef = useRef<HTMLTextAreaElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
+  // True while an IME composition is in progress (pinyin / kana / hangul). We
+  // track it ourselves via composition events because `KeyboardEvent.isComposing`
+  // is unreliable for Escape across browsers — and keydown fires before
+  // `compositionend`, so this ref is still true at the moment we check it.
+  const composingRef = useRef(false);
 
   const messages = (quickChatId && convos[quickChatId]) || [];
   const hasMessages = messages.length > 0;
@@ -54,6 +59,11 @@ export function QuickChat() {
   useEffect(() => {
     if (hidden) return;
     const onKey = (e: KeyboardEvent) => {
+      // Ignore keys delivered while an IME composition is active (Chinese /
+      // Japanese / Korean input). There, the first Esc cancels the in-progress
+      // composition — it must NOT also close the popup. We trust our own
+      // composition ref first, with isComposing / keyCode 229 as a fallback.
+      if (composingRef.current || e.isComposing || e.keyCode === 229) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
         e.preventDefault();
         setRightCollapsed(!rightCollapsed);
@@ -85,7 +95,9 @@ export function QuickChat() {
     }
   };
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+    // Don't send while composing — Enter there confirms the IME candidate, not
+    // the message (otherwise picking a Chinese word would fire a premature send).
+    if (e.key === 'Enter' && !e.shiftKey && !composingRef.current) { e.preventDefault(); submit(); }
   };
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setVal(e.target.value);
@@ -153,6 +165,8 @@ export function QuickChat() {
             <div className="nb-qc">
               <div className="qc-row">
                 <textarea ref={taRef} rows={1} value={val} onChange={onChange} onKeyDown={onKeyDown}
+                  onCompositionStart={() => { composingRef.current = true; }}
+                  onCompositionEnd={() => { composingRef.current = false; }}
                   placeholder={ctx ? '问问这条内容…' : '随时问我…'}
                   data-testid="quick-chat-input" />
                 <button className="nb-send" disabled={!val.trim()} onClick={submit} title="发送"
