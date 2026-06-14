@@ -10,12 +10,17 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 ## Key notes
 - Returns null on the chat view (centered bottom composer is the quick chat's "full form") and on the settings page (a configuration surface).
 - Folded by default (`rightCollapsed` starts `true`): only the bubble shows. Clicking the bubble toggles `rightCollapsed`; while open (`!rightCollapsed`) the popup renders and stays open until the bubble or the header's `×` closes it (no auto-close on mouse leave). The bubble shows the bee icon when folded, `×` when open.
-- **⌘J / Ctrl+J toggles the popup from anywhere**, and **Escape closes it when open** (the listener is inert on the chat / settings surfaces where the widget isn't rendered; it `preventDefault`s the browser's own ⌘J). The shortcut is surfaced to the user in two places: the bubble's hover tooltip (`快速对话 · ⌘J`) and a `⌘J` kbd chip in the popup header; the close button's tooltip notes `Esc`. Opening the popup (via the shortcut or a bubble click) auto-focuses the composer.
+- **Space opens the popup, and Escape closes it when open** (the listener is inert on the chat / settings surfaces where the widget isn't rendered). Space only fires in a non-input state — it is gated on `document.activeElement === document.body`, so it never steals a space from an `<input>`/`<textarea>`/contenteditable, a focused button/link, or a scrollable region; the app `body` is `overflow:hidden`, so a bare Space has no page-scroll job to hijack. The shortcut is surfaced to the user via the bubble's hover tooltip and a `空格` kbd chip in the popup header; the close button's tooltip notes `Esc`. Opening the popup (via the shortcut or a bubble click) auto-focuses the composer.
 - The popup floats over content (fixed, bottom-right) instead of squeezing a grid column, so opening/closing it never reflows the page.
 - The feed pins to the bottom on new messages, on the pending indicator, and whenever the popup (re)opens.
 - Quick conversations get session metadata so they appear in the sidebar's "刚刚" group.
 
 ## Change history
+
+### 2026-06-14 — open shortcut changed from ⌘J to Space (non-input only)
+- **Motivation**: the user wanted to open the bubble by simply pressing Space, explicitly only when not in an input state.
+- **Goal**: Space opens the popup without ever interfering with typing, focused controls, or scrolling.
+- **Key decisions**: dropped the ⌘J toggle; Space opens only when the popup is folded, no modifier is held, and `document.activeElement === document.body` (nothing interactive/editable focused). `preventDefault` runs only when we actually open. Kept Escape-to-close and the IME composition guard. The header kbd chip and bubble tooltip now read `空格`.
 
 ### 2026-06-14 — IME-safe Escape / Enter (composition guard)
 - **Motivation**: under a Chinese IME the Esc that cancels an in-progress composition was also closing the popup (and Enter while picking a candidate would prematurely send). `KeyboardEvent.isComposing` is unreliable for Escape across browsers.

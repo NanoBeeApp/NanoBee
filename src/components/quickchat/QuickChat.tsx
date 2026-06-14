@@ -53,9 +53,11 @@ export function QuickChat() {
 
   // Keyboard control for the popup. Inert on the chat / settings surfaces where
   // the widget isn't rendered.
-  // - ⌘J / Ctrl+J toggles it from anywhere (preventDefault so the browser's own
-  //   ⌘J / downloads stays out of the way while the app owns it).
-  // - Escape closes it when open (matches the standard "dismiss overlay" gesture).
+  // - Space opens it — but ONLY when nothing interactive is focused (so it never
+  //   steals a space from a text field, a focused button/link, or a scrollable
+  //   region). The app body is overflow:hidden, so a bare Space here has no
+  //   page-scroll job to hijack.
+  // - Escape closes it when open (the standard "dismiss overlay" gesture).
   useEffect(() => {
     if (hidden) return;
     const onKey = (e: KeyboardEvent) => {
@@ -64,12 +66,25 @@ export function QuickChat() {
       // composition — it must NOT also close the popup. We trust our own
       // composition ref first, with isComposing / keyCode 229 as a fallback.
       if (composingRef.current || e.isComposing || e.keyCode === 229) return;
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
-        e.preventDefault();
-        setRightCollapsed(!rightCollapsed);
-      } else if (e.key === 'Escape' && !rightCollapsed) {
+
+      if (e.key === 'Escape' && !rightCollapsed) {
         e.preventDefault();
         setRightCollapsed(true);
+        return;
+      }
+
+      // Space opens the popup, but only in a "non-input" state: it is folded, no
+      // modifier is held, and the focus is on the bare page (document.body) — not
+      // an <input>/<textarea>/contenteditable, nor a focused button/link/control.
+      if (
+        (e.key === ' ' || e.code === 'Space') &&
+        rightCollapsed &&
+        !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey
+      ) {
+        const active = document.activeElement;
+        if (active && active !== document.body) return;
+        e.preventDefault();
+        setRightCollapsed(false);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -119,7 +134,7 @@ export function QuickChat() {
           <div className="nb-rc-head">
             <span className="nb-rc-glyph"><Icons.bee size={14} sw={1.6} /></span>
             <b>快速对话</b>
-            <span className="kbd" title="按 ⌘J 开关">⌘J</span>
+            <span className="kbd" title="非输入状态下按空格可打开">空格</span>
             <span style={{ flex: 1 }} />
             {hasMessages && (
               <button className="btn btn-ghost btn-icon btn-sm" title="在聊天页打开" onClick={openQuickInChat}
@@ -180,8 +195,8 @@ export function QuickChat() {
       <button
         className={`nb-qc-bubble${open ? ' is-open' : ''}`}
         onClick={() => setRightCollapsed(open)}
-        title={open ? '关闭快速对话 · ⌘J' : '快速对话 · ⌘J'}
-        aria-label={open ? '关闭快速对话（⌘J）' : '打开快速对话（⌘J）'}
+        title={open ? '关闭快速对话' : '快速对话（非输入状态下按空格打开）'}
+        aria-label={open ? '关闭快速对话' : '打开快速对话（空格）'}
         aria-expanded={open}
         data-testid="quick-chat-bubble">
         {open ? <Icons.x size={22} sw={2.2} /> : <Icons.bee size={24} sw={1.6} />}
