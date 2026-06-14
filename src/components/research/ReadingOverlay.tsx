@@ -79,6 +79,23 @@ export function ReadingOverlay() {
             </div>
           )}
 
+          {/* Streaming bottom buffer (ported from Curve): while the article is
+              still streaming, append ~one screen of blank space below the body.
+              Once the user scrolls down, the latest line settles near the top of
+              the viewport and freshly generated tokens fill the blank below, so
+              they can keep watching the article grow without re-scrolling every
+              few lines. Rendered only while streaming; paired with
+              `overflow-anchor: none` on the scroll container so appending text
+              never auto-nudges scrollTop. No skeleton bars here — a plain buffer
+              avoids a "gray-bars + prose" double track next to the live body. */}
+          {loading && hasContent && (
+            <div
+              className="rc-stream-spacer"
+              aria-hidden="true"
+              data-testid="research-stream-spacer"
+            />
+          )}
+
           {!loading && !failed && node.isRoot && !node.content && (
             <p className="rc-reading-roothint">
               这是你的研究方向。点击画布上的任意节点开始深入阅读，或从下面的问题继续探索。

@@ -26,6 +26,18 @@ backdrop.
 
 ## Change history
 
+### 2026-06-14 — Restore Curve's streaming blank-area buffer
+- **Motivation**: the port dropped Curve's `streaming-bottom-spacer`. Without it,
+  the newest streamed line always hugged the bottom edge of the sheet, forcing
+  the reader to scroll down repeatedly to keep the live output in view.
+- **Goal**: reproduce Curve's behavior — scroll down once, then have new tokens
+  fill a screenful of blank space below so re-scrolling isn't needed.
+- **Key decision**: render a `.rc-stream-spacer` (≈ one screen tall) only while
+  `loading && content`, paired with `overflow-anchor: none` on `.rc-reading-scroll`
+  so appending text below the viewport never auto-nudges scrollTop. Adapted to
+  NanoBee's plain `overflow-y:auto` div (no Radix ScrollArea / subtree swap), so
+  the lighter CSS approach replaces Curve's full custom scroll-anchor effect.
+
 ### 2026-06-14 — Drop the tag row above the article title
 - **Motivation**: the row of tag chips at the top of the reading detail added
   visual noise above the title without carrying core reading value.

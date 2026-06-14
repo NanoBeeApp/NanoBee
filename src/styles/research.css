@@ -409,6 +409,27 @@
   min-height: 0;
   overflow-y: auto;
   padding: 28px 36px 56px;
+  /* Disable the browser's native scroll anchoring. While the article streams,
+     tokens are appended below the viewport (into .rc-stream-spacer); native
+     anchoring would try to keep a now-shifting element in place and nudge
+     scrollTop, which reads as the scrollbar creeping downward on its own.
+     With it off, appended text leaves the visible region untouched, so the
+     reader stays put and the latest line just fills the blank buffer. */
+  overflow-anchor: none;
+}
+.rc-reading-scroll * {
+  overflow-anchor: none;
+}
+
+/* Streaming bottom buffer — pure blank space appended after the body while the
+   article is still streaming (mirrors Curve's .streaming-bottom-spacer).
+   Height ≈ one sheet minus the top chrome and a few lines of breathing room, so
+   after the reader scrolls down once, the latest line sits near the top of the
+   viewport with a screenful of empty space beneath it for new tokens to fill. */
+.rc-stream-spacer {
+  min-height: calc(88vh - 200px);
+  flex-shrink: 0;
+  pointer-events: none;
 }
 .rc-reading-title {
   font-size: 24px;
