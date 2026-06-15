@@ -32,7 +32,8 @@
 				}
 			],
 			"vars": {
-				"EMAIL_FROM": "NanoBee <noreply@windseed.app>"
+				"EMAIL_FROM": "NanoBee <noreply@windseed.app>",
+				"DATA_HUB_URL": "https://init-hono-tanstack-rpc.stairbook.workers.dev"
 			},
 			"d1_databases": [
 				{
@@ -52,7 +53,8 @@
 				}
 			],
 			"vars": {
-				"EMAIL_FROM": "NanoBee <noreply@windseed.app>"
+				"EMAIL_FROM": "NanoBee <noreply@windseed.app>",
+				"DATA_HUB_URL": "https://init-hono-tanstack-rpc-dev.stairbook.workers.dev"
 			},
 			"d1_databases": [
 				{
