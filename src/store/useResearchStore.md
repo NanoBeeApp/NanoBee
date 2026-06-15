@@ -8,7 +8,7 @@ snapshot persistence.
 ## Core exports / API
 - `useResearchStore` with state (`phase`, `projectId`, `nodes`, `order`,
   `activeNodeId`, `generating`, `projects`, `error`, `projectHighlighted`,
-  `focusNodeId`) and actions: `listProjects`, `startResearch`, `openNode`,
+  `highlightedNodeId`, `traces`) and actions: `listProjects`, `startResearch`, `openNode`,
   `growChild`, `closeReading`, `loadProject(id, openNodeId?)`, `newResearch`,
   `highlightProject`, `clearProjectHighlight`, `focusAndOpenNode`.
 
@@ -30,6 +30,20 @@ snapshot persistence.
   user's chat provider config.
 
 ## Change history
+
+### 2026-06-15 — Capture generation traces for debugging (`traces` map)
+- **Motivation**: the canvas/reading overlay need to show how the outline and
+  each article were generated; the store has to hold those traces.
+- **Goal**: keep an in-session `traces` map and populate it from each generation
+  call (outline + per-node content), including on failure.
+- **Key decision**: `generate` and `generateContentStream` now return
+  `{ result, trace }` (the trace is carried even on failure — non-streamed via
+  the 502 body, streamed via the `error` SSE event). Traces are keyed by the id
+  of the node they produced (root id → outline trace; concept node id → its
+  article trace) and are NOT persisted in the snapshot (they'd bloat it); the
+  map is reset on `startResearch` / `loadProject` / `newResearch`. Inline Q&A
+  (`askInReading`) ignores its trace — it answers below the article rather than
+  growing a node, so there's no node to anchor a "生成过程" entry to.
 
 ### 2026-06-14 — Remove focusAndOpenNode / focusNodeId (open immediately)
 - **Motivation**: the user wants sidebar rows to open the reading overlay

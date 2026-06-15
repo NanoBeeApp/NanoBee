@@ -10,6 +10,7 @@ import { create } from "zustand";
 import { apiClient } from "../lib/api-client";
 import { nextId } from "../data/ids";
 import { extractStreamingContent } from "../research/streaming";
+import type { ResearchGenerationTrace } from "../research/generation-trace";
 import type {
   ResearchGenerationResult,
   ResearchNode,
@@ -42,6 +43,11 @@ interface ResearchState {
    *  reading overlay closes — it persists until the user presses blank canvas
    *  (clearNodeHighlight) or opens another node (which moves it). */
   highlightedNodeId: string | null;
+  /** In-session generation traces for debugging, keyed by the id of the node
+   *  they produced: the root node's id holds the outline-generation trace; a
+   *  concept node's id holds its article-generation trace. Not persisted in the
+   *  D1 snapshot (it would bloat it); cleared when the project changes. */
+  traces: Record<string, ResearchGenerationTrace>;
 
   listProjects: () => Promise<void>;
   startResearch: (topic: string) => Promise<void>;
@@ -118,21 +124,33 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     }
   }
 
-  /** Call the generation endpoint; returns null on failure. */
+  /**
+   * Call the (non-streamed) generation endpoint. Returns the validated result
+   * (null on failure) AND the execution trace when present — the failure path
+   * still carries a trace (in the error body) so the UI can debug a failed run.
+   */
   async function generate(body: {
     topic: string;
     question?: string;
     context?: string;
     focusTerm?: string;
     generationMode?: "outline" | "content";
-  }): Promise<ResearchGenerationResult | null> {
+  }): Promise<{ result: ResearchGenerationResult | null; trace: ResearchGenerationTrace | null }> {
     try {
       const res = await apiClient.research.generate.$post({ json: body });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return (await res.json()) as ResearchGenerationResult;
+      if (!res.ok) {
+        // The 502 error body may still carry a failure trace for debugging.
+        const body = (await res.json().catch(() => null)) as
+          | { trace?: ResearchGenerationTrace | null }
+          | null;
+        console.error("[research] generate failed: HTTP", String(res.status));
+        return { result: null, trace: body?.trace ?? null };
+      }
+      const result = (await res.json()) as ResearchGenerationResult;
+      return { result, trace: result.trace ?? null };
     } catch (error) {
       console.error("[research] generate failed:", String(error));
-      return null;
+      return { result: null, trace: null };
     }
   }
 
@@ -152,7 +170,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       focusParagraph?: string;
     },
     onContent: (partial: string) => void,
-  ): Promise<ResearchGenerationResult | null> {
+  ): Promise<{ result: ResearchGenerationResult | null; trace: ResearchGenerationTrace | null }> {
     try {
       const res = await fetch("/api/research/generate-stream", {
         method: "POST",
@@ -167,6 +185,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       let buffer = "";
       let raw = ""; // accumulated decoded token text → live content extraction
       let result: ResearchGenerationResult | null = null;
+      let errorTrace: ResearchGenerationTrace | null = null;
       let streamError: string | null = null;
 
       // Coalesce token updates to one render per animation frame: tokens can
@@ -220,8 +239,17 @@ export const useResearchStore = create<ResearchState>((set, get) => {
             streamError = "Malformed final payload";
           }
         } else if (event === "error") {
+          // New shape: `{ message, trace }`; legacy shape: a bare JSON string.
           try {
-            streamError = JSON.parse(data) as string;
+            const parsed = JSON.parse(data) as
+              | string
+              | { message?: string; trace?: ResearchGenerationTrace | null };
+            if (typeof parsed === "string") {
+              streamError = parsed;
+            } else {
+              streamError = parsed.message ?? "Generation failed";
+              errorTrace = parsed.trace ?? null;
+            }
           } catch {
             streamError = data;
           }
@@ -242,11 +270,16 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       if (buffer.trim()) handleFrame(buffer);
       flushEmit(); // ensure the last partial lands even if no frame fired
 
-      if (streamError) throw new Error(streamError);
-      return result;
+      // A failed stream still returns its trace (carried on the error event) so
+      // the caller can surface how the failed run unfolded for debugging.
+      if (streamError) {
+        console.error("[research] generateContentStream failed:", streamError);
+        return { result: null, trace: errorTrace };
+      }
+      return { result, trace: result?.trace ?? null };
     } catch (error) {
       console.error("[research] generateContentStream failed:", String(error));
-      return null;
+      return { result: null, trace: null };
     }
   }
 
@@ -263,6 +296,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     error: null,
     projectHighlighted: false,
     highlightedNodeId: null,
+    traces: {},
 
     listProjects: async () => {
       try {
@@ -300,9 +334,13 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         error: null,
         projectHighlighted: false,
         highlightedNodeId: null,
+        traces: {},
       });
 
-      const result = await generate({ topic, generationMode: "outline" });
+      const { result, trace } = await generate({ topic, generationMode: "outline" });
+      // Stash the outline-generation trace under the root node id (even on
+      // failure) so the canvas can open the "生成过程" debug modal.
+      if (trace) set((s) => ({ traces: { ...s.traces, [rootId]: trace } }));
       if (!result || !result.outline?.length) {
         set((s) => ({
           generating: false,
@@ -338,7 +376,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       set((s) => ({ nodes: { ...s.nodes, [id]: { ...s.nodes[id], status: "loading" } } }));
       const parent = node.parentId ? get().nodes[node.parentId] : null;
       const context = [get().topic, parent?.brief, parent?.summary].filter(Boolean).join(" / ");
-      const result = await generateContentStream(
+      const { result, trace } = await generateContentStream(
         { topic: get().topic, question: node.title, context: context || undefined },
         (partial) =>
           set((s) => {
@@ -347,6 +385,9 @@ export const useResearchStore = create<ResearchState>((set, get) => {
             return { nodes: { ...s.nodes, [id]: { ...prev, content: partial } } };
           }),
       );
+      // Stash the article-generation trace under this node's id (even on
+      // failure) so the reading overlay can open the "生成过程" debug modal.
+      if (trace) set((s) => ({ traces: { ...s.traces, [id]: trace } }));
       set((s) => {
         const prev = s.nodes[id];
         if (!prev) return {};
@@ -397,7 +438,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       const context = [get().topic, parent.brief, parent.summary, parent.content?.slice(0, 1200)]
         .filter(Boolean)
         .join(" / ");
-      const result = await generateContentStream(
+      const { result, trace } = await generateContentStream(
         {
           topic: get().topic,
           question: opts.question,
@@ -412,6 +453,9 @@ export const useResearchStore = create<ResearchState>((set, get) => {
             return { nodes: { ...s.nodes, [childId]: { ...prev, content: partial } } };
           }),
       );
+      // Stash the child's article-generation trace under its node id (even on
+      // failure) so its reading overlay can open the "生成过程" debug modal.
+      if (trace) set((s) => ({ traces: { ...s.traces, [childId]: trace } }));
       set((s) => {
         const prev = s.nodes[childId];
         if (!prev) return {};
@@ -476,7 +520,9 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       const context = [get().topic, node.title, node.summary, node.content?.slice(0, 2000)]
         .filter(Boolean)
         .join(" / ");
-      const result = await generateContentStream(
+      // Inline Q&A answers a follow-up below the article rather than growing a
+      // node, so its trace isn't surfaced (no node to attach a "生成过程" entry to).
+      const { result } = await generateContentStream(
         { topic: get().topic, question, context: context || undefined },
         (partial) => patchTurn((t) => ({ ...t, answer: partial })),
       );
@@ -514,6 +560,9 @@ export const useResearchStore = create<ResearchState>((set, get) => {
           projectHighlighted: false,
           // Deep-link opens a node → light it; a bare project load lights nothing.
           highlightedNodeId: willOpen,
+          // Traces aren't persisted; a loaded project starts with none until a
+          // node is (re)generated this session.
+          traces: {},
         });
         // A bookmarked node that was never filled in still needs its article.
         if (willOpen) void get().openNode(willOpen);
@@ -535,6 +584,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         error: null,
         projectHighlighted: false,
         highlightedNodeId: null,
+        traces: {},
       });
     },
 

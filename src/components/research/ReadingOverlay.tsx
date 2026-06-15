@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
 import { Icons } from "../../icons/icons";
 import { ReadingArticle } from "./ReadingArticle";
+import { ResearchTraceLauncher } from "./ResearchTraceLauncher";
 import { ReadingQnaTurns } from "./ReadingQnaTurns";
 import { ImageLightbox } from "./ImageLightbox";
 import { loadReadingProgress, saveReadingProgress } from "./reading-progress";
@@ -25,6 +26,10 @@ export function ReadingOverlay() {
     node?.parentId ? s.nodes[node.parentId] : null,
   );
   const projectId = useResearchStore((s) => s.projectId);
+  // Article-generation trace for the open node (debug entry). Keyed by node id.
+  const nodeTrace = useResearchStore((s) =>
+    s.activeNodeId ? s.traces[s.activeNodeId] : undefined,
+  );
   const closeReading = useResearchStore((s) => s.closeReading);
   const growChild = useResearchStore((s) => s.growChild);
   const openNode = useResearchStore((s) => s.openNode);
@@ -130,6 +135,10 @@ export function ReadingOverlay() {
         className="rc-reading"
         data-testid="research-reading-overlay"
         onClick={(e) => e.stopPropagation()}>
+        {/* Debug entry: inspect how the AI generated this article. Floats at the
+            top-left (mirrors the close button), shown once a trace exists. */}
+        {nodeTrace && <ResearchTraceLauncher trace={nodeTrace} placement="content" />}
+
         <button
           className="rc-reading-close"
           onClick={closeReading}

@@ -1,0 +1,126 @@
+/* Research generation-trace debug modal (ResearchTraceModal.tsx) + its entry
+   button (ResearchTraceLauncher.tsx). Self-contained: relies only on the global
+   modal shell (nb-modal-scrim / nb-modal / nb-ai-close from app.css); everything
+   else is rc-trace-*. Follows app conventions: white surfaces, background tints
+   over borders, mono for payloads, Radix grass/red status dots. */
+
+.rc-trace-modal {
+  /* position:relative so the floating .nb-ai-close anchors to the modal, not
+     the full-screen scrim. overflow:hidden so the head/badges stay pinned and
+     ONLY .rc-trace-body scrolls (the shared .nb-modal sets overflow-y:auto,
+     which would otherwise scroll the whole modal and hide the close button). */
+  position: relative;
+  width: min(720px, 100%);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rc-trace-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px 10px;
+}
+.rc-trace-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.rc-trace-meta { margin-top: 4px; font-size: 12px; color: var(--ink-3); }
+
+.rc-trace-badges { padding: 0 24px 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+.rc-trace-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.rc-trace-badge.ok { color: var(--success); }
+.rc-trace-badge.fail { color: var(--danger); }
+.rc-trace-badge.warn { color: var(--nb-amber-ink); }
+
+.rc-trace-body {
+  /* flex:1 + min-height:0 so the body absorbs the remaining height and scrolls
+     internally, keeping the head/badges pinned above it. */
+  flex: 1;
+  min-height: 0;
+  padding: 0 24px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rc-trace-step {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rc-trace-step-head { display: flex; align-items: center; gap: 8px; }
+.rc-trace-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.rc-trace-dot.ok { background: #30a46c; }
+.rc-trace-dot.fail { background: #e5484d; }
+.rc-trace-dot.info { background: var(--brand-2); }
+.rc-trace-step-label { font-size: 13px; font-weight: 650; color: var(--ink); }
+.rc-trace-step-time { margin-left: auto; font-size: 11px; color: var(--ink-4); }
+
+.rc-trace-detail { font-size: 12.5px; color: var(--ink-2); }
+
+.rc-trace-msgs { display: flex; flex-direction: column; gap: 8px; }
+.rc-trace-msg { display: flex; flex-direction: column; gap: 3px; }
+.rc-trace-msg-role {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-4);
+}
+
+.rc-trace-io { display: flex; flex-direction: column; gap: 3px; }
+.rc-trace-io-label { font-size: 11px; color: var(--ink-4); }
+
+.rc-trace-pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.rc-trace-output { max-height: 300px; }
+.rc-trace-error { color: var(--danger); }
+
+/* Entry button (ResearchTraceLauncher.tsx) — a quiet pill. */
+.rc-trace-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.rc-trace-open:hover { background: var(--surface-3); color: var(--ink-2); }
+.rc-trace-open svg { color: var(--brand-2); flex-shrink: 0; }
+
+/* Outline placement: tucked under the canvas research banner, left-aligned. The
+   banner has a 30px bottom margin; pull up into it so the button reads as part
+   of the banner block. */
+.rc-trace-open--outline { align-self: flex-start; margin: -18px 0 26px; }
+
+/* Content placement: floats at the reading panel's top-left, mirroring the
+   top-right close button. */
+.rc-trace-open--content { position: absolute; top: 12px; left: 16px; z-index: 2; }

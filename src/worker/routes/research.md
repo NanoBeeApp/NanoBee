@@ -5,10 +5,12 @@ Hono routes for the Research Canvas: AI node generation + project snapshot CRUD.
 
 ## Core exports / API
 - `researchRoutes` (mounted at `/api/research` in `routes/api.ts`):
-  - `POST /generate` — generate one node (outline/content/deep-dive), one-shot JSON.
+  - `POST /generate` — generate one node (outline/content/deep-dive), one-shot
+    JSON. On failure returns `502 { error, trace }` (the failure trace, if any).
   - `POST /generate-stream` — content-mode streaming sibling: emits SSE `token`
-    events as the body streams, then a `final` event (validated result) or an
-    `error` event. Tokens are JSON-encoded so newlines never break SSE framing.
+    events as the body streams, then a `final` event (validated result, with a
+    `trace`) or an `error` event (`{ message, trace }`). Tokens are JSON-encoded
+    so newlines never break SSE framing.
   - `GET /projects` — list the owner's projects.
   - `GET /snapshots/:id` — load one snapshot (404 if missing/not owned).
   - `POST /snapshots` — save a snapshot (upsert).
@@ -28,6 +30,15 @@ Hono routes for the Research Canvas: AI node generation + project snapshot CRUD.
   passthrough) so the client can evolve node shape without a schema bump.
 
 ## Change history
+
+### 2026-06-15 — Return the generation trace (success + failure)
+- **Motivation**: the UI needs the generation execution trace to debug how the
+  outline/article were produced — including when a run fails.
+- **Goal**: surface the trace on both endpoints without a new route.
+- **Key decision**: the success result already carries `trace` (from
+  `generate.ts`); on failure, extract the trace from a `ResearchGenerationError`
+  and return it in the `502` body (`/generate`) or on the `error` SSE event as
+  `{ message, trace }` (`/generate-stream`).
 
 ### 2026-06-13 — Created
 - **Motivation**: Expose research generation + persistence to the canvas client.

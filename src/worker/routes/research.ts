@@ -18,7 +18,11 @@ import type { Env } from "../api-worker";
 import { resolveAiConfig } from "../ai/settings";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
-import { generateResearchNode, generateResearchNodeStream } from "../research/generate";
+import {
+  generateResearchNode,
+  generateResearchNodeStream,
+  ResearchGenerationError,
+} from "../research/generate";
 import {
   ANON_OWNER,
   deleteResearchProject,
@@ -98,7 +102,10 @@ export const researchRoutes = new Hono<{ Bindings: Env }>()
       return c.json(result);
     } catch (error) {
       console.error("[API] POST /api/research/generate failed:", String(error));
-      return c.json({ error: "Generation failed" }, 502);
+      // Return the failure trace (if any) so the UI can still show how the
+      // failed run unfolded — debugging matters most when generation fails.
+      const trace = error instanceof ResearchGenerationError ? error.trace : null;
+      return c.json({ error: "Generation failed", trace }, 502);
     }
   })
   // Streaming sibling of /generate (content mode): emits `token` events as the
@@ -123,7 +130,13 @@ export const researchRoutes = new Hono<{ Bindings: Env }>()
         await stream.writeSSE({ event: "final", data: JSON.stringify(result) });
       } catch (error) {
         console.error("[API] POST /api/research/generate-stream failed:", String(error));
-        await stream.writeSSE({ event: "error", data: JSON.stringify(String(error).slice(0, 300)) });
+        // Carry the failure trace (if any) on the error event so the client can
+        // still surface how the failed run unfolded for debugging.
+        const trace = error instanceof ResearchGenerationError ? error.trace : null;
+        await stream.writeSSE({
+          event: "error",
+          data: JSON.stringify({ message: String(error).slice(0, 300), trace }),
+        });
       }
     });
   })

@@ -7,6 +7,8 @@
 // two-level outline of knowledge nodes, and each node can grow children by
 // following one of its three follow-up questions or by deep-diving a bold term.
 
+import type { ResearchGenerationTrace } from "./generation-trace";
+
 /** AI generation mode: an outline tree, or one node's full article. */
 export type ResearchGenerationMode = "outline" | "content";
 
@@ -61,6 +63,12 @@ export interface ResearchGenerationResult {
     provider: string;
     model?: string;
   };
+  /**
+   * Step-by-step execution trace of this generation run (prompts sent, raw
+   * model output, parse/repair steps, timing). Attached for in-UI debugging;
+   * not persisted in the D1 snapshot. Absent only on legacy/older callers.
+   */
+  trace?: ResearchGenerationTrace;
 }
 
 /** Status of a node on the canvas. */

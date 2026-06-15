@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
 import { ResearchNodeCard } from "./ResearchNodeCard";
+import { ResearchTraceLauncher } from "./ResearchTraceLauncher";
 import { buildChildrenMap } from "../../research/outline";
 import { loadViewport, saveViewport } from "./canvas-viewport";
 import type { ResearchNode } from "../../research/types";
@@ -40,6 +41,8 @@ export function ResearchCanvas() {
   const highlightedNodeId = useResearchStore((s) => s.highlightedNodeId);
   const clearNodeHighlight = useResearchStore((s) => s.clearNodeHighlight);
   const projectId = useResearchStore((s) => s.projectId);
+  // The outline-generation trace is stashed under the root node's id (order[0]).
+  const traces = useResearchStore((s) => s.traces);
 
   const viewportRef = useRef<HTMLDivElement>(null);
   // Each topic remembers its own pan/zoom (see canvas-viewport.ts). The canvas is
@@ -62,6 +65,7 @@ export function ResearchCanvas() {
 
   const rootId = order[0];
   const root = rootId ? nodes[rootId] : null;
+  const outlineTrace = rootId ? traces[rootId] : undefined;
   const childrenOf = useMemo(() => buildChildrenMap(nodes, order), [nodes, order]);
 
   // Center the fixed-width outline column for a *new* topic (no saved viewport):
@@ -131,9 +135,13 @@ export function ResearchCanvas() {
       // sidebar-driven project highlight.
       clearProjectHighlight();
       // Only pan when the bare background is grabbed — never when starting on an
-      // interactive element (a node card or the topic banner), so their clicks
-      // aren't swallowed by a pan/pointer-capture.
-      if ((e.target as HTMLElement).closest(".rc-node, .rc-outline-banner")) return;
+      // interactive element (a node card, the topic banner, or the outline
+      // trace-debug entry), so their clicks aren't swallowed by a
+      // pan/pointer-capture.
+      if (
+        (e.target as HTMLElement).closest(".rc-node, .rc-outline-banner, .rc-trace-open")
+      )
+        return;
       // Pressing blank canvas (not a card/banner) clears the node highlight —
       // closing the reading overlay keeps it, only a blank press or opening
       // another card moves/clears it.
@@ -218,6 +226,10 @@ export function ResearchCanvas() {
             <span className="rc-outline-banner-label">研究方向</span>
             <span className="rc-outline-banner-title">{root.title}</span>
           </button>
+
+          {/* Debug entry: inspect how the AI generated this outline (left-side
+              directory). Appears once the outline-generation trace exists. */}
+          {outlineTrace && <ResearchTraceLauncher trace={outlineTrace} placement="outline" />}
 
           {rootLoading && (
             <div className="rc-outline-rootloading">

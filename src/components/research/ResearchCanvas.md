@@ -10,7 +10,8 @@ indented under its parent along a vertical rail.
 - `NodeBranch` (internal) — recursive outline node + its indented children.
 
 ## Dependencies
-- Upstream: `store/useResearchStore.ts`, `ResearchNodeCard.tsx`, `research/types.ts`.
+- Upstream: `store/useResearchStore.ts`, `ResearchNodeCard.tsx`, `research/types.ts`,
+  `ResearchTraceLauncher.tsx` (the "查看大纲生成过程" debug entry).
 - Downstream: `components/research/ResearchView.tsx`.
 
 ## Key implementation notes
@@ -32,6 +33,17 @@ indented under its parent along a vertical rail.
   the scroll phase), not only once the reading overlay opens ~1s later.
 
 ## Change history
+
+### 2026-06-15 — "查看大纲生成过程" debug entry under the banner
+- **Motivation**: the user wants to inspect, from the canvas, how the AI
+  generated this outline (the left-side directory) — every execution step — for
+  debugging.
+- **Goal**: an entry button beneath the research banner that opens the
+  outline-generation trace modal.
+- **Key decision**: the outline trace is stashed under the root node's id
+  (`order[0]`); subscribe to `store.traces` and, when `traces[rootId]` exists,
+  render `<ResearchTraceLauncher placement="outline">` right under the banner.
+  The launcher owns the modal state, so the canvas only wires in the trace.
 
 ### 2026-06-14 — Remove the sidebar focus-scroll delay machinery
 - **Motivation**: the user wants a sidebar-row click to open the overlay

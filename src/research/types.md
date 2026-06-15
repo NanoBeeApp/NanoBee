@@ -8,13 +8,14 @@ worker (AI generation + D1 persistence) and the client (canvas + store).
 - `ResearchGenerationMode` / `ResearchGenerationInput` — input to one AI call.
 - `ResearchOutlineItem` — node of the generated outline tree.
 - `ResearchGenerationResult` — validated AI output (`content`, exactly 3
-  `questions`, optional `summary` / `outline` / `tags`, provider metadata).
+  `questions`, optional `summary` / `outline` / `tags`, provider metadata, and
+  an optional `trace` — the generation execution trace, for debugging).
 - `ResearchNode` — one knowledge node (structure via `parentId` + `depth`).
 - `ResearchSnapshot` — a full project (nodes + order), the D1 persistence shape.
 - `ResearchProjectMeta` — sidebar list entry.
 
 ## Dependencies
-- Upstream: none (pure types).
+- Upstream: `research/generation-trace.ts` (the `ResearchGenerationTrace` type).
 - Downstream: `research/contract.ts`, `research/prompt.ts`,
   `worker/research/*`, `components/research/*`, `store/useResearchStore.ts`.
 
@@ -27,6 +28,14 @@ worker (AI generation + D1 persistence) and the client (canvas + store).
   is stored as one JSON blob per project (MVP).
 
 ## Change history
+
+### 2026-06-15 — Add optional `trace` to `ResearchGenerationResult`
+- **Motivation**: the generation execution trace (built by the worker) needs to
+  reach the client so the canvas/reading overlay can render it for debugging.
+- **Goal**: carry the trace alongside the validated result without a new endpoint.
+- **Key decision**: an optional `trace?: ResearchGenerationTrace` field
+  (defined in the new `research/generation-trace.ts`); optional so it stays
+  backward-compatible and so the trace can be dropped without breaking the type.
 
 ### 2026-06-13 — Drop layout coordinates from ResearchNode
 - **Motivation**: The canvas became a nested-outline hierarchical view (Curve's

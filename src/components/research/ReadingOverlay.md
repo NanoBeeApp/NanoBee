@@ -9,7 +9,8 @@ backdrop.
 - `ReadingOverlay()` — reads the active node from the store; null when none.
 
 ## Dependencies
-- Upstream: `store/useResearchStore.ts`, `icons/icons.tsx`, `common/Markdown.tsx`.
+- Upstream: `store/useResearchStore.ts`, `icons/icons.tsx`, `common/Markdown.tsx`,
+  `ResearchTraceLauncher.tsx` (the "查看生成过程" debug entry).
 - Downstream: `components/research/ResearchView.tsx`.
 
 ## Key implementation notes
@@ -26,6 +27,16 @@ backdrop.
   (`!loading`).
 
 ## Change history
+
+### 2026-06-15 — "查看生成过程" debug entry for the article
+- **Motivation**: the user wants to inspect, from the article detail panel, how
+  the AI generated this article (every execution step), for debugging.
+- **Goal**: a small entry button in the reading panel that opens the generation
+  trace modal for the open node.
+- **Key decision**: subscribe to `store.traces[activeNodeId]` and, when present,
+  render `<ResearchTraceLauncher placement="content">` floating at the panel's
+  top-left (mirrors the close button). The launcher owns the modal state; this
+  component only wires in the trace, keeping the container/presentational split.
 
 ### 2026-06-15 — Quieter close button
 - **Motivation**: the top-right close (X) button drew too much attention — it

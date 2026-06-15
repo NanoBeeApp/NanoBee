@@ -5,10 +5,13 @@ Drives the configured AI model to generate one research node, validates the
 reply against the contract, and retries once with a repair instruction.
 
 ## Core exports / API
-- `generateResearchNode(cfg, input)` → `ResearchGenerationResult`.
+- `generateResearchNode(cfg, input)` → `ResearchGenerationResult` (with a
+  `trace` attached).
 - `generateResearchNodeStream(cfg, input, onDelta)` → `ResearchGenerationResult`
   — streams raw model tokens through `onDelta`, then validates the full reply
   (one non-streamed repair retry on contract failure). Used for content mode.
+- `ResearchGenerationError` — thrown on failure; carries the partial
+  `ResearchGenerationTrace` so the route can return it for debugging.
 
 ## Dependencies
 - Upstream: `worker/ai/client.ts` (`generateChatText`, `streamAgentText`),
@@ -22,6 +25,19 @@ reply against the contract, and retries once with a repair instruction.
   second reply still fails the contract.
 
 ## Change history
+
+### 2026-06-15 — Build a generation trace (incl. on failure)
+- **Motivation**: the user wants to inspect, from the research canvas, exactly
+  how the outline and each article were generated (every execution step), for
+  debugging — and debugging matters most when generation fails.
+- **Goal**: record each pipeline step (build prompt → model request → parse →
+  repair) with the messages sent, raw output, and timing, and surface it even
+  when the run fails.
+- **Key decision**: build a `ResearchGenerationTrace` in both functions and
+  attach it to the success result; on failure, throw a `ResearchGenerationError`
+  carrying the (partial) trace so the route can return it. Extracted shared
+  `callModel` / `repairAndFinalize` helpers to keep the streamed and
+  non-streamed paths from drifting on how steps are recorded.
 
 ### 2026-06-13 — Created
 - **Motivation**: Replace Curve's mock canvas data with real AI generation,
