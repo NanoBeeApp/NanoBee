@@ -20,6 +20,11 @@ list — `ArtifactsView` itself is detail-only.
 
 ## Change history
 
+### 2026-06-15 — use shared `artifactMeta`
+- **Motivation**: the meta line ("单词 · 10 张") was duplicated here and in the
+  gallery's row/card/table; centralized it in `artifacts/format.ts`.
+- **Change**: drop the local `KIND_LABEL`, render `artifactMeta(a)`.
+
 ### 2026-06-13 — created
 - **Motivation**: the user asked that each page's sidebar list be the
   corresponding list; the Artifacts deck list belonged in the sidebar rather

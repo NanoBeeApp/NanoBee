@@ -142,4 +142,4 @@ export type IconName =
   | 'check' | 'bee' | 'panelRight' | 'panelLeft' | 'list' | 'grid' | 'feed'
   | 'eye' | 'arrowRight' | 'pause' | 'play' | 'calendar' | 'globe' | 'spark'
   | 'x' | 'bookmark' | 'doc' | 'filter' | 'logout' | 'download' | 'smartphone'
-  | 'monitor' | 'gear';
+  | 'monitor' | 'gear' | 'table';

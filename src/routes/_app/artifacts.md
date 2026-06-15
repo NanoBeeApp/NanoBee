@@ -6,8 +6,9 @@ Route `/artifacts` — renders the card-deck gallery (`ArtifactsView`) into the
 
 ## Core exports
 - `Route` — `createFileRoute("/_app/artifacts")` with `validateSearch` for
-  `{ tab?, artifact? }` and `component: ArtifactsView`.
-- `ArtifactsSearch` — the search-param shape (`tab`, `artifact`).
+  `{ tab?, artifact?, vm? }` and `component: ArtifactsView`.
+- `ArtifactsSearch` — the search-param shape (`tab`, `artifact`, `vm`).
+- `ArtifactsViewMode` — `'list' | 'table' | 'card'` (the gallery view mode).
 
 ## Dependencies
 - Upstream: `@tanstack/react-router`, `@/components/artifacts/ArtifactsView`.
@@ -17,10 +18,17 @@ Route `/artifacts` — renders the card-deck gallery (`ArtifactsView`) into the
 - `ArtifactsView` loads the deck list on mount, so deep-linking `/artifacts`
   populates correctly without going through the `openArtifacts` store action.
 - Search params are the bookmarkable source of truth: `tab` (mine | favorites |
-  category id) and `artifact` (open deck id). Empty/whitespace values normalize
-  to `undefined` so the default tab keeps the URL clean.
+  category id), `artifact` (open deck id) and `vm` (list | table | card). Empty /
+  invalid values normalize to `undefined` so the defaults keep the URL clean.
 
 ## Change history
+
+### 2026-06-15 — vm (view mode) search param
+- **Motivation**: the gallery gained a list / table / card view switch; the
+  chosen view is view state that must survive refresh and be shareable.
+- **Goal**: add `vm` to the search schema (default `list`, omitted when default).
+- **Key decision**: `validateSearch` accepts only `list | table | card`;
+  `useArtifactsUrlSync` exposes `viewMode` / `setViewMode`.
 
 ### 2026-06-15 — tab + open-deck search params
 - **Motivation**: the page gained top tabs and an inline deck detail; both are

@@ -16,7 +16,7 @@ import { ArtifactGallery } from './ArtifactGallery';
 import { ArtifactDetail } from './ArtifactDetail';
 
 export function ArtifactsView() {
-  const { tab, setTab } = useArtifactsUrlSync();
+  const { tab, setTab, viewMode, setViewMode } = useArtifactsUrlSync();
   const artifacts = useAppStore((s) => s.artifacts);
   const selectedId = useAppStore((s) => s.selectedArtifactId);
   const loadArtifacts = useAppStore((s) => s.loadArtifacts);
@@ -35,7 +35,7 @@ export function ArtifactsView() {
       ) : (
         <>
           <ArtifactsTabs activeTab={tab} onSelect={setTab} />
-          <ArtifactGallery tab={tab} />
+          <ArtifactGallery tab={tab} viewMode={viewMode} onViewModeChange={setViewMode} />
         </>
       )}
     </section>

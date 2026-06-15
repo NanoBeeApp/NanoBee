@@ -3,10 +3,8 @@
 // surface. This is the page's master list — the Artifacts view itself is
 // detail-only, so the sidebar is the single place the decks are listed.
 import { useAppStore } from '../../store/useAppStore';
+import { artifactMeta } from '../../artifacts/format';
 import { Icons } from '../../icons/icons';
-
-/** Map a card kind to a short human label for the list meta line. */
-const KIND_LABEL: Record<string, string> = { word: '单词' };
 
 export function ArtifactsNavList() {
   const artifacts = useAppStore((s) => s.artifacts);
@@ -31,7 +29,7 @@ export function ArtifactsNavList() {
           <span className="nb-item-ic" style={{ color: 'var(--brand-2)' }}><Icons.grid size={15} /></span>
           <div className="meta">
             <div className="title">{a.title}</div>
-            <div className="sub">{(KIND_LABEL[a.kind] ?? a.kind)} · {a.cardCount} 张</div>
+            <div className="sub">{artifactMeta(a)}</div>
           </div>
         </div>
       ))}

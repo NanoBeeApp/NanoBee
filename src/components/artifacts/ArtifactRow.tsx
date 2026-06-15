@@ -1,6 +1,7 @@
-// One owned-artifact tile in the gallery grid (你创建的 / 你收藏的). Clicking the
-// body opens the deck detail; the corner buttons favorite or delete it without
-// opening. Pure render — all actions are passed in from the gallery.
+// One owned-artifact row for the list view (你创建的 / 你收藏的). A flat,
+// Twitter-feed-style row — no card border, separated by a hairline and a hover
+// tint, not a box. Clicking the row opens the deck; the trailing buttons
+// favorite or delete without opening. Pure render.
 import type { Artifact } from '../../artifacts/types';
 import { artifactMeta } from '../../artifacts/format';
 import { Icons } from '../../icons/icons';
@@ -12,11 +13,10 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
-export function ArtifactCard({ artifact, onOpen, onToggleFavorite, onDelete }: Props) {
-  const meta = artifactMeta(artifact);
+export function ArtifactRow({ artifact, onOpen, onToggleFavorite, onDelete }: Props) {
   return (
     <div
-      className="nb-arti-card"
+      className="nb-arti-row"
       role="button"
       tabIndex={0}
       onClick={() => onOpen(artifact.id)}
@@ -26,14 +26,11 @@ export function ArtifactCard({ artifact, onOpen, onToggleFavorite, onDelete }: P
           onOpen(artifact.id);
         }
       }}
-      data-testid={`artifact-card-${artifact.id}`}>
-      <span className="nb-arti-card-ic"><Icons.grid size={18} /></span>
-      <div className="nb-arti-card-main">
-        <div className="nb-arti-card-title">{artifact.title}</div>
-        <div className="nb-arti-card-meta">{meta}</div>
-      </div>
-
-      <div className="nb-arti-card-actions">
+      data-testid={`artifact-row-${artifact.id}`}>
+      <span className="nb-arti-row-ic"><Icons.grid size={16} /></span>
+      <span className="nb-arti-row-title">{artifact.title}</span>
+      <span className="nb-arti-row-meta">{artifactMeta(artifact)}</span>
+      <div className="nb-arti-row-actions">
         <button
           className={`nb-arti-card-fav${artifact.favorited ? ' on' : ''}`}
           title={artifact.favorited ? '取消收藏' : '收藏'}

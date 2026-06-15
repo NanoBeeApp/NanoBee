@@ -17,6 +17,9 @@ Inline SVG line-icon set (Lucide-class, 24x24, rounded caps) ported 1:1 from the
 
 ## Change history
 
+### 2026-06-15 — added `table` icon
+- **Motivation**: the Artifacts gallery view switch needed a table glyph (list / table / card).
+
 ### 2026-06-12 — created
 - **Motivation**: design handoff; keeping the exact prototype paths guarantees pixel-identical glyphs.
 

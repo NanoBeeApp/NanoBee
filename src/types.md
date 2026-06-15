@@ -16,6 +16,9 @@ All interfaces/types listed above plus `IconName`.
 
 ## Change history
 
+### 2026-06-15 — extended `IconName` with `table`
+- **Motivation**: the Artifacts gallery view switch needed a `table` glyph.
+
 ### 2026-06-13 — remove the read/unread feature
 - **Motivation**: user asked to drop read-state management entirely.
 - **Change**: `UpdateItem` lost its `unread` flag.

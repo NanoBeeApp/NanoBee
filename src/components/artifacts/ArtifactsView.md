@@ -17,6 +17,11 @@ Artifacts 页面的编排者(orchestrator)。顶部 tab 栏(你创建的 / 你�
 
 ## 变更历史
 
+### 2026-06-15 — 视图模式（列表/表格/卡片）
+- **出发点**：用户嫌卡片丑,要默认非卡片 + 视图切换
+- **目标**：把 useArtifactsUrlSync 的 viewMode/setViewMode 透传给 ArtifactGallery
+- **关键决策**：编排者只多传两个 prop;视图切换控件与三视图渲染都在 gallery 内
+
 ### 2026-06-15 — 顶部 tabs + 浏览 gallery
 - **出发点**：用户要 artifacts 页顶部加 tabs(你创建的/你收藏的/各分类),新用户默认进「你创建的」空态并在底部展示推荐/热门项目
 - **目标**：把 detail-only 页改成分 tab 浏览 gallery,空态带「为你推荐」,分类 tab 展示一键生成模板

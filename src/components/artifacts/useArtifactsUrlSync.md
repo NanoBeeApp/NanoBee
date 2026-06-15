@@ -1,11 +1,11 @@
 # components/artifacts/useArtifactsUrlSync.ts
 
 ## 文件职责
-Artifacts 页面 URL search 参数(`?tab=&artifact=`)与 store 的桥接 hook,保证刷新/深链/前进后退后 tab 与打开的 deck 一致、可收藏分享。
+Artifacts 页面 URL search 参数(`?tab=&artifact=&vm=`)与 store 的桥接 hook,保证刷新/深链/前进后退后 tab、打开的 deck 与视图模式一致、可收藏分享。
 
 ## 核心导出 / API
-- `DEFAULT_ARTIFACTS_TAB`('mine')
-- `useArtifactsUrlSync()`：返回 `{ tab, setTab }`
+- `DEFAULT_ARTIFACTS_TAB`('mine')、`DEFAULT_ARTIFACTS_VM`('list')
+- `useArtifactsUrlSync()`：返回 `{ tab, setTab, viewMode, setViewMode }`
 
 ## 依赖关系
 - 上游：`@tanstack/react-router`(getRouteApi/useNavigate)、`store/useAppStore.ts`(selectedArtifactId/selectArtifact)
@@ -20,6 +20,11 @@ Artifacts 页面 URL search 参数(`?tab=&artifact=`)与 store 的桥接 hook,�
 - 参照 `research/useResearchUrlSync` 的成熟模式
 
 ## 变更历史
+
+### 2026-06-15 — 加 vm 视图模式
+- **出发点**：列表/表格/卡片视图切换状态属于"能改变可见内容"的视图状态,须进 URL
+- **目标**：viewMode + setViewMode 进 URL(`?vm=`),默认 list 省略
+- **关键决策**：vm 像 tab 一样纯 URL(页面本地);用 `mkSearch` 统一构造 search 并在默认值省略;切 tab / 开关详情 / setViewMode 都保留其它两个参数(互不丢失)
 
 ### 2026-06-15 — 创建
 - **出发点**：tabs 与打开的 deck 属于"能改变可见内容"的视图状态,按 URL 即状态铁律必须进 URL
