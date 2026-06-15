@@ -276,7 +276,11 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         console.error("[research] generateContentStream failed:", streamError);
         return { result: null, trace: errorTrace };
       }
-      return { result, trace: result?.trace ?? null };
+      // TS 5.9 control-flow analysis narrows `result` (a closure-mutated let) to
+      // `never` here; an explicit cast re-establishes the declared type so the
+      // optional `.trace` access type-checks correctly.
+      const finalResult = result as ResearchGenerationResult | null;
+      return { result: finalResult, trace: finalResult?.trace ?? null };
     } catch (error) {
       console.error("[research] generateContentStream failed:", String(error));
       return { result: null, trace: null };

@@ -177,3 +177,15 @@ dialog (`setAiSetupOpen`).
   chat-triggered Artifacts page.
 - **Goal**: the nav tile now opens the Artifacts view (`openArtifacts()`,
   testid `artifacts-entry`, label "Artifacts") instead of the cards view.
+
+### 2026-06-15 — Compare nav tile added
+- **Motivation**: wiring the compare feature into the sidebar so users can reach
+  the multi-model compare view directly from the nav rail without going through
+  the chat composer button.
+- **Goal**: add a "模型对比 / Compare" tile to the nav grid between research and
+  settings, using the `Icons.table` glyph and `openCompare()` action from the
+  store. The tile shows as active when `view === 'compare'` (the CompareView
+  calls `syncView('compare')` on mount).
+- **Key decisions**: (1) expanded the grid from 6 to 7 tiles (4 rows, one partial
+  row) — the 2-column grid layout handles odd counts gracefully. (2) placed Compare
+  between Research and Settings so it groups with content-generation features.

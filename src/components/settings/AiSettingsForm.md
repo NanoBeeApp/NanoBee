@@ -34,3 +34,20 @@ password-visibility and active-pane toggles; all data + callbacks come from
 - **Key decision**: return the `.nb-ai-split` content directly so it can be
   placed under the page heading; renamed to `AiSettingsForm` and moved into the
   `settings/` folder alongside its container.
+
+### 2026-06-15 — add Account entry to master list
+- **Motivation**: account management (profile, security, sessions, data export/delete)
+  needs a home in the settings master-detail panel.
+- **Changes**: added `"account"` to the `activePane` union; added an "Account" master-list
+  row (shown only when signed in) under the "偏好设置" group; when `account` is active the
+  detail pane renders `<AccountSection>` with the current user; added `useAuthUser` import
+  and `authUser` local variable; the detail pane gets the `nb-ai-detail--account` modifier
+  class for scrollable layout.
+
+### 2026-06-15 — add Notifications entry to master list
+- **Motivation**: wire in the new `NotificationSettings` component.
+- **Changes**: added `"notifications"` to the `activePane` union; added a
+  "通知" (Notifications) master-list row under a new "偏好设置" group; when
+  `notifications` is active the detail pane renders `<NotificationSettings>`
+  instead of the AI/websearch panels; added `userSignedIn` prop to
+  `AiSettingsFormProps` to gate the notification settings query.

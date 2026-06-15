@@ -198,13 +198,15 @@ export async function generateAgentTurn(
 	cfg: AiRuntimeConfig,
 	messages: AgentChatMessage[],
 	tools: AiToolDef[],
-	opts?: { maxTokens?: number; timeoutMs?: number },
+	opts?: { maxTokens?: number; timeoutMs?: number; signal?: AbortSignal },
 ): Promise<AgentTurn> {
 	if (!cfg.apiKey) throw new Error("No API key available for AI provider");
 	if (!cfg.baseUrl) throw new Error("No base URL configured for AI provider");
 
 	const maxTokens = opts?.maxTokens ?? CONFIG.AI.MAX_COMPLETION_TOKENS;
-	const signal = AbortSignal.timeout(opts?.timeoutMs ?? CONFIG.AI.REQUEST_TIMEOUT_MS);
+	// Abort on either the request timeout or a client "stop" (opts.signal).
+	const timeout = AbortSignal.timeout(opts?.timeoutMs ?? CONFIG.AI.REQUEST_TIMEOUT_MS);
+	const signal = opts?.signal ? AbortSignal.any([timeout, opts.signal]) : timeout;
 
 	let url: string;
 	let headers: Record<string, string>;
@@ -296,7 +298,7 @@ export async function streamAgentTurn(
 	messages: AgentChatMessage[],
 	tools: AiToolDef[],
 	onToken: (delta: string) => void | Promise<void>,
-	opts?: { maxTokens?: number; timeoutMs?: number },
+	opts?: { maxTokens?: number; timeoutMs?: number; signal?: AbortSignal },
 ): Promise<AgentTurn> {
 	if (!cfg.apiKey) throw new Error("No API key available for AI provider");
 	if (!cfg.baseUrl) throw new Error("No base URL configured for AI provider");
@@ -310,7 +312,9 @@ export async function streamAgentTurn(
 	}
 
 	const maxTokens = opts?.maxTokens ?? CONFIG.AI.MAX_COMPLETION_TOKENS;
-	const signal = AbortSignal.timeout(opts?.timeoutMs ?? CONFIG.AI.REQUEST_TIMEOUT_MS);
+	// Abort on either the request timeout or a client "stop" (opts.signal).
+	const timeout = AbortSignal.timeout(opts?.timeoutMs ?? CONFIG.AI.REQUEST_TIMEOUT_MS);
+	const signal = opts?.signal ? AbortSignal.any([timeout, opts.signal]) : timeout;
 	const url = joinUrl(cfg.baseUrl, "/chat/completions");
 	const res = await fetch(url, {
 		method: "POST",

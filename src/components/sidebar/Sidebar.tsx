@@ -31,6 +31,7 @@ export function Sidebar() {
   const openTasks = useAppStore((s) => s.openTasks);
   const openArtifacts = useAppStore((s) => s.openArtifacts);
   const openResearch = useAppStore((s) => s.openResearch);
+  const openCompare = useAppStore((s) => s.openCompare);
   const openSettings = useAppStore((s) => s.openSettings);
   const toggleTopic = useAppStore((s) => s.toggleTopic);
   const setSideCollapsed = useAppStore((s) => s.setSideCollapsed);
@@ -90,6 +91,12 @@ export function Sidebar() {
             data-testid="research-entry">
             <span className="ic"><Icons.spark size={17} /></span>
             <span className="label">研究画布</span>
+          </button>
+
+          <button className={`nb-nav-tile${view === 'compare' ? ' active' : ''}`} onClick={openCompare}
+            data-testid="compare-entry">
+            <span className="ic"><Icons.table size={17} /></span>
+            <span className="label">模型对比</span>
           </button>
 
           <button className={`nb-nav-tile${view === 'settings' ? ' active' : ''}`} onClick={openSettings}

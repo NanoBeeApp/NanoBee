@@ -115,6 +115,11 @@ async function executeToolCall(
  * through it as they arrive (live typewriter); tool-only turns emit nothing, so
  * in the common case only the final answer types out. Without it the loop uses
  * plain non-streamed completions (e.g. the quick chat / fallback JSON path).
+ *
+ * When `signal` is supplied (the request signal from a streaming chat), the loop
+ * stops between iterations once it aborts, and the abort is forwarded to the
+ * upstream LLM fetch so a "stop" cancels generation server-side, not just on the
+ * client. The caller persists whatever text streamed before the abort.
  */
 export async function runAgentLoop(
 	env: Env,
@@ -122,6 +127,7 @@ export async function runAgentLoop(
 	baseMessages: AgentChatMessage[],
 	ctx: AgentContext = EMPTY_AGENT_CONTEXT,
 	onToken?: (delta: string) => void | Promise<void>,
+	signal?: AbortSignal,
 ): Promise<AgentRunResult> {
 	const startedAt = Date.now();
 	const tools = await collectAgentTools(env, ctx);
@@ -143,10 +149,12 @@ export async function runAgentLoop(
 	});
 
 	for (let i = 0; i < CONFIG.AGENT.MAX_ITERATIONS; i++) {
+		// Client pressed stop between turns: don't start another LLM call / tool round.
+		if (signal?.aborted) throw new Error("agent run aborted by client");
 		// On the final iteration no tools are offered, forcing a plain answer.
 		const offered = i === CONFIG.AGENT.MAX_ITERATIONS - 1 ? [] : tools;
 		const turn = onToken
-			? await streamAgentTurn(cfg, messages, offered, onToken)
+			? await streamAgentTurn(cfg, messages, offered, onToken, { signal })
 			: await generateAgentTurn(cfg, messages, offered);
 
 		if (turn.toolCalls.length === 0) {

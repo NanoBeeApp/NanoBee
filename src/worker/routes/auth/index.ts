@@ -7,6 +7,7 @@
 
 import { Hono } from "hono";
 import type { Env } from "../../api-worker";
+import { accountRoutes } from "./account";
 import { emailAuthRoutes } from "./email";
 import { oauthRoutes } from "./oauth";
 import { sessionRoutes } from "./session";
@@ -14,4 +15,5 @@ import { sessionRoutes } from "./session";
 export const authRoutes = new Hono<{ Bindings: Env }>()
 	.route("/", emailAuthRoutes)
 	.route("/", sessionRoutes)
-	.route("/", oauthRoutes);
+	.route("/", oauthRoutes)
+	.route("/", accountRoutes);

@@ -603,6 +603,156 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 	.nb-ai-master-list { flex-direction: row; flex-wrap: wrap; gap: 6px; max-height: 120px; }
 }
 
+/* ---------- Notification settings section ---------- */
+/* Sits inside .nb-ai-detail (the shared detail pane) when the notifications
+   entry is active in the master list. Follows the same field / section
+   conventions as the AI settings pane. */
+
+/* Section groups inside the notification detail pane */
+.nb-notif-section { display: flex; flex-direction: column; gap: 10px; }
+.nb-notif-section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--ink-4); font-family: var(--font-mono);
+  padding-bottom: 4px; border-bottom: 1px solid var(--border);
+}
+
+/* Toggle row: label on left, toggle switch on right */
+.nb-notif-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.nb-notif-row-label { display: flex; flex-direction: column; gap: 2px; }
+.nb-notif-row-label b { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.nb-notif-row-label span { font-size: 12px; color: var(--ink-3); line-height: 1.4; }
+
+/* Toggle switch (checkbox-based, no external library) */
+.nb-toggle { position: relative; display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
+.nb-toggle input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+.nb-toggle-track {
+  width: 38px; height: 22px; border-radius: 999px;
+  background: var(--surface-3); border: 1.5px solid var(--border-2);
+  transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+  position: relative;
+}
+.nb-toggle input:checked ~ .nb-toggle-track {
+  background: var(--brand-2); border-color: var(--brand-2);
+}
+.nb-toggle-thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 999px;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.nb-toggle input:checked ~ .nb-toggle-track .nb-toggle-thumb { transform: translateX(16px); }
+.nb-toggle input:focus-visible ~ .nb-toggle-track {
+  outline: 2px solid var(--brand-2); outline-offset: 2px;
+}
+.nb-toggle input:disabled ~ .nb-toggle-track { opacity: 0.45; cursor: not-allowed; }
+
+/* DND time range row */
+.nb-notif-time-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nb-notif-time-sep { font-size: 12px; color: var(--ink-3); flex-shrink: 0; }
+.nb-notif-time-row .input { width: 96px; font-family: var(--font-mono); font-size: 13px; }
+
+/* Importance threshold pill group */
+.nb-notif-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.nb-notif-pill {
+  padding: 5px 13px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  background: var(--surface-2); color: var(--ink-3);
+  border: 1.5px solid var(--border);
+  transition: all var(--dur-1) var(--ease-out);
+  cursor: pointer;
+}
+.nb-notif-pill:hover { background: var(--surface-3); color: var(--ink-2); border-color: var(--border-2); }
+.nb-notif-pill.active { background: var(--brand-soft); color: var(--brand-2); border-color: var(--brand-2); }
+
+/* Web Push opt-in block */
+.nb-push-block {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface-2); border-radius: 11px;
+  padding: 13px 14px; border: 1px solid var(--border);
+}
+.nb-push-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; background: var(--brand-soft); color: var(--brand-2); }
+.nb-push-content { flex: 1; min-width: 0; }
+.nb-push-content b { font-size: 13.5px; font-weight: 600; display: block; color: var(--ink); }
+.nb-push-content span { font-size: 12px; color: var(--ink-3); line-height: 1.4; display: block; margin-top: 1px; }
+.nb-push-content .nb-push-error { color: var(--danger); font-size: 12px; margin-top: 3px; display: block; }
+.nb-push-state { display: flex; align-items: center; gap: 7px; margin-top: 4px; font-size: 12px; font-weight: 500; }
+.nb-push-state .dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; background: var(--ink-4); }
+.nb-push-state.state-subscribed { color: var(--success); }
+.nb-push-state.state-subscribed .dot { background: var(--success); }
+.nb-push-state.state-loading { color: var(--ink-3); }
+.nb-push-state.state-loading .dot { background: var(--brand-2); animation: nbpulse 1s var(--ease-out) infinite; }
+.nb-push-state.state-denied { color: var(--danger); }
+.nb-push-state.state-denied .dot { background: var(--danger); }
+.nb-push-action { display: flex; gap: 8px; margin-top: 10px; }
+
+/* ---------- Account management section ---------- */
+/* Sits inside .nb-ai-detail when the Account entry is active.
+   Follows the same field / section conventions as other settings panes.
+   The detail pane gets --account modifier to allow scrolling the full list. */
+.nb-ai-detail--account { padding: 0; gap: 0; }
+.nb-acct-pane { display: flex; flex-direction: column; overflow-y: auto; height: 100%; }
+
+/* Each sub-section (Profile / Security / Sessions / Data) */
+.nb-acct-section { padding: 18px 24px 20px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
+.nb-acct-section:last-child { border-bottom: 0; }
+.nb-acct-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.nb-acct-section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--ink-4); font-family: var(--font-mono);
+  padding-bottom: 0; margin: 0;
+}
+
+/* Profile: name row has an inline "Save" button */
+.nb-acct-row { display: flex; gap: 8px; align-items: center; }
+.nb-acct-row .input { flex: 1; }
+.nb-acct-email { font-size: 13px; color: var(--ink-2); margin: 0; }
+
+/* Success hint (green, mirrors .field-error but success color) */
+.nb-acct-hint-ok { font-size: 12px; color: var(--success); margin: 0; }
+
+/* Security: password form */
+.nb-acct-pw-form { display: flex; flex-direction: column; gap: 10px; }
+
+/* Sessions list */
+.nb-acct-loading { font-size: 13px; color: var(--ink-3); margin: 0; }
+.nb-acct-empty { font-size: 13px; color: var(--ink-3); margin: 0; }
+.nb-acct-sessions-list { display: flex; flex-direction: column; gap: 6px; }
+.nb-acct-session {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface-2); border-radius: 9px;
+  padding: 10px 12px; border: 1px solid var(--border);
+}
+.nb-acct-session[data-current] { background: var(--brand-soft); border-color: rgba(99,91,255,0.22); }
+.nb-acct-session-ic { color: var(--ink-3); flex-shrink: 0; display: flex; align-items: center; }
+.nb-acct-session-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.nb-acct-session-device { font-size: 13px; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 7px; }
+.nb-acct-session-badge {
+  font-size: 10.5px; font-weight: 700; color: var(--brand-2);
+  background: rgba(99,91,255,0.12); border-radius: 999px;
+  padding: 1px 7px; letter-spacing: 0.02em;
+}
+.nb-acct-session-meta { font-size: 11.5px; color: var(--ink-3); }
+
+/* Data section rows */
+.nb-acct-data-row {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: var(--surface-2); border-radius: 9px;
+  padding: 12px 14px; border: 1px solid var(--border);
+}
+.nb-acct-danger-row { border-color: var(--danger-soft, rgba(196,54,43,0.18)); }
+.nb-acct-data-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.nb-acct-data-label { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.nb-acct-data-hint { font-size: 12px; color: var(--ink-3); line-height: 1.45; }
+
+/* Delete confirm inline box */
+.nb-acct-confirm-box { display: flex; flex-direction: column; gap: 8px; }
+.nb-acct-confirm-label { font-size: 12.5px; color: var(--ink-2); margin: 0; }
+.nb-acct-confirm-input { width: 140px; font-family: var(--font-mono); letter-spacing: 1px; }
+.nb-acct-confirm-actions { display: flex; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-push-state.state-loading .dot { animation: nbpulse 1s var(--ease-out) infinite !important; }
+}
+
 /* Reduced motion: silence decorative entry/transition animations (panel peeks,
    toasts, modal pop-ins). Functional loading/progress indicators are explicitly
    restored below — freezing a spinner mid-load makes the UI look broken, which

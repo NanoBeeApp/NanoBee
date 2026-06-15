@@ -15,6 +15,8 @@ type EmailAuthFormProps = {
 	onNameChange: (value: string) => void;
 	onSubmit: () => void;
 	onSwitchMode: () => void;
+	/** Optional: show a "Forgot password?" link in login mode. */
+	onForgotPassword?: () => void;
 };
 
 export function EmailAuthForm({
@@ -29,6 +31,7 @@ export function EmailAuthForm({
 	onNameChange,
 	onSubmit,
 	onSwitchMode,
+	onForgotPassword,
 }: EmailAuthFormProps) {
 	const isRegister = mode === "register";
 
@@ -111,6 +114,19 @@ export function EmailAuthForm({
 					{isRegister ? "去登录" : "立即注册"}
 				</button>
 			</div>
+
+			{!isRegister && onForgotPassword && (
+				<div className="nb-auth-switch">
+					<button
+						type="button"
+						className="nb-auth-link"
+						onClick={onForgotPassword}
+						data-testid="forgot-password-link"
+					>
+						Forgot password?
+					</button>
+				</div>
+			)}
 		</form>
 	);
 }

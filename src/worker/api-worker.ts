@@ -47,6 +47,17 @@ export type Env = {
 	//   {"datahub": "http://127.0.0.1:3344/mcp"}  or  [{"name":..., "url":...}]
 	// Unset = no MCP tools.
 	MCP_SERVERS?: string;
+
+	// --- Web Push / VAPID (RFC 8292) — Phase 1b ---
+	// VAPID_PUBLIC_KEY: base64url-encoded P-256 public key for the VAPID JWT.
+	// Set as a non-secret var in wrangler.json (empty string = push not active).
+	// Never rotate after subscriptions exist — changing it invalidates all existing
+	// push subscriptions.
+	VAPID_PUBLIC_KEY?: string;
+	// VAPID_PRIVATE_KEY_ENC: the P-256 private key AES-256-GCM encrypted with
+	// AUTH_SECRET (same "v1$iv$ct" scheme as api_key_enc). Set as a Worker secret
+	// via `wrangler secret put VAPID_PRIVATE_KEY_ENC`. Never committed to git.
+	VAPID_PRIVATE_KEY_ENC?: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();

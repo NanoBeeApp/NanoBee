@@ -32,7 +32,7 @@ const TITLE_MAX_CHARS = 22;
 const TASK_SEED = '帮我盯着 ';
 const ARTIFACT_SEED = '帮我做一组卡片：';
 
-export type View = 'chat' | 'today' | 'tasks' | 'artifacts' | 'research' | 'settings';
+export type View = 'chat' | 'today' | 'tasks' | 'artifacts' | 'research' | 'settings' | 'compare';
 export type SidebarMode = 'history' | 'topics';
 
 /** URL path for each view. The router is the source of truth for navigation;
@@ -44,6 +44,9 @@ export const VIEW_PATH: Record<View, string> = {
   artifacts: '/artifacts',
   research: '/research',
   settings: '/settings',
+  // Compare is a sub-view of the chat route (/?compare=1), not its own path.
+  // VIEW_PATH.compare is used as a hint; navigation is via openCompare().
+  compare: '/',
 };
 
 /** Label + test id for the sidebar's page-aware "new" button. Today / Settings
@@ -55,9 +58,27 @@ export const NEW_ACTION: Record<View, { label: string; testid: string }> = {
   artifacts: { label: '新建 Artifact', testid: 'new-artifact-button' },
   research: { label: '新建研究', testid: 'new-research-button' },
   settings: { label: '新建对话', testid: 'new-chat-button' },
+  compare: { label: '新建对话', testid: 'new-chat-button' },
 };
 
-/** Resolve a pathname back to its view (unknown paths fall back to chat). */
+/** The quick-chat context the user always has on each surface: `label` is the
+ *  always-present page name shown in the "正在看 · …" chip, and `agent` is the
+ *  phrasing sent to the model so it knows which page the user is on. `null` for
+ *  surfaces where the quick chat isn't rendered (chat / settings). On Today the
+ *  in-view article (`quickCtx`) layers on top of this page baseline. */
+export const VIEW_CONTEXT: Record<View, { label: string; agent: string } | null> = {
+  chat: null,
+  settings: null,
+  today: { label: '今日事项', agent: '「今日事项」阅读页（资讯 / 更新列表）' },
+  tasks: { label: '任务', agent: '「任务」页（用户正在盯的事项列表）' },
+  artifacts: { label: 'Artifacts', agent: '「Artifacts」卡片库页（已生成的卡片合集）' },
+  research: { label: '研究画布', agent: '「研究画布」页（研究项目 / 大纲）' },
+  compare: { label: 'Compare', agent: '「模型对比」页（多模型并行对比）' },
+};
+
+/** Resolve a pathname back to its view (unknown paths fall back to chat).
+ *  Note: compare lives at `/?compare=1` (same path as chat); the CompareView
+ *  component calls syncView('compare') itself on mount. */
 export function viewFromPath(pathname: string): View {
   switch (pathname) {
     case '/today': return 'today';
@@ -109,7 +130,12 @@ interface AppState {
    *  opens the popup, which then stays open until the bubble (or its close
    *  button) is clicked again — there is no auto-close on mouse leave. */
   rightCollapsed: boolean;
+  /** The thinking indicator: true only between send and the first reply token. */
   pending: boolean;
+  /** A streaming reply is in flight (send → final/error/stop). Drives the
+   *  composer's stop button — unlike `pending`, it stays true while tokens
+   *  stream, which is exactly when the user wants to interrupt. */
+  generating: boolean;
   toasts: Toast[];
   justAddedTaskId: string | null;
   // global quick chat
@@ -166,6 +192,8 @@ interface AppState {
   openToday: () => void;
   openTasks: () => void;
   openResearch: () => void;
+  /** Open the multi-model compare page (chat sub-view at /?compare=1). */
+  openCompare: () => void;
   /** Ask the active center page (Today / Tasks) to scroll its matching item into view. */
   focusItem: (id: string) => void;
   // artifacts
@@ -186,6 +214,9 @@ interface AppState {
 
   // chat
   send: (text: string) => void;
+  /** Stop the in-flight streaming reply: aborts the request (the worker stops
+   *  generating too) and keeps whatever has streamed so far as the final bubble. */
+  stopGeneration: () => void;
 
   // quick chat
   sendQuick: (text: string) => void;
@@ -195,6 +226,8 @@ interface AppState {
   // tasks
   createTask: (data: TaskSuggestion) => void;
   toggleTask: (id: string) => void;
+  /** Permanently delete a task (optimistic, rolls back on failure). */
+  deleteTask: (id: string) => void;
 
   // toasts
   toast: (text: string) => void;
@@ -218,6 +251,7 @@ async function deliverMessage(
   args: {
     chatId: string; userMessageId: string; title?: string;
     text: string; ctxTitle?: string | null; ctxTopicId?: string | null;
+    ctxPage?: string | null;
   },
 ): Promise<{ topicId: string; artifacts?: ArtifactRef[] } | null> {
   const [res] = await Promise.all([
@@ -247,13 +281,22 @@ function patchConvo(
   set((st) => ({ convos: { ...st.convos, [chatId]: fn(st.convos[chatId] ?? []) } }));
 }
 
+/** Result of an aborted (user-stopped) stream — distinct from success/failure. */
+type StreamAborted = { aborted: true };
+
+/** The controller for the single in-flight main-chat stream, so `stopGeneration`
+ *  can cancel it from anywhere. Only the main chat streams, so one slot suffices. */
+let activeStreamController: AbortController | null = null;
+
 /**
  * Streaming variant of {@link deliverMessage} for the main chat: POSTs to
  * /api/messages/stream and consumes the SSE response, growing one AI message
  * token by token (live typewriter), then replacing it with the authoritative
  * persisted message on the `final` event. Clears `pending` as soon as the
  * first token (or the final reply) arrives. Returns null on transport/stream
- * failure (the placeholder is removed so a failed turn leaves no empty bubble).
+ * failure (the placeholder is removed so a failed turn leaves no empty bubble),
+ * or `{ aborted: true }` when the user pressed stop — in which case whatever has
+ * streamed so far is kept as a finalized bubble (not discarded).
  */
 async function deliverMessageStream(
   set: (fn: (s: AppState) => Partial<AppState>) => void,
@@ -261,7 +304,7 @@ async function deliverMessageStream(
     chatId: string; userMessageId: string; title?: string;
     text: string; ctxTitle?: string | null; ctxTopicId?: string | null;
   },
-): Promise<{ topicId: string; artifacts?: ArtifactRef[] } | null> {
+): Promise<{ topicId: string; artifacts?: ArtifactRef[] } | StreamAborted | null> {
   // The placeholder is created lazily on the first token so the thinking
   // indicator (pending) stays up until the reply actually starts.
   let placeholderId: string | null = null;
@@ -283,12 +326,19 @@ async function deliverMessageStream(
     if (!rafQueued) { rafQueued = true; requestAnimationFrame(flush); }
   };
 
+  // One controller per stream; `stopGeneration` aborts it. Aborting the fetch
+  // closes the connection, which the worker observes (via the request signal) to
+  // stop generating server-side too.
+  const controller = new AbortController();
+  activeStreamController = controller;
+
   try {
     const res = await fetch('/api/messages/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
       body: JSON.stringify(args),
+      signal: controller.signal,
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
@@ -368,12 +418,29 @@ async function deliverMessageStream(
     });
     return { topicId: final.topicId, artifacts: final.aiMessage.artifacts };
   } catch (error) {
+    // User pressed stop: keep whatever streamed so far as a finalized bubble
+    // (the worker also persists the partial reply), rather than discarding it.
+    if (controller.signal.aborted) {
+      if (placeholderId) {
+        const id = placeholderId;
+        patchConvo(set, args.chatId, (msgs) =>
+          msgs.map((m) => (m.id === id ? { ...(m as AiMessage), md: acc, streaming: false } : m)),
+        );
+      }
+      return { aborted: true };
+    }
     console.error('[send] stream failed:', String(error));
     if (placeholderId) {
       const id = placeholderId;
       patchConvo(set, args.chatId, (msgs) => msgs.filter((m) => m.id !== id));
     }
     return null;
+  } finally {
+    // The stream is over (success / error / stop): drop the generating flag so
+    // the composer reverts to a send button, and release the controller slot so
+    // a later send/stop targets the next stream, not this one.
+    set(() => ({ generating: false }));
+    if (activeStreamController === controller) activeStreamController = null;
   }
 }
 
@@ -398,6 +465,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   sidePeek: false,
   rightCollapsed: true,
   pending: false,
+  generating: false,
   toasts: [],
   justAddedTaskId: null,
   quickChatId: null,
@@ -493,6 +561,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+
   // The sidebar "聊天" tile: just switch back to the chat view, keeping whatever
   // conversation is active (unlike newChat, which clears it).
   openChat: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.chat); },
@@ -502,6 +571,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   openTasks: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.tasks); },
 
   openResearch: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.research); },
+
+  openCompare: () => { set({ notifOpen: false }); get()._navigate?.('/?compare=1'); },
+
 
   focusItem: (id) => set((s) => ({ focusItemId: id, focusItemTick: s.focusItemTick + 1 })),
 
@@ -640,7 +712,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const s = get();
     let chatId = s.activeChatId;
     const userMessageId = nextId();
-    const patch: Partial<AppState> = { notifOpen: false, pending: true };
+    const patch: Partial<AppState> = { notifOpen: false, pending: true, generating: true };
 
     // Free-typed message in a brand-new chat: create session metadata for it.
     if (!chatId || !s.convos[chatId]) {
@@ -664,7 +736,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       console.error('[send] network error:', String(error));
       return null;
     });
-    if (result) {
+    if (result && 'topicId' in result) {
       set({ activeTopicId: result.topicId, pending: false });
       // A reply that produced card artifacts: refresh the Artifacts page list
       // so the new deck is there, and nudge the user toward it.
@@ -672,10 +744,21 @@ export const useAppStore = create<AppState>((set, get) => ({
         void get().loadArtifacts();
         get().toast(`已生成卡片 · ${result.artifacts[0].title}`);
       }
+    } else if (result && 'aborted' in result) {
+      // User stopped: pending was already cleared by stopGeneration and the
+      // partial reply is kept — nothing more to do, and no failure toast.
     } else {
       set({ pending: false });
       get().toast('发送失败，请稍后重试');
     }
+  },
+
+  stopGeneration: () => {
+    if (!activeStreamController) return;
+    activeStreamController.abort();
+    // Revert the composer + drop the thinking indicator immediately;
+    // deliverMessageStream's abort path finalizes any partial bubble.
+    set({ pending: false, generating: false });
   },
 
   sendQuick: async (text) => {
@@ -702,6 +785,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     const result = await deliverMessage(set, {
       chatId: id, userMessageId, title: truncateTitle(text), text,
       ctxTitle: ctx?.title ?? null, ctxTopicId: ctx?.topicId ?? null,
+      // The page the user is on always travels with the message — so the model
+      // knows the surface (today / tasks / research / …), not just the article.
+      ctxPage: VIEW_CONTEXT[s.view]?.agent ?? null,
     }).catch((error) => {
       console.error('[sendQuick] network error:', String(error));
       return null;
@@ -776,6 +862,24 @@ export const useAppStore = create<AppState>((set, get) => ({
       console.error('[toggleTask] persist failed:', String(error));
       set({ tasks: prevTasks });
       get().toast('操作失败，请重试');
+    }
+  },
+
+  deleteTask: async (id) => {
+    const prevTasks = get().tasks;
+    const removed = prevTasks.find((t) => t.id === id);
+    set((s) => ({
+      tasks: s.tasks.filter((t) => t.id !== id),
+      createdTaskIds: s.createdTaskIds.filter((x) => x !== id),
+    }));
+    get().toast(removed ? `已删除 · ${removed.title}` : '任务已删除');
+    try {
+      const res = await apiClient.tasks[':id'].$delete({ param: { id } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (error) {
+      console.error('[deleteTask] persist failed:', String(error));
+      set({ tasks: prevTasks });
+      get().toast('删除失败，请重试');
     }
   },
 

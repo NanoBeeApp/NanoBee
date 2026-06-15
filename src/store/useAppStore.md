@@ -22,6 +22,39 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ## Change history
 
+### 2026-06-15 — Added `deleteTask` action
+- **Motivation**: The task detail drawer in the redesigned Tasks page needs a real delete, not a half-measure.
+- **Goal**: Optimistically remove a task and persist it, rolling back on failure.
+- **Change**: Added `deleteTask(id)` — optimistic removal + toast, `DELETE /api/tasks/:id` via the typed RPC client, rollback + error toast on failure (mirrors `toggleTask`).
+
+### 2026-06-15 — stop the streaming reply (`generating` + `stopGeneration`)
+- **Motivation**: the chat composer had no way to interrupt a reply once it
+  started — `fetch` had no `signal` and the read loop had no abort path.
+- **Change**: added a module-level `AbortController` (`activeStreamController`)
+  set in `deliverMessageStream` and passed as the fetch `signal`. New
+  `stopGeneration()` action aborts it. The stream's abort path keeps whatever
+  streamed so far as a finalized bubble (`{ md: acc, streaming: false }`) instead
+  of discarding it, and returns `{ aborted: true }` so `send` skips the failure
+  toast.
+- **New `generating` state, distinct from `pending`**: `pending` only drives the
+  thinking indicator and flips false on the first token — so it can't gate the
+  stop button (you'd lose it mid-stream). `generating` stays true for the whole
+  stream (send → final/error/stop), driving the composer's stop button and
+  blocking a second send while one is in flight. Cleared in the stream's
+  `finally`.
+
+### 2026-06-15 — page-level quick-chat context (`VIEW_CONTEXT`, `ctxPage`)
+- **Motivation**: the quick chat only knew about Today's in-view article; on
+  every other surface the assistant had no idea what page the user was on.
+- **Change**: added the exported `VIEW_CONTEXT` map (`View` → `{ label, agent }`,
+  `null` on chat/settings where the widget is hidden). `label` is the chip's
+  always-present page name; `agent` is the phrasing sent to the model. `sendQuick`
+  now passes `ctxPage: VIEW_CONTEXT[view]?.agent` alongside the existing
+  `ctxTitle`/`ctxTopicId`, and `deliverMessage` carries the new optional field.
+- **Key decision**: the page context is derived from the active `view`, not set
+  by each page — it can never go stale or be forgotten when a new page is added
+  (the `Record<View, …>` makes that a compile error).
+
 ### 2026-06-14 — page-aware "new" action (`newForView`, `newTask`, `newArtifact`, `composerSeed`)
 - **Motivation**: the single sidebar "新建对话" (New Chat) button (and ⌘N) did the same thing
   on every page, even though each page creates a different entity — tasks should
@@ -186,3 +219,18 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
   the gallery. The open deck + active tab live in the URL (see
   `useArtifactsUrlSync`); `selectedArtifactId` is the store mirror the sidebar
   highlights from.
+
+### 2026-06-15 — compare view integration (View + openCompare)
+- **Motivation**: the multi-model compare feature was built but not wired; the
+  sidebar needs an `openCompare()` action and the `View` type must include
+  `'compare'` so the sidebar tile can highlight when the compare sub-view is active.
+- **Changes**:
+  - `View` type extended to include `'compare'`.
+  - `VIEW_PATH.compare = '/'` (compare is a sub-view at `/?compare=1`, not its own
+    route — navigation happens via `openCompare` which navigates to `/?compare=1`).
+  - `NEW_ACTION.compare` and `VIEW_CONTEXT.compare` added (both fall back to new
+    chat / "Compare page" labels).
+  - `openCompare()` action added: navigates to `/?compare=1` and clears the notif
+    dropdown.
+  - `viewFromPath` is unchanged — compare detection is handled by `CompareView`
+    calling `syncView('compare')` on mount and resetting to `'chat'` on unmount.

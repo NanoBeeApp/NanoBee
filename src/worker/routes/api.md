@@ -66,6 +66,15 @@ plus the smoke-test `hello` endpoint.
 - **Goal**: `aiSettingsRoutes` mounted at `/ai` (kept in the RPC chain so the
   typed client sees `apiClient.ai.settings`).
 
+### 2026-06-15 — mount /push routes
+- Added `pushRoutes` imported from `./push`; mounted at `/push`.
+- Endpoints: `GET /api/push/vapid-public-key`, `POST /api/push/subscribe`, `DELETE /api/push/subscribe`.
+
+### 2026-06-15 — mount /notifications routes
+- Added `notificationSettingsRoutes` imported from `./notification-settings`; mounted at `/notifications`.
+- Endpoints: `GET /api/notifications/settings`, `PUT /api/notifications/settings`.
+- Both require a signed-in session (401 when signed out).
+
 ### 2026-06-13 — mount /artifacts, drop /cards
 - **Motivation**: card generation moved to a chat agent tool; the standalone
   `/cards/generate` endpoint is superseded, and the Artifacts page needs

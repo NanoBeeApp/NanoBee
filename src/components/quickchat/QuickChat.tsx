@@ -7,7 +7,7 @@
 // exclusive to the chat page. Context-aware ("正在看 · …" chip) and can promote
 // the conversation to the full chat page.
 import { useEffect, useRef, useState } from 'react';
-import { useAppStore } from '../../store/useAppStore';
+import { useAppStore, VIEW_CONTEXT } from '../../store/useAppStore';
 import { useImeComposition } from '../../lib/useImeComposition';
 import { Icons } from '../../icons/icons';
 import { MessageView } from '../chat/MessageView';
@@ -109,9 +109,15 @@ export function QuickChat() {
     }
   };
 
-  const ctxLabel = ctx
+  // The chip always tells the user what NanoBee can see: the page is the
+  // always-present baseline (derived from the active route, so it's never
+  // stale), and the in-view article — when one is reported (Today) — is the
+  // more specific focus that takes precedence.
+  const pageCtx = VIEW_CONTEXT[view];
+  const itemLabel = ctx
     ? (ctx.title.length > CTX_LABEL_MAX_CHARS ? `${ctx.title.slice(0, CTX_LABEL_MAX_CHARS)}…` : ctx.title)
     : null;
+  const ctxLabel = itemLabel ?? pageCtx?.label ?? null;
 
   return (
     <>
@@ -134,14 +140,18 @@ export function QuickChat() {
             </button>
           </div>
 
-          {ctx && (
+          {ctxLabel && (
             <div className="nb-rc-ctx">
               <span className="nb-chip" style={{ borderColor: 'var(--nb-amber-line)', background: 'var(--nb-amber-soft)', color: 'var(--nb-amber-ink)', fontFamily: 'var(--font-sans)' }}
+                title="NanoBee 能读取你当前查看的内容，作为这段对话的上下文"
                 data-testid="viewing-context-chip">
                 <span className="ic"><Icons.eye size={12} /></span>
                 正在看 · {ctxLabel}
-                <span style={{ cursor: 'pointer', opacity: 0.6, display: 'inline-flex', marginLeft: 2 }}
-                  onClick={() => setQuickCtx(null)} data-testid="clear-viewing-context"><Icons.x size={11} /></span>
+                {ctx && (
+                  <span style={{ cursor: 'pointer', opacity: 0.6, display: 'inline-flex', marginLeft: 2 }}
+                    title="取消关联这条内容"
+                    onClick={() => setQuickCtx(null)} data-testid="clear-viewing-context"><Icons.x size={11} /></span>
+                )}
               </span>
             </div>
           )}

@@ -7,13 +7,16 @@ starts empty; returned state reflects only real user activity.
 
 ## Core exports / API
 - `bootstrapRoutes` — Hono sub-app: `GET /` → `{ chats, conversations, tasks, updates }` | `500`
+  - Results are scoped to the caller's owner bucket (signed-in user id or `"anon"`).
 
 ## Dependencies
-- Upstream: `db/repo`, `../api-worker` (Env type)
+- Upstream: `db/repo`, `db/seed`, `auth/cookies`, `auth/store`, `../api-worker` (Env type)
 - Downstream: mounted by `routes/api.ts`; consumed by the store's `bootstrap()`
 
 ## Notes
 - The four list queries run in `Promise.all` — independent reads, one trip each.
+- `ensureAnonSeed` runs before the queries when `owner === ANON_OWNER` (one extra D1 SELECT
+  on the fast-path; one batch INSERT on first cold-start for anon visitors).
 
 ## Change history
 
@@ -34,3 +37,14 @@ starts empty; returned state reflects only real user activity.
 - **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `db/seed.ts` and the `SEED_DEMO_DATA` env flag were deleted entirely.
 - The `ensureSeeded(c.env)` call and the `db/seed` import are removed; the route now runs the four `Promise.all` D1 reads unconditionally with no seeding step.
 - The DB always starts empty; any content is the result of real user activity.
+
+### 2026-06-15 — multi-tenant owner isolation + lazy anon seed
+- **Motivation**: migration 0012 adds `owner` columns to all four core tables. Each user
+  must only see their own chats/messages/tasks/updates; the anon bucket needs demo content
+  so signed-out visitors get a meaningful first experience.
+- **Changes**:
+  - Resolve the owner from the session cookie (`getSessionToken` → `getUserBySessionToken`
+    → `user.id ?? ANON_OWNER`), mirroring `research.ts`.
+  - Call `ensureAnonSeed(c.env.DB)` before the list queries when `owner === ANON_OWNER`
+    (idempotent; fast-path on all subsequent requests).
+  - All four `list*` calls now receive `owner` as the second argument.

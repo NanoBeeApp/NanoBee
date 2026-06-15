@@ -302,6 +302,7 @@ function SettingsFormState(props: SettingsFormStateProps) {
 			}}
 			onFetchModels={() => void runFetchModels(values.provider, values.apiKey, values.baseUrl)}
 			onTestConnection={() => void handleTestConnection()}
+			userSignedIn={true}
 		/>
 	);
 }

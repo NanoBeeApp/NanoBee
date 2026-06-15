@@ -17,6 +17,9 @@ import {
 	type WebSearchProviderId,
 } from "../../lib/ai-providers";
 import type { TestConnectionResult } from "../../lib/useAiSettings";
+import { useAuthUser } from "../../lib/useAuth";
+import { AccountSection } from "./AccountSection";
+import { NotificationSettings } from "./NotificationSettings";
 
 export interface AiSetupFormValues {
 	provider: AiProviderId;
@@ -59,6 +62,8 @@ export interface AiSettingsFormProps {
 	) => void;
 	onFetchModels: () => void;
 	onTestConnection: () => void;
+	/** Whether the user is signed in (gates the notification settings query). */
+	userSignedIn?: boolean;
 }
 
 export function AiSettingsForm(props: AiSettingsFormProps) {
@@ -66,9 +71,10 @@ export function AiSettingsForm(props: AiSettingsFormProps) {
 	const { models, modelsLoading, modelsError, testStatus, testResult, saveState, saveText } = props;
 	const [showKey, setShowKey] = useState(false);
 	const [showWebSearchKey, setShowWebSearchKey] = useState(false);
-	// Which detail pane is shown: an AI model provider, or the standalone web
-	// search settings (independent of the model provider). UI-only nav state.
-	const [activePane, setActivePane] = useState<"provider" | "websearch">("provider");
+	// Which detail pane is shown: an AI model provider, web search, notification
+	// preferences, or account management.
+	const [activePane, setActivePane] = useState<"provider" | "websearch" | "notifications" | "account">("provider");
+	const { data: authUser } = useAuthUser();
 	const webSearchInfo = getWebSearchProviderInfo(values.webSearchProvider);
 
 	// A model is "from the list" only when it matches a fetched id; otherwise the
@@ -127,6 +133,41 @@ export function AiSettingsForm(props: AiSettingsFormProps) {
 						</span>
 						<span className="nb-ai-prow-name">Web 搜索</span>
 					</button>
+					<div className="nb-ai-master-grp">偏好设置</div>
+					<button
+						type="button"
+						className={`nb-ai-prow${activePane === "notifications" ? " selected" : ""}`}
+						aria-current={activePane === "notifications"}
+						onClick={() => setActivePane("notifications")}
+						data-testid="settings-notifications-entry"
+					>
+						<span
+							className="nb-ai-prow-logo"
+							style={{ background: "rgba(99,91,255,0.10)", color: "var(--brand-2)" }}
+							aria-hidden="true"
+						>
+							<Icons.bell size={15} />
+						</span>
+						<span className="nb-ai-prow-name">通知</span>
+					</button>
+					{authUser && (
+						<button
+							type="button"
+							className={`nb-ai-prow${activePane === "account" ? " selected" : ""}`}
+							aria-current={activePane === "account"}
+							onClick={() => setActivePane("account")}
+							data-testid="settings-account-entry"
+						>
+							<span
+								className="nb-ai-prow-logo"
+								style={{ background: "rgba(14,165,233,0.10)", color: "#0ea5e9" }}
+								aria-hidden="true"
+							>
+								<Icons.at size={15} />
+							</span>
+							<span className="nb-ai-prow-name">Account</span>
+						</button>
+					)}
 				</div>
 				{saveText && (
 					<div
@@ -141,10 +182,14 @@ export function AiSettingsForm(props: AiSettingsFormProps) {
 				)}
 			</div>
 
-			{/* Detail: AI model provider settings, or the standalone web search
-			    settings — switched by the master-list selection. */}
-			<div className="nb-ai-detail">
-				{activePane === "provider" ? (
+			{/* Detail: AI model provider settings, standalone web search settings,
+			    notification preferences, or account management. */}
+			<div className={`nb-ai-detail${activePane === "account" ? " nb-ai-detail--account" : ""}`}>
+				{activePane === "notifications" ? (
+					<NotificationSettings userEnabled={props.userSignedIn ?? false} />
+				) : activePane === "account" ? (
+					authUser ? <AccountSection user={authUser} /> : null
+				) : activePane === "provider" ? (
 					<>
 						<div className="nb-ai-detail-head">
 							<div className="title" data-testid="ai-detail-title">{info.label}</div>

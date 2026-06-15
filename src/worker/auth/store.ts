@@ -221,7 +221,38 @@ export async function getUserBySessionToken(
 		)
 		.bind(id)
 		.first<UserRow>();
-	return row ? toAuthUser(row) : null;
+	if (!row) return null;
+	// Fire-and-forget: bump last_seen so the session list has live timestamps.
+	void db
+		.prepare("UPDATE auth_sessions SET last_seen_at = unixepoch() WHERE id = ?")
+		.bind(id)
+		.run();
+	return toAuthUser(row);
+}
+
+/**
+ * Resolve session to user AND return the hashed session id so callers
+ * can pass it to functions that need both (e.g. listUserSessions to mark current).
+ */
+export async function getUserAndSessionId(
+	db: D1Database,
+	token: string,
+): Promise<{ user: AuthUser; sessionId: string } | null> {
+	const sessionId = await sha256Hex(token);
+	const row = await db
+		.prepare(
+			`SELECT u.id, u.email, u.name, u.image, u.email_verified, u.password_hash
+			 FROM auth_sessions s JOIN users u ON u.id = s.user_id
+			 WHERE s.id = ? AND s.expires_at > unixepoch()`,
+		)
+		.bind(sessionId)
+		.first<UserRow>();
+	if (!row) return null;
+	void db
+		.prepare("UPDATE auth_sessions SET last_seen_at = unixepoch() WHERE id = ?")
+		.bind(sessionId)
+		.run();
+	return { user: toAuthUser(row), sessionId };
 }
 
 export async function deleteSessionByToken(
@@ -255,52 +286,224 @@ export async function saveEmailCode(
 	email: string,
 	code: string,
 ): Promise<void> {
-	const codeHash = await sha256Hex(`${email}:${code}`);
-	const expiresAt =
-		Math.floor(Date.now() / 1000) + CONFIG.AUTH.EMAIL_CODE_TTL_SECONDS;
-	// Lazy cleanup: codes older than the rate-limit window (1h) are dead
-	// weight — they no longer count toward countRecentCodes either.
-	await db
-		.prepare("DELETE FROM auth_email_codes WHERE created_at < unixepoch() - 3600")
-		.run();
-	await db
-		.prepare(
-			"INSERT INTO auth_email_codes (id, email, code_hash, expires_at) VALUES (?, ?, ?, ?)",
-		)
-		.bind(`code_${nanoid(12)}`, email, codeHash, expiresAt)
-		.run();
+	// Delegate to the purpose-aware version; 'verify' is the legacy default.
+	return saveEmailCodeWithPurpose(db, email, code, "verify");
 }
 
 /**
  * Check a verification code. Counts failed attempts per code row and
  * deletes every code for the email on success (single use).
+ * The `purpose` parameter guards against cross-purpose code consumption
+ * (e.g. a reset code being accepted by the verify-email endpoint).
  */
 export async function consumeEmailCode(
 	db: D1Database,
 	email: string,
 	code: string,
+	purpose: "verify" | "reset" = "verify",
 ): Promise<boolean> {
 	const codeHash = await sha256Hex(`${email}:${code}`);
 	const row = await db
 		.prepare(
 			`SELECT id FROM auth_email_codes
-			 WHERE email = ? AND code_hash = ? AND expires_at > unixepoch() AND attempts < ?`,
+			 WHERE email = ? AND code_hash = ? AND purpose = ?
+			   AND expires_at > unixepoch() AND attempts < ?`,
 		)
-		.bind(email, codeHash, CONFIG.AUTH.EMAIL_CODE_MAX_ATTEMPTS)
+		.bind(email, codeHash, purpose, CONFIG.AUTH.EMAIL_CODE_MAX_ATTEMPTS)
 		.first<{ id: string }>();
 	if (!row) {
-		// Burn an attempt on every live code for this email to stop brute force.
+		// Burn an attempt on every live code for this email+purpose to stop brute force.
 		await db
 			.prepare(
-				"UPDATE auth_email_codes SET attempts = attempts + 1 WHERE email = ? AND expires_at > unixepoch()",
+				`UPDATE auth_email_codes SET attempts = attempts + 1
+				 WHERE email = ? AND purpose = ? AND expires_at > unixepoch()`,
 			)
-			.bind(email)
+			.bind(email, purpose)
 			.run();
 		return false;
 	}
 	await db
-		.prepare("DELETE FROM auth_email_codes WHERE email = ?")
-		.bind(email)
+		.prepare("DELETE FROM auth_email_codes WHERE email = ? AND purpose = ?")
+		.bind(email, purpose)
 		.run();
 	return true;
+}
+
+/** Save a code with an explicit purpose ('verify' | 'reset'). */
+export async function saveEmailCodeWithPurpose(
+	db: D1Database,
+	email: string,
+	code: string,
+	purpose: "verify" | "reset",
+): Promise<void> {
+	const codeHash = await sha256Hex(`${email}:${code}`);
+	const expiresAt =
+		Math.floor(Date.now() / 1000) + CONFIG.AUTH.EMAIL_CODE_TTL_SECONDS;
+	await db
+		.prepare("DELETE FROM auth_email_codes WHERE created_at < unixepoch() - 3600")
+		.run();
+	await db
+		.prepare(
+			"INSERT INTO auth_email_codes (id, email, code_hash, purpose, expires_at) VALUES (?, ?, ?, ?, ?)",
+		)
+		.bind(`code_${nanoid(12)}`, email, codeHash, purpose, expiresAt)
+		.run();
+}
+
+/** Rate limit per (email, purpose) pair (same 5-per-hour window). */
+export async function countRecentCodesForPurpose(
+	db: D1Database,
+	email: string,
+	purpose: "verify" | "reset",
+): Promise<number> {
+	const row = await db
+		.prepare(
+			`SELECT COUNT(*) AS n FROM auth_email_codes
+			 WHERE email = ? AND purpose = ? AND created_at > unixepoch() - 3600`,
+		)
+		.bind(email, purpose)
+		.first<{ n: number }>();
+	return row?.n ?? 0;
+}
+
+// ---------------------------------------------------------------------------
+// Session management (list / revoke / last-seen touch)
+// ---------------------------------------------------------------------------
+
+export type SessionInfo = {
+	id: string;
+	createdAt: number;
+	/** Unix timestamp of last activity. Null for legacy sessions created before
+	 *  migration 0016 (last_seen_at column did not exist yet). */
+	lastSeenAt: number | null;
+	expiresAt: number;
+	ip: string | null;
+	userAgent: string | null;
+};
+
+/** List all non-expired sessions for a user, newest first. */
+export async function listUserSessions(
+	db: D1Database,
+	userId: string,
+): Promise<SessionInfo[]> {
+	const rows = await db
+		.prepare(
+			`SELECT id, created_at, last_seen_at, expires_at, ip, user_agent
+			 FROM auth_sessions
+			 WHERE user_id = ? AND expires_at > unixepoch()
+			 ORDER BY last_seen_at DESC`,
+		)
+		.bind(userId)
+		.all<{
+			id: string;
+			created_at: number;
+			last_seen_at: number | null;
+			expires_at: number;
+			ip: string | null;
+			user_agent: string | null;
+		}>();
+	return (rows.results ?? []).map((r) => ({
+		id: r.id,
+		createdAt: r.created_at,
+		lastSeenAt: r.last_seen_at,
+		expiresAt: r.expires_at,
+		ip: r.ip,
+		userAgent: r.user_agent,
+	}));
+}
+
+/** Delete a specific session by its hashed id (the stored value, not the cookie token). */
+export async function deleteSessionById(
+	db: D1Database,
+	sessionId: string,
+	userId: string,
+): Promise<void> {
+	await db
+		.prepare("DELETE FROM auth_sessions WHERE id = ? AND user_id = ?")
+		.bind(sessionId, userId)
+		.run();
+}
+
+/** Delete all sessions for a user except the one with the given hashed id. */
+export async function deleteOtherSessions(
+	db: D1Database,
+	userId: string,
+	currentSessionId: string,
+): Promise<void> {
+	await db
+		.prepare("DELETE FROM auth_sessions WHERE user_id = ? AND id != ?")
+		.bind(userId, currentSessionId)
+		.run();
+}
+
+/** Delete ALL sessions for a user (used during account deletion). */
+export async function deleteAllUserSessions(
+	db: D1Database,
+	userId: string,
+): Promise<void> {
+	await db
+		.prepare("DELETE FROM auth_sessions WHERE user_id = ?")
+		.bind(userId)
+		.run();
+}
+
+/** Bump last_seen_at on the current session (fire-and-forget). */
+export async function touchSessionLastSeen(
+	db: D1Database,
+	sessionId: string,
+): Promise<void> {
+	await db
+		.prepare("UPDATE auth_sessions SET last_seen_at = unixepoch() WHERE id = ?")
+		.bind(sessionId)
+		.run();
+}
+
+// ---------------------------------------------------------------------------
+// Profile updates
+// ---------------------------------------------------------------------------
+
+/** Update the user's display name. */
+export async function updateUserName(
+	db: D1Database,
+	userId: string,
+	name: string,
+): Promise<void> {
+	await db
+		.prepare("UPDATE users SET name = ?, updated_at = unixepoch() WHERE id = ?")
+		.bind(name, userId)
+		.run();
+}
+
+/** Update the user's password hash and revoke all other sessions (security). */
+export async function updateUserPassword(
+	db: D1Database,
+	userId: string,
+	passwordHash: string,
+	keepSessionId: string | null,
+): Promise<void> {
+	await db
+		.prepare("UPDATE users SET password_hash = ?, updated_at = unixepoch() WHERE id = ?")
+		.bind(passwordHash, userId)
+		.run();
+	// Invalidate all sessions except the one the user is currently using
+	// (or all sessions when called from password-reset without a session).
+	if (keepSessionId) {
+		await db
+			.prepare("DELETE FROM auth_sessions WHERE user_id = ? AND id != ?")
+			.bind(userId, keepSessionId)
+			.run();
+	} else {
+		await deleteAllUserSessions(db, userId);
+	}
+}
+
+/** Fetch full user row for data export (includes created_at). */
+export async function getUserRowForExport(
+	db: D1Database,
+	userId: string,
+): Promise<{ id: string; email: string; name: string; image: string | null; created_at: number } | null> {
+	return db
+		.prepare("SELECT id, email, name, image, created_at FROM users WHERE id = ?")
+		.bind(userId)
+		.first<{ id: string; email: string; name: string; image: string | null; created_at: number }>();
 }

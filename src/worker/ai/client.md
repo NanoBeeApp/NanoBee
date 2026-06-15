@@ -33,6 +33,14 @@ diagnosable error (status + truncated body).
 
 ## Change history
 
+### 2026-06-15 — `opts.signal` for cancellable turns (chat "stop")
+- **Motivation**: a client "stop" must cancel the in-flight upstream request,
+  not just the browser side.
+- **Change**: `streamAgentTurn` and `generateAgentTurn` accept `opts.signal`. The
+  per-request fetch signal is now `AbortSignal.any([timeout, opts.signal])` so
+  the request aborts on either the existing timeout or the caller's stop. No
+  behavior change when `signal` is omitted.
+
 ### 2026-06-12 — created
 - **Motivation**: wire the chat reply to the user-configured provider
   (backend default DeepSeek V4 Flash via OpenRouter) without adding heavy

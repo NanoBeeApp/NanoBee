@@ -22,6 +22,15 @@ fallback that logs the code to the console.
 
 ## Change history
 
+### 2026-06-15 — add password-reset email
+- **Motivation**: password reset requires a distinct email template so the
+  subject and body clearly identify the operation.
+- **Goal**: `sendPasswordResetCode(env, email, code)` following the exact same
+  pattern (Resend + LOG_EMAIL_CODES fallback + plain fetch, no SDK).
+- **Key decision**: English subject/body for the reset email since the public
+  repo must be English-first; verification email subject stays Chinese for
+  parity with existing users.
+
 ### 2026-06-12 — created
 - **Motivation**: email registration needs proof of mailbox ownership; the
   project already had a Resend API key available.

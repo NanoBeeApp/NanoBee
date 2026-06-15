@@ -13,6 +13,15 @@ Main chat composer: auto-growing textarea, slash (`/任务` /task · `/提醒` /
 
 ## Change history
 
+### 2026-06-15 — send button becomes a stop button while generating
+- **Motivation**: no way to interrupt an in-flight reply from the composer.
+- **Change**: read `generating` + `stopGeneration` from the store. While
+  `generating`, the send button is replaced by a dark `nb-stop` button
+  (`data-testid="stop-chat-generation"`, filled-square `stop` icon) that calls
+  `stopGeneration()`; `submit()` is also guarded to no-op while `generating` so
+  Enter can't start a second turn mid-stream. Reverts to the normal send button
+  when the stream ends.
+
 ### 2026-06-15 — remove hardcoded @ mention popover (MENTION_ITEMS watchlist)
 - **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `MENTION_ITEMS` was a hardcoded watchlist (`黄金 XAU/USD · 已关注` — "Gold XAU/USD · Following" etc.) posing as real user data.
 - Deleted the `MENTION_ITEMS` const, the `@` trigger logic in `onChange`, the mention popover JSX, and the `'mention'` branch from the `Popover` type (now `'slash' | null`).

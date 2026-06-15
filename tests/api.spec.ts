@@ -131,7 +131,7 @@ async function getBootstrap(): Promise<BootstrapBody> {
 	return (await res.json()) as BootstrapBody;
 }
 
-describe("bootstrap (D1, seeded)", () => {
+describe("bootstrap (D1, anon bucket seeded lazily)", () => {
 	it("GET /api/bootstrap returns the seeded app state", async () => {
 		const body = await getBootstrap();
 		expect(body.chats.length).toBeGreaterThanOrEqual(7);
@@ -230,5 +230,105 @@ describe("tasks (D1)", () => {
 	it("POST /api/tasks/:id/toggle returns 404 for an unknown id", async () => {
 		const res = await fetch(`${BASE_URL}/api/tasks/t_nope/toggle`, { method: "POST" });
 		expect(res.status).toBe(404);
+	});
+});
+
+describe("account management (unauthenticated guards)", () => {
+	// All account management endpoints must return 401 when not signed in.
+
+	it("PATCH /api/auth/account/name returns 401 without session", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/account/name`, {
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ name: "Test" }),
+		});
+		expect(res.status).toBe(401);
+	});
+
+	it("POST /api/auth/account/password returns 401 without session", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/account/password`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ currentPassword: "old", newPassword: "new-pass-123" }),
+		});
+		expect(res.status).toBe(401);
+	});
+
+	it("GET /api/auth/sessions returns 401 without session", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/sessions`);
+		expect(res.status).toBe(401);
+	});
+
+	it("POST /api/auth/sessions/revoke returns 401 without session", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/sessions/revoke`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ mode: "others" }),
+		});
+		expect(res.status).toBe(401);
+	});
+
+	it("GET /api/auth/export returns 401 without session", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/export`);
+		expect(res.status).toBe(401);
+	});
+
+	it("DELETE /api/auth/account returns 401 without session", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/account`, {
+			method: "DELETE",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ confirm: "DELETE" }),
+		});
+		expect(res.status).toBe(401);
+	});
+});
+
+describe("password reset flow (unauthenticated)", () => {
+	it("POST /api/auth/forgot-password always returns ok (no enum)", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email: `nonexistent+${Date.now()}@example.com` }),
+		});
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as { ok: boolean };
+		expect(body.ok).toBe(true);
+	});
+
+	it("POST /api/auth/forgot-password rejects invalid email with 400", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email: "not-an-email" }),
+		});
+		expect(res.status).toBe(400);
+	});
+
+	it("POST /api/auth/reset-password rejects wrong code with 400", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				email: `nonexistent+${Date.now()}@example.com`,
+				code: "000001",
+				newPassword: "new-pass-123",
+			}),
+		});
+		expect(res.status).toBe(400);
+		const body = (await res.json()) as { error: string };
+		expect(body.error).toBe("invalid_code");
+	});
+
+	it("POST /api/auth/reset-password rejects weak password with 400", async () => {
+		const res = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				email: "test@example.com",
+				code: "123456",
+				newPassword: "short",
+			}),
+		});
+		expect(res.status).toBe(400);
 	});
 });

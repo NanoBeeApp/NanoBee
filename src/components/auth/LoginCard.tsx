@@ -1,6 +1,6 @@
 // State component for the login page: owns the auth flow state
-// (login / register / verify-email) and calls the /api/auth endpoints.
-// Rendering is delegated to the pure form components.
+// (login / register / verify-email / forgot-password / reset-password)
+// and calls the /api/auth endpoints. Rendering is delegated to pure form components.
 
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
@@ -8,10 +8,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { AUTH_USER_QUERY_KEY } from "@/lib/useAuth";
 import { EmailAuthForm } from "./EmailAuthForm";
+import { ForgotPasswordForm, ResetPasswordForm } from "./ForgotPasswordForm";
 import { VerifyEmailForm } from "./VerifyEmailForm";
 import { OAuthButtons } from "./OAuthButtons";
 
-type Mode = "login" | "register" | "verify";
+type Mode = "login" | "register" | "verify" | "forgot" | "reset";
 
 // Server error codes → user-facing copy (includes OAuth callback errors).
 const ERROR_MESSAGES: Record<string, string> = {
@@ -28,6 +29,8 @@ const ERROR_MESSAGES: Record<string, string> = {
 	oauth_exchange_failed: "第三方登录失败，请重试",
 	oauth_profile_failed: "获取第三方账号信息失败，请重试",
 	user_resolve_failed: "登录失败，请重试",
+	// Password reset
+	reset_failed: "Reset failed, please try again",
 };
 
 function messageFor(code: string | null): string | null {
@@ -53,6 +56,12 @@ export function LoginCard() {
 	const [error, setError] = useState<string | null>(initialOAuthError);
 	const [resendNotice, setResendNotice] = useState<string | null>(null);
 	const [pending, setPending] = useState(false);
+
+	// Forgot / reset password state
+	const [resetCode, setResetCode] = useState("");
+	const [resetPassword, setResetPassword] = useState("");
+	const [resetConfirm, setResetConfirm] = useState("");
+	const [forgotNotice, setForgotNotice] = useState<string | null>(null);
 
 	const finishLogin = async () => {
 		await queryClient.invalidateQueries({ queryKey: AUTH_USER_QUERY_KEY });
@@ -125,16 +134,58 @@ export function LoginCard() {
 		setMode(mode === "register" ? "login" : "register");
 	};
 
+	const submitForgotPassword = () =>
+		run(async () => {
+			const res = await fetch("/api/auth/forgot-password", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email }),
+			});
+			const data = (await res.json()) as { ok?: boolean; error?: string };
+			if (!res.ok) return setError(messageFor(data.error ?? null));
+			// Always show a success-shaped message to avoid email enumeration.
+			setForgotNotice("If that email is registered, a reset code has been sent.");
+			setError(null);
+			setMode("reset");
+		});
+
+	const submitResetPassword = () =>
+		run(async () => {
+			const res = await fetch("/api/auth/reset-password", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email, code: resetCode, newPassword: resetPassword }),
+			});
+			const data = (await res.json()) as { ok?: boolean; error?: string };
+			if (!res.ok) return setError(messageFor(data.error ?? null));
+			// Success: go back to login with a notice.
+			setResetCode(""); setResetPassword(""); setResetConfirm("");
+			setForgotNotice(null);
+			setError(null);
+			setMode("login");
+			setResendNotice("Password reset successfully. Please log in with your new password.");
+		});
+
+	const titleFor: Record<Mode, string> = {
+		login: "欢迎回来",
+		register: "创建账号",
+		verify: "验证你的邮箱",
+		forgot: "Reset password",
+		reset: "Reset password",
+	};
+
+	const subFor: Record<Mode, string> = {
+		login: "登录 NanoBee，让 AI 助理主动为你盯着重要的事",
+		register: "登录 NanoBee，让 AI 助理主动为你盯着重要的事",
+		verify: "最后一步，确认这个邮箱属于你",
+		forgot: "We'll send you a 6-digit code to reset your password.",
+		reset: "Enter the code we sent to your email.",
+	};
+
 	return (
 		<div className="nb-auth-card" data-testid="login-card">
-			<h1 className="nb-auth-title">
-				{mode === "verify" ? "验证你的邮箱" : mode === "register" ? "创建账号" : "欢迎回来"}
-			</h1>
-			<p className="nb-auth-sub">
-				{mode === "verify"
-					? "最后一步，确认这个邮箱属于你"
-					: "登录 NanoBee，让 AI 助理主动为你盯着重要的事"}
-			</p>
+			<h1 className="nb-auth-title">{titleFor[mode]}</h1>
+			<p className="nb-auth-sub">{subFor[mode]}</p>
 
 			{mode === "verify" ? (
 				<VerifyEmailForm
@@ -151,6 +202,30 @@ export function LoginCard() {
 						setError(null);
 						setMode("login");
 					}}
+				/>
+			) : mode === "forgot" ? (
+				<ForgotPasswordForm
+					email={email}
+					error={error}
+					notice={forgotNotice}
+					pending={pending}
+					onEmailChange={setEmail}
+					onSubmit={submitForgotPassword}
+					onBack={() => { setError(null); setForgotNotice(null); setMode("login"); }}
+				/>
+			) : mode === "reset" ? (
+				<ResetPasswordForm
+					email={email}
+					code={resetCode}
+					password={resetPassword}
+					confirmPassword={resetConfirm}
+					error={error}
+					pending={pending}
+					onCodeChange={setResetCode}
+					onPasswordChange={setResetPassword}
+					onConfirmChange={setResetConfirm}
+					onSubmit={submitResetPassword}
+					onBack={() => { setError(null); setMode("forgot"); }}
 				/>
 			) : (
 				<>
@@ -170,6 +245,7 @@ export function LoginCard() {
 						onNameChange={setName}
 						onSubmit={submitEmailAuth}
 						onSwitchMode={switchMode}
+						onForgotPassword={() => { setError(null); setMode("forgot"); }}
 					/>
 				</>
 			)}

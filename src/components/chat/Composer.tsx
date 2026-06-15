@@ -1,6 +1,7 @@
 // Main chat composer: auto-growing textarea plus the slash ("/task") popover
 // that turns conversation into automated tasks.
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { useAppStore } from '../../store/useAppStore';
 import { useImeComposition } from '../../lib/useImeComposition';
 import { Icon, Icons } from '../../icons/icons';
@@ -32,6 +33,12 @@ export function Composer({ onSend }: ComposerProps) {
   const { compositionProps, isSubmitEnter } = useImeComposition();
   const activeChatId = useAppStore((s) => s.activeChatId);
   const clearComposerSeed = useAppStore((s) => s.clearComposerSeed);
+  const navigate = useNavigate();
+  // While a reply is generating (send → first token → stream → final), the send
+  // button becomes a stop button. `generating` (not `pending`) stays true for the
+  // whole stream, so stop is available exactly while tokens are arriving.
+  const generating = useAppStore((s) => s.generating);
+  const stopGeneration = useAppStore((s) => s.stopGeneration);
 
   // Focus the input on mount and whenever the conversation changes
   // (new chat via ⌘N / sidebar button, or switching to another chat).
@@ -71,6 +78,9 @@ export function Composer({ onSend }: ComposerProps) {
   };
 
   const submit = () => {
+    // Don't start a second turn while one is still streaming — the button is a
+    // stop control in that state, not a send.
+    if (generating) return;
     if (!val.trim()) return;
     onSend(val.trim());
     setVal('');
@@ -129,9 +139,22 @@ export function Composer({ onSend }: ComposerProps) {
               }}
               data-testid="open-slash-commands"><Icons.slash size={16} /></button>
             <button className="cbtn" title="语音" data-testid="voice-input"><Icons.mic size={16} /></button>
+            <button className="cbtn" title="多模型对比"
+              onClick={() => {
+                // Open the compare sub-page over the chat (a second-level view,
+                // not a separate route), carrying the current draft as its prompt.
+                const q = val.trim();
+                void navigate({ to: '/', search: (prev) => ({ ...prev, compare: '1', q: q || undefined }) });
+              }}
+              data-testid="open-model-compare"><Icons.table size={16} /></button>
             <span className="model" data-testid="model-selector"><Icons.spark size={12} /> sonnet · agent <Icons.chevD size={12} /></span>
-            <button className="nb-send" disabled={!val.trim()} onClick={submit} title="发送"
-              data-testid="send-chat-message"><Icons.send size={16} sw={2.4} /></button>
+            {generating ? (
+              <button className="nb-send nb-stop" onClick={stopGeneration} title="停止生成"
+                data-testid="stop-chat-generation"><Icons.stop size={15} /></button>
+            ) : (
+              <button className="nb-send" disabled={!val.trim()} onClick={submit} title="发送"
+                data-testid="send-chat-message"><Icons.send size={16} sw={2.4} /></button>
+            )}
           </div>
         </div>
       </div>

@@ -7,7 +7,7 @@ it and returns it.
 
 ## Core exports / API
 - `messageRoutes` — Hono sub-app:
-  - `POST /` `{ chatId, userMessageId, title?, text, ctxTitle?, ctxTopicId? }`
+  - `POST /` `{ chatId, userMessageId, title?, text, ctxTitle?, ctxTopicId?, ctxPage? }`
     → `201 { chatId, topicId, aiMessage }` | `400` invalid | `500`
 
 ## Dependencies
@@ -24,6 +24,24 @@ it and returns it.
   PRD); a Today-page reading context (`ctxTopicId`) pins the topic instead.
 
 ## Change history
+
+### 2026-06-15 — forward the client "stop" to the agent loop
+- **Motivation**: when the user pressed stop, the browser aborted the fetch but
+  the worker kept generating (and burning tokens) server-side.
+- **Change**: the `/stream` route now passes `c.req.raw.signal` (which fires when
+  the client disconnects) as the last arg to `runAgentLoop`, so the loop stops
+  between iterations and the abort propagates to the upstream LLM fetch. Whatever
+  text streamed before the abort is still persisted (the existing catch path), so
+  a stopped reply survives reload.
+
+### 2026-06-15 — viewing context covers the whole page, not just the article
+- **Motivation**: the quick chat now reports which surface the user is on (today
+  / tasks / artifacts / research / compare), so replies can be grounded in the
+  page even when no specific article is in view.
+- **Change**: `sendSchema` accepts an optional `ctxPage` (≤120 chars);
+  `buildAgentMessages` composes the system context from `ctxPage` (the page) and
+  `ctxTitle` (the in-view item) — `用户正在使用 NanoBee。当前所在页面：…；正在查看：「…」。`
+  Either or both may be present; absent → no system message, as before.
 
 ### 2026-06-12 — created
 - **Motivation**: chat was the core loop still running on client-side mocks;
@@ -103,6 +121,26 @@ it and returns it.
 - **Change**: the per-request web-search key is now injected under
   `<provider>_api_key` (from `resolveWebSearchKey`'s `{provider,key}`), not
   hardcoded `tavily_api_key`, so Brave/Serper/Exa keys reach the data-hub source.
+
+### 2026-06-15 — fix: AI message INSERT OR IGNORE (security review)
+
+The AI message row was inserted with `INSERT INTO` (no `OR IGNORE`). If a
+streaming client retried or if `persistTurn` was called twice for the same
+turn, a duplicate AI row would be written with the same `id`, causing a D1
+unique-constraint error. Changed to `INSERT OR IGNORE` to match the user
+message row; the id is stable per turn so a retry simply skips the duplicate
+insert and the final `final` SSE event is still emitted correctly.
+
+### 2026-06-15 — multi-tenant owner isolation in persistTurn
+- **Motivation**: migration 0012 adds `owner` columns to `chats` and `messages`. Inserts
+  must carry the owner so chats and messages land in the correct user bucket and are never
+  visible across accounts.
+- **Changes**:
+  - `persistTurn` gains an `owner: string` parameter.
+  - Both `INSERT INTO chats` and both `INSERT INTO messages` now include the `owner` column.
+  - `UPDATE chats SET topic_id` gains `AND owner = ?` as a security guard.
+  - Both call sites (POST / and POST /stream) pass `agentCtx.artifacts.owner` as the
+    owner argument — the same value already resolved by `prepareRun` for artifact context.
 
 ### 2026-06-15 — remove ensureSeeded calls and db/seed dependency
 - **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `db/seed.ts` and the `SEED_DEMO_DATA` env flag were deleted entirely.

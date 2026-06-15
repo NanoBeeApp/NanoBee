@@ -47,6 +47,11 @@ exports `AppType` for the typed RPC client.
 - **Key decision**: optional string set only in `.dev.vars` — absent in
   `wrangler.json` vars so no deployed environment can accidentally seed.
 
+### 2026-06-15 — Added VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY_ENC to Env type
+- `VAPID_PUBLIC_KEY?: string` — base64url P-256 public key for VAPID JWT signing; non-secret var in `wrangler.json` (empty string = Web Push inactive).
+- `VAPID_PRIVATE_KEY_ENC?: string` — P-256 private key AES-256-GCM encrypted with `AUTH_SECRET` (same scheme as `api_key_enc`); set via `wrangler secret put`.
+- Both fields are optional; when absent the scheduler silently skips push delivery and falls back to the in-app feed only.
+
 ### 2026-06-15 — remove SEED_DEMO_DATA from Env; demo seeding mechanism deleted
 - **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `db/seed.ts` was deleted entirely.
 - `SEED_DEMO_DATA?: string` is removed from the `Env` type — no deployed or local environment can reference it.

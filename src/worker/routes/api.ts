@@ -11,7 +11,10 @@ import { aiSettingsRoutes } from "./ai-settings";
 import { artifactRoutes } from "./artifacts";
 import { authRoutes } from "./auth";
 import { bootstrapRoutes } from "./bootstrap";
+import { compareRoutes } from "./compare";
 import { messageRoutes } from "./messages";
+import { notificationSettingsRoutes } from "./notification-settings";
+import { pushRoutes } from "./push";
 import { researchRoutes } from "./research";
 import { taskRoutes } from "./tasks";
 
@@ -21,7 +24,10 @@ export const apiRoutes = new Hono<{ Bindings: Env }>()
 	.route("/artifacts", artifactRoutes)
 	.route("/auth", authRoutes)
 	.route("/bootstrap", bootstrapRoutes)
+	.route("/compare", compareRoutes)
 	.route("/messages", messageRoutes)
+	.route("/notifications", notificationSettingsRoutes)
+	.route("/push", pushRoutes)
 	.route("/research", researchRoutes)
 	.route("/tasks", taskRoutes)
 	// GET /api/hello — minimal RPC smoke-test endpoint

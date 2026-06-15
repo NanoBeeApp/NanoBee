@@ -21,6 +21,12 @@ Pure render component: the email + password form used by both the
 
 ## Change history
 
+### 2026-06-15 — add optional onForgotPassword prop
+- **Motivation**: the login mode needs a "Forgot password?" link that switches
+  the LoginCard into the forgot-password flow.
+- **Goal**: add optional `onForgotPassword?: () => void` — shown only in login
+  mode (not register) when provided.
+
 ### 2026-06-12 — created
 - **Motivation**: login and register share almost the whole form; two
   copies would drift. Repo rules require pure render components.

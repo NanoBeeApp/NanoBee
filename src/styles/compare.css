@@ -1,0 +1,591 @@
+/* Multi-model compare page — implements the V2 design (white background, weak
+   dividers, light error state, flat empty state). All colors use Ledger UI
+   tokens. Reused base classes (.btn, .input, .nb-send) live in base.css. */
+
+.nb-cmp-view {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	background: var(--bg);
+}
+
+/* ---------- Toolbar (slim, one row) ---------- */
+.nb-cmp-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	height: 52px;
+	flex-shrink: 0;
+	/* extra right padding leaves room for the app shell's floating account avatar */
+	padding: 0 76px 0 20px;
+}
+.nb-cmp-bar-left {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	min-width: 0;
+}
+.nb-cmp-bar-title {
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--ink);
+	letter-spacing: -0.01em;
+}
+.nb-cmp-bar-sub {
+	font-size: 12px;
+	color: var(--ink-3);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.nb-cmp-bar-right {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+}
+
+/* ---------- Column grid ---------- */
+.nb-cmp-grid {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	/* All columns scroll together: the grid is the single scroll container
+	   (vertical for content, horizontal for many/wide columns). */
+	overflow: auto;
+	position: relative;
+	background: var(--bg);
+}
+
+.nb-cmp-col {
+	/* width comes from an inline `flex: 0 0 {columnWidth}px` (drag-resizable,
+	   shared across all columns); min-width is just a hard floor. */
+	flex-shrink: 0;
+	min-width: 300px;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	border-right: 1px solid var(--border);
+}
+/* The last column needs no right divider (would float alone past the content). */
+.nb-cmp-col:last-of-type {
+	border-right: none;
+}
+
+.nb-cmp-col-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	height: 48px;
+	flex-shrink: 0;
+	padding: 0 10px 0 12px;
+	/* Head stays pinned while the grid scrolls, so you always see which model. */
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	background: var(--bg);
+}
+.nb-cmp-col-body {
+	/* No independent scroll — the whole grid scrolls together. flex:1 pushes the
+	   foot to the bottom so feet align across columns of different heights. */
+	flex: 1;
+	padding: 16px 12px 8px;
+}
+/* Foot pins to the bottom of the scroll area (elapsed/copy always reachable);
+   no top border per the weak-lines rule — whitespace + size separate it. */
+.nb-cmp-col-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 34px;
+	flex-shrink: 0;
+	padding: 4px 14px 8px;
+	font-size: 11px;
+	color: var(--ink-3);
+	position: sticky;
+	bottom: 0;
+	z-index: 4;
+	background: var(--bg);
+}
+
+/* Right-edge drag handle: resizes ALL columns together (shared width). */
+.nb-cmp-resize {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 7px;
+	height: 100%;
+	cursor: col-resize;
+	z-index: 6;
+}
+.nb-cmp-resize::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 1px;
+	height: 100%;
+	background: transparent;
+	transition: background var(--dur-1) var(--ease-out);
+}
+.nb-cmp-resize:hover::after,
+.nb-cmp-resize:active::after {
+	background: var(--brand-2);
+}
+
+/* small icon button (column remove) — visual icon small, hit area >= 32px */
+.nb-cmp-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	border: none;
+	background: transparent;
+	border-radius: var(--r-2);
+	color: var(--ink-4);
+	cursor: pointer;
+	transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.nb-cmp-icon-btn:hover {
+	background: var(--surface-2);
+	color: var(--ink);
+}
+
+/* ---------- Model select ---------- */
+.nb-cmp-select {
+	position: relative;
+	min-width: 0;
+}
+.nb-cmp-select-trigger {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	max-width: 100%;
+	height: 32px;
+	padding: 0 8px;
+	border: none;
+	background: transparent;
+	border-radius: var(--r-2);
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--ink);
+	cursor: pointer;
+	transition: background var(--dur-1) var(--ease-out);
+}
+.nb-cmp-select-trigger:hover {
+	background: var(--surface-2);
+}
+.nb-cmp-select-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.nb-cmp-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+.nb-cmp-select-panel {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 40;
+	width: 280px;
+	max-width: 86vw;
+	background: var(--bg);
+	border: 1px solid var(--border-2);
+	border-radius: var(--r-3);
+	box-shadow: var(--sh-3);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+.nb-cmp-select-search {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--border);
+	background: var(--surface-2);
+}
+.nb-cmp-select-search input {
+	flex: 1;
+	border: none;
+	outline: none;
+	background: transparent;
+	font-size: 13px;
+	color: var(--ink);
+}
+.nb-cmp-select-list {
+	max-height: 260px;
+	overflow-y: auto;
+	padding: 4px;
+}
+.nb-cmp-select-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 8px 10px;
+	border: none;
+	background: transparent;
+	border-radius: var(--r-2);
+	font-size: 13px;
+	color: var(--ink-2);
+	cursor: pointer;
+	text-align: left;
+	transition: background var(--dur-1) var(--ease-out);
+}
+.nb-cmp-select-item:hover {
+	background: var(--surface-2);
+}
+.nb-cmp-select-item.selected {
+	background: var(--brand-soft);
+	color: var(--brand-2);
+	font-weight: 600;
+}
+.nb-cmp-select-item-label {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.nb-cmp-select-item-provider {
+	font-size: 11px;
+	color: var(--ink-4);
+	flex-shrink: 0;
+}
+.nb-cmp-select-item-lock {
+	color: var(--warning);
+	display: inline-flex;
+}
+.nb-cmp-select-empty {
+	padding: 16px;
+	text-align: center;
+	font-size: 13px;
+	color: var(--ink-4);
+}
+.nb-cmp-select-foot {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	padding: 9px 12px;
+	border: none;
+	border-top: 1px solid var(--border);
+	background: var(--bg);
+	font-size: 12px;
+	color: var(--brand-2);
+	cursor: pointer;
+	transition: background var(--dur-1) var(--ease-out);
+}
+.nb-cmp-select-foot:hover {
+	background: var(--surface-2);
+}
+
+/* ---------- Column body states ---------- */
+.nb-cmp-thinking {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 2px;
+	font-size: 13px;
+	color: var(--ink-3);
+}
+.nb-cmp-thinking .dot {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: var(--ink-4);
+	animation: nb-cmp-bounce 1s infinite alternate;
+}
+.nb-cmp-thinking .dot:nth-child(2) {
+	animation-delay: 0.18s;
+}
+.nb-cmp-thinking .dot:nth-child(3) {
+	animation-delay: 0.36s;
+}
+.nb-cmp-thinking .txt {
+	margin-left: 4px;
+}
+@keyframes nb-cmp-bounce {
+	from {
+		opacity: 0.35;
+		transform: translateY(0);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(-3px);
+	}
+}
+
+/* light error block (no heavy border, secondary action) */
+.nb-cmp-error {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	margin-top: 8px;
+	padding: 14px;
+	border-radius: var(--r-3);
+	background: var(--danger-soft);
+	max-width: 320px;
+}
+.nb-cmp-error.needs-key {
+	background: var(--warning-soft);
+}
+.nb-cmp-error-head {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--danger);
+}
+.nb-cmp-error.needs-key .nb-cmp-error-head {
+	color: var(--warning);
+}
+.nb-cmp-error-desc {
+	font-size: 12px;
+	color: var(--ink-3);
+}
+
+/* foot bits */
+.nb-cmp-streaming {
+	color: var(--brand-2);
+	font-weight: 500;
+}
+.nb-cmp-elapsed {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+.nb-cmp-foot-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+.nb-cmp-foot-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	height: 26px;
+	padding: 0 6px;
+	border: none;
+	background: transparent;
+	border-radius: var(--r-1);
+	font-size: 11px;
+	color: var(--ink-3);
+	cursor: pointer;
+	transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.nb-cmp-foot-btn:hover {
+	background: var(--surface-2);
+	color: var(--brand-2);
+}
+
+/* flat empty state (no card), centered over the grid */
+.nb-cmp-empty {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	gap: 6px;
+	pointer-events: none;
+}
+.nb-cmp-empty-glyph {
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--brand-soft);
+	color: var(--brand-2);
+	margin-bottom: 6px;
+}
+.nb-cmp-empty-title {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--ink);
+}
+.nb-cmp-empty-desc {
+	font-size: 13px;
+	color: var(--ink-3);
+	max-width: 320px;
+}
+
+/* ---------- Bottom composer ---------- */
+.nb-cmp-composer {
+	flex-shrink: 0;
+	padding: 8px 20px 16px;
+	background: var(--bg);
+}
+.nb-cmp-composer-box {
+	display: flex;
+	align-items: flex-end;
+	gap: 10px;
+	padding: 8px 10px 8px 14px;
+	border: 1px solid var(--border-2);
+	border-radius: var(--r-3);
+	background: var(--bg);
+	transition: border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out);
+}
+.nb-cmp-composer-box:focus-within {
+	border-color: var(--brand-2);
+	box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.nb-cmp-composer-box textarea {
+	flex: 1;
+	border: none;
+	outline: none;
+	resize: none;
+	background: transparent;
+	font: inherit;
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--ink);
+	max-height: 160px;
+}
+.nb-cmp-composer-hint {
+	margin-top: 6px;
+	font-size: 11px;
+	color: var(--ink-4);
+}
+
+/* ---------- Provider key dialog ---------- */
+.nb-cmp-modal-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 60;
+	background: var(--overlay);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+}
+.nb-cmp-modal {
+	position: relative;
+	width: 480px;
+	max-width: 100%;
+	max-height: 80vh;
+	overflow-y: auto;
+	background: var(--bg);
+	border-radius: var(--r-4);
+	box-shadow: var(--sh-4);
+	padding: 22px;
+}
+.nb-cmp-modal-close {
+	position: absolute;
+	top: 14px;
+	right: 14px;
+	width: 30px;
+	height: 30px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	background: transparent;
+	border-radius: var(--r-2);
+	color: var(--ink-4);
+	cursor: pointer;
+}
+.nb-cmp-modal-close:hover {
+	background: var(--surface-2);
+	color: var(--ink);
+}
+.nb-cmp-modal-title {
+	font-size: 17px;
+	font-weight: 700;
+	color: var(--ink);
+}
+.nb-cmp-modal-sub {
+	margin-top: 4px;
+	font-size: 13px;
+	color: var(--ink-3);
+}
+.nb-cmp-modal-note {
+	margin-top: 12px;
+	padding: 10px 12px;
+	border-radius: var(--r-2);
+	background: var(--info-soft);
+	font-size: 12px;
+	color: var(--ink-2);
+}
+.nb-cmp-key-list {
+	margin-top: 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.nb-cmp-key-row {
+	border-radius: var(--r-2);
+}
+.nb-cmp-key-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 10px 10px;
+	border: none;
+	background: transparent;
+	border-radius: var(--r-2);
+	cursor: pointer;
+	text-align: left;
+	transition: background var(--dur-1) var(--ease-out);
+}
+.nb-cmp-key-head:hover:not(:disabled) {
+	background: var(--surface-2);
+}
+.nb-cmp-key-head:disabled {
+	cursor: default;
+	opacity: 0.7;
+}
+.nb-cmp-key-label {
+	flex: 1;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--ink);
+}
+.nb-cmp-key-badge {
+	font-size: 11px;
+	font-weight: 600;
+	padding: 2px 8px;
+	border-radius: var(--r-pill);
+}
+.nb-cmp-key-badge.configured {
+	background: var(--success-soft);
+	color: var(--success);
+}
+.nb-cmp-key-badge.builtin {
+	background: var(--brand-soft);
+	color: var(--brand-2);
+}
+.nb-cmp-key-badge.none {
+	background: var(--surface-3);
+	color: var(--ink-3);
+}
+.nb-cmp-key-form {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 4px 10px 12px;
+}
+.nb-cmp-key-hint {
+	font-size: 12px;
+	color: var(--ink-3);
+}
+.nb-cmp-key-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}

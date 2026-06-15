@@ -29,6 +29,16 @@ MCP calls and decides on its own when it has enough to answer.
 
 ## Change history
 
+### 2026-06-15 — optional `signal` to cancel a run (chat "stop")
+- **Motivation**: a streaming chat must be cancellable; the loop ran to
+  completion once started.
+- **Change**: `runAgentLoop` takes an optional 6th `signal?: AbortSignal`. It
+  checks `signal.aborted` at the top of each iteration (stops before the next LLM
+  call / tool round) and forwards the signal into `streamAgentTurn`, which
+  `AbortSignal.any`-combines it with the request timeout so a client stop aborts
+  the upstream fetch. The non-stream path (`generateAgentTurn`, quick chat) is
+  unaffected when no signal is passed.
+
 ### 2026-06-12 — created
 - **Motivation**: single-shot route-then-answer (the old `datahub/augment`)
   could fetch at most one source and could not react to results; the user

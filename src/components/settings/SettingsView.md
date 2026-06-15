@@ -36,3 +36,10 @@ loading / signed-out states.
   mounted and the backend already defaults; kept the autosave engine verbatim;
   added page heading + loading / signed-out states; the old `onboarding/`
   dialog + form files were deleted.
+
+### 2026-06-15 — wire NotificationSettings into SettingsView
+- **Motivation**: expose notification preferences on the /settings page.
+- **Changes**: pass `userSignedIn={true}` to `AiSettingsForm` (the
+  `SettingsFormState` is only rendered when the user is signed in, so the flag
+  is always `true` here); import removed — `NotificationSettings` is now
+  consumed inside `AiSettingsForm`, not directly by `SettingsView`.

@@ -99,6 +99,11 @@ export function AccountFoot() {
 										<Icons.spark size={15} />
 										AI 模型设置
 									</button>
+									<button className="nb-account-action" onClick={() => { close(); openSettings(); }}
+										data-testid="account-settings-entry">
+										<Icons.at size={15} />
+										Account
+									</button>
 									<div className="nb-account-sep" />
 									<DownloadLinks onPick={close} />
 									<div className="nb-account-sep" />

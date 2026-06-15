@@ -6,10 +6,10 @@ sub-routers into `authRoutes`, mounted at `/api/auth` by `routes/api.ts`.
 
 ## Core exports / API
 - `authRoutes` — Hono sub-app chaining `emailAuthRoutes`, `sessionRoutes`,
-  `oauthRoutes` (all on `/` so paths stay flat under `/api/auth`)
+  `oauthRoutes`, `accountRoutes` (all on `/` so paths stay flat under `/api/auth`)
 
 ## Dependencies
-- Upstream: `./email`, `./session`, `./oauth`, `../../api-worker` (Env)
+- Upstream: `./email`, `./session`, `./oauth`, `./account`, `../../api-worker` (Env)
 - Downstream: `routes/api.ts`, typed RPC client (`src/lib/api-client.ts`)
 
 ## Notes
@@ -25,6 +25,11 @@ sub-routers into `authRoutes`, mounted at `/api/auth` by `routes/api.ts`.
   existing routes/ layout.
 - **Key decision**: flat URL space (`/register`, `/me`, `/:provider/start`)
   instead of nested prefixes — shorter client calls, no ambiguity.
+
+### 2026-06-15 — add accountRoutes
+- **Motivation**: password reset, session management, data export and account
+  deletion require new endpoints under the same `/api/auth` prefix.
+- **Goal**: add `accountRoutes` from `./account.ts` to the chain.
 
 ### 2026-06-12 — OAuth callback path confirmed as /api/auth/<provider>/callback
 - **Motivation**: a `redirect_uri_mismatch` from Google during end-to-end

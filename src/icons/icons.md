@@ -17,6 +17,10 @@ Inline SVG line-icon set (Lucide-class, 24x24, rounded caps) ported 1:1 from the
 
 ## Change history
 
+### 2026-06-15 — added `stop` icon
+- **Motivation**: the chat composer's stop-generating button needed a filled
+  rounded-square glyph (added to `IconName` in `types.ts` too).
+
 ### 2026-06-15 — added `table` icon
 - **Motivation**: the Artifacts gallery view switch needed a table glyph (list / table / card).
 

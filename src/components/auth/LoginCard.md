@@ -25,6 +25,14 @@ the pure form components.
 
 ## Change history
 
+### 2026-06-15 — add forgot/reset password flow
+- **Motivation**: users need to recover accounts without knowing their password.
+- **Goal**: add `Mode = 'forgot' | 'reset'` states, `ForgotPasswordForm` and
+  `ResetPasswordForm` components, and their corresponding API calls
+  (`/api/auth/forgot-password`, `/api/auth/reset-password`).
+- **Key decision**: same enum-based mode pattern as existing login/register/verify;
+  the email field is shared so the reset form can pre-fill it.
+
 ### 2026-06-12 — created
 - **Motivation**: the auth flow has three UI states sharing fields (email
   carries from register into verify); per repo rules state and pure

@@ -28,3 +28,21 @@ GITHUB_CLIENT_SECRET=
 # Built-in OpenRouter key — the backend default AI provider (DeepSeek V4
 # Flash via OpenRouter) for users who haven't supplied their own key
 OPENROUTER_API_KEY=
+
+# --- Web Push / VAPID (Phase 1b — optional) ---
+# Leave these empty in local dev to run without push notifications.
+# The scheduling engine and in-app feed work without them.
+#
+# Setup (run once):
+#   1. Call generateVapidKeyPair() from src/worker/push/vapid.ts
+#      (e.g. via a one-off Wrangler script or the browser console).
+#   2. Set VAPID_PUBLIC_KEY below (also set it in wrangler.json vars
+#      for deployed environments).
+#   3. Encrypt the private key with AUTH_SECRET and store it here as
+#      VAPID_PRIVATE_KEY_ENC (run: encryptSecret(privateKeyRaw, AUTH_SECRET)).
+#      In production use: wrangler secret put VAPID_PRIVATE_KEY_ENC --env <env>
+#
+# IMPORTANT: Never regenerate the key pair after browser subscriptions exist —
+# changing VAPID_PUBLIC_KEY invalidates all existing push subscriptions.
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY_ENC=

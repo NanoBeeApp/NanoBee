@@ -33,6 +33,13 @@ menu offers login/register plus the shared settings actions.
 
 ## Change history
 
+### 2026-06-15 — add "Account" entry to the signed-in menu
+- **Motivation**: users need a quick path from the account popover to the Account
+  settings pane (profile, security, sessions, data export/delete).
+- **Change**: added "Account" button (Icons.at) below "AI 模型设置" in the signed-in
+  menu; it calls `openSettings()` like the AI model settings entry — the Account pane
+  is reached by clicking "Account" in the left master list of /settings.
+
 ### 2026-06-13 — "AI 模型设置" (AI Model Settings) navigates to /settings (was: open modal)
 - **Motivation**: settings became a page with its own URL instead of a modal.
 - **Change**: both account-menu "AI 模型设置" entries (signed-in and signed-out)

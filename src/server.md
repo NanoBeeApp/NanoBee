@@ -7,7 +7,7 @@ worker; everything else (SSR, server functions, assets) goes to the default
 TanStack Start handler.
 
 ## Core exports / API
-- `default` — `{ fetch(request, env, ctx) }` worker handler
+- `default` — `{ fetch(request, env, ctx), scheduled(event, env, ctx) }` worker handler
 
 ## Dependencies
 - Upstream: `@tanstack/react-start/server-entry` (default Start handler),
@@ -24,6 +24,12 @@ TanStack Start handler.
   functions.
 
 ## Change history
+
+### 2026-06-15 — Added scheduled() handler for Cloudflare cron triggers
+- Exports `scheduled(event, env, ctx)` alongside `fetch()`.
+- Delegates to `runScheduler(env)` in `worker/scheduler/engine.ts` via `ctx.waitUntil()`.
+- Imports `ScheduledEvent` from `@cloudflare/workers-types`.
+- The cron fires every 15 minutes per `*/15 * * * *` in `wrangler.json`.
 
 ### 2026-06-12 — created
 - **Motivation**: the template shipped `ssr.tsx` / `server-entry.ts` from an

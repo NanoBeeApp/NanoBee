@@ -29,6 +29,31 @@ verification codes (`auth_email_codes`).
 
 ## Change history
 
+### 2026-06-15 — fix nullable last_seen_at (migration compatibility)
+- **Motivation**: SQLite `ALTER TABLE ADD COLUMN` rejects non-constant DEFAULT
+  expressions (`unixepoch()`); migration 0016 was failing with SQLITE_ERROR.
+- **Goal**: keep `last_seen_at` working while passing the migration.
+- **Key changes**: `SessionInfo.lastSeenAt` changed from `number` to
+  `number | null`; DB row type updated to match; `ORDER BY last_seen_at DESC`
+  still works (NULLs sort last in DESC, which is fine for legacy rows).
+
+### 2026-06-15 — account management additions
+- **Motivation**: implement password-reset, session management, account deletion,
+  data export, and change-name/password endpoints.
+- **Goal**: add all persistence functions for the new account management features.
+- **Key changes**:
+  - `saveEmailCode` now delegates to new `saveEmailCodeWithPurpose('verify')`.
+  - New `saveEmailCodeWithPurpose(purpose)` and `countRecentCodesForPurpose`
+    for reset vs. verify separation (migration 0016 adds `purpose` column).
+  - `consumeEmailCode` gains a `purpose` param (default `'verify'` for backward
+    compatibility); rate-limit burns and success deletion are now purpose-scoped.
+  - `getUserBySessionToken` fires a fire-and-forget `last_seen_at` touch (migration 0016
+    adds that column); new `getUserAndSessionId` variant returns both.
+  - Session management: `listUserSessions`, `deleteSessionById`, `deleteOtherSessions`,
+    `deleteAllUserSessions`.
+  - Profile updates: `updateUserName`, `updateUserPassword` (with session revocation),
+    `getUserRowForExport`.
+
 ### 2026-06-12 — created
 - **Motivation**: auth routes needed storage; the project deliberately uses
   raw D1 prepared statements (no ORM), so the auth tables follow the same

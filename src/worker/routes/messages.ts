@@ -37,6 +37,7 @@ const sendSchema = z.object({
 	text: z.string().min(1, "Message must not be empty").max(4000, "Message too long"),
 	ctxTitle: z.string().max(200).nullish(),
 	ctxTopicId: z.string().max(40).nullish(),
+	ctxPage: z.string().max(120).nullish(),
 });
 
 type SendBody = z.infer<typeof sendSchema>;
@@ -52,11 +53,18 @@ interface PreparedRun {
 	createdArtifacts: ArtifactRef[];
 }
 
-/** The conversation the model sees: optional reading-context + the user turn. */
+/** The conversation the model sees: optional viewing-context + the user turn.
+ *  The context names the page the user is on (`ctxPage`) and, when reported, the
+ *  specific item in view (`ctxTitle`) — so the reply can be grounded in whatever
+ *  surface (today / tasks / research / …) the user is looking at, not only an
+ *  article. */
 function buildAgentMessages(body: SendBody): AgentChatMessage[] {
+	const parts: string[] = [];
+	if (body.ctxPage) parts.push(`当前所在页面：${body.ctxPage}`);
+	if (body.ctxTitle) parts.push(`正在查看：「${body.ctxTitle}」`);
 	return [
-		...(body.ctxTitle
-			? [{ role: "system" as const, content: `用户当前正在阅读：「${body.ctxTitle}」` }]
+		...(parts.length
+			? [{ role: "system" as const, content: `用户正在使用 NanoBee。${parts.join("；")}。如与问题相关，请结合该页面上下文作答。` }]
 			: []),
 		{ role: "user" as const, content: body.text },
 	];
@@ -98,6 +106,9 @@ function logTools(run: AgentRunResult): void {
  * Assemble the AI message (LLM text when available, else the rule-based
  * fallback so chat never breaks), persist the user + AI rows and upsert the
  * chat, then return the payload shared by both routes.
+ *
+ * The `owner` parameter scopes all inserts to the correct user bucket so
+ * chats and messages are never visible across account boundaries.
  */
 async function persistTurn(
 	c: Context<{ Bindings: Env }>,
@@ -105,6 +116,7 @@ async function persistTurn(
 	llm: { text: string; model: string } | null,
 	trace: AgentTrace | null,
 	createdArtifacts: ArtifactRef[],
+	owner: string,
 ): Promise<{ chatId: string; topicId: string; aiMessage: ReturnType<typeof genReply>["msg"] }> {
 	const reply = genReply(body.text, body.ctxTitle, llm);
 	// A Today-page reading context pins the topic; otherwise the reply's
@@ -121,16 +133,19 @@ async function persistTurn(
 
 	await c.env.DB.batch([
 		c.env.DB.prepare(
-			"INSERT OR IGNORE INTO chats (id, topic_id, title, sub, grp) VALUES (?, ?, ?, ?, ?)",
-		).bind(body.chatId, topicId, body.title ?? body.text.slice(0, 22), "新对话", "今天"),
-		// AI keeps the chat's topic in sync with the conversation.
-		c.env.DB.prepare("UPDATE chats SET topic_id = ? WHERE id = ?").bind(topicId, body.chatId),
+			"INSERT OR IGNORE INTO chats (id, owner, topic_id, title, sub, grp) VALUES (?, ?, ?, ?, ?, ?)",
+		).bind(body.chatId, owner, topicId, body.title ?? body.text.slice(0, 22), "新对话", "今天"),
+		// AI keeps the chat's topic in sync with the conversation; guard by owner so
+		// a crafted chatId cannot update another user's chat.
+		c.env.DB.prepare("UPDATE chats SET topic_id = ? WHERE id = ? AND owner = ?").bind(topicId, body.chatId, owner),
 		c.env.DB.prepare(
-			"INSERT OR IGNORE INTO messages (id, chat_id, role, payload) VALUES (?, ?, ?, ?)",
-		).bind(userMessage.id, body.chatId, "user", JSON.stringify(userMessage)),
+			"INSERT OR IGNORE INTO messages (id, owner, chat_id, role, payload) VALUES (?, ?, ?, ?, ?)",
+		).bind(userMessage.id, owner, body.chatId, "user", JSON.stringify(userMessage)),
+		// OR IGNORE: the AI message id is deterministic per turn; a client retry
+		// (e.g. streaming reconnect) must not duplicate the row.
 		c.env.DB.prepare(
-			"INSERT INTO messages (id, chat_id, role, payload) VALUES (?, ?, ?, ?)",
-		).bind(aiMessage.id, body.chatId, aiMessage.role, JSON.stringify(aiMessage)),
+			"INSERT OR IGNORE INTO messages (id, owner, chat_id, role, payload) VALUES (?, ?, ?, ?, ?)",
+		).bind(aiMessage.id, owner, body.chatId, aiMessage.role, JSON.stringify(aiMessage)),
 	]);
 
 	return { chatId: body.chatId, topicId, aiMessage };
@@ -166,7 +181,7 @@ export const messageRoutes = new Hono<{ Bindings: Env }>()
 				);
 			}
 
-			const payload = await persistTurn(c, body, llm, trace, createdArtifacts);
+			const payload = await persistTurn(c, body, llm, trace, createdArtifacts, agentCtx.artifacts.owner);
 			return c.json(payload, 201);
 		} catch (error) {
 			console.error("[API] POST /api/messages D1 error:", String(error));
@@ -197,6 +212,9 @@ export const messageRoutes = new Hono<{ Bindings: Env }>()
 							acc += delta;
 							await stream.writeSSE({ event: "token", data: JSON.stringify(delta) });
 						},
+						// When the client presses stop it aborts the fetch, which fires
+						// this request's signal — the agent loop stops generating too.
+						c.req.raw.signal,
 					);
 					logTools(run);
 					trace = run.trace;
@@ -215,7 +233,7 @@ export const messageRoutes = new Hono<{ Bindings: Env }>()
 
 			const llm = acc.trim() ? { text: acc, model: aiConfig.model } : null;
 			try {
-				const payload = await persistTurn(c, body, llm, trace, createdArtifacts);
+				const payload = await persistTurn(c, body, llm, trace, createdArtifacts, agentCtx.artifacts.owner);
 				await stream.writeSSE({ event: "final", data: JSON.stringify(payload) });
 			} catch (error) {
 				console.error("[API] POST /api/messages/stream persist error:", String(error));

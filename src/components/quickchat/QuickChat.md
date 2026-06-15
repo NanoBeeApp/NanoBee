@@ -17,6 +17,22 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 
 ## Change history
 
+### 2026-06-15 — context chip is always present (page baseline, not just articles)
+- **Motivation**: the "正在看 · …" chip only rendered when a specific article was
+  reported (Today's scroll listener), so on tasks / artifacts / research / compare
+  the user had no signal that NanoBee can read the page they're on.
+- **Goal**: whenever the popup is open, the chip tells the user what the
+  assistant can see — the current page is the always-present baseline, and the
+  in-view article (when reported) is the more specific focus on top of it.
+- **Key decisions**: the page label comes from `VIEW_CONTEXT[view]` (derived from
+  the active route, so it can never be stale or forgotten by a page); `ctxLabel`
+  is the article title when present, else the page label; the chip renders on any
+  visible surface (`ctxLabel != null`); the clear `×` shows only when there's a
+  specific article to detach from (clearing falls back to the page label rather
+  than hiding the chip). Added a tooltip spelling out that NanoBee reads the
+  current content as context. The matching page phrasing is sent to the model via
+  `ctxPage` (see `useAppStore.sendQuick` / `worker/routes/messages`).
+
 ### 2026-06-14 — extract the IME guard into a shared hook
 - **Motivation**: the same composition guard was needed in the main chat
   composer and the research entry input, which were still re-sending on an IME

@@ -31,6 +31,16 @@ snapshot persistence.
 
 ## Change history
 
+### 2026-06-15 — Fix TS 5.9 `never` narrowing in `generateContentStream`
+- **Motivation**: TypeScript 5.9 tightened control-flow analysis for
+  closure-mutated `let` variables; `result` (written inside `handleFrame`) was
+  narrowed to `never` outside the closure, causing `result?.trace` to error
+  with "Property 'trace' does not exist on type 'never'".
+- **Fix**: snapshot `result` into `const finalResult = result as
+  ResearchGenerationResult | null` immediately before the return, giving
+  TypeScript a fresh `const` binding with the explicit declared type rather
+  than the narrowed inference.  No runtime behaviour change.
+
 ### 2026-06-15 — Capture generation traces for debugging (`traces` map)
 - **Motivation**: the canvas/reading overlay need to show how the outline and
   each article were generated; the store has to hold those traces.

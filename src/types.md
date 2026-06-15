@@ -16,6 +16,22 @@ All interfaces/types listed above plus `IconName`.
 
 ## Change history
 
+### 2026-06-15 — Added optional `triggerSpec?: TriggerSpec` to `Task`
+- **Motivation**: The `TaskDetailDrawer` needs access to the structured trigger spec to show a human-readable summary (schedule hour/minute, condition source/op/threshold). The spec is now surfaced from the `trigger_spec` D1 column via `repo.rowToTask`.
+- **Change**: Added optional `triggerSpec?: TriggerSpec` field to the `Task` interface. Backward-compatible — tasks without a spec behave as before.
+
+### 2026-06-15 — Added optional `kind` / `runState` / `batch` / `history` to `Task`
+- **Motivation**: The redesigned Tasks page renders one-off / schedule / condition / batch tasks, batch progress with child rows, and a run-history timeline.
+- **Goal**: Carry the new display data without breaking existing rows.
+- **Change**: Added `TaskKind`, `RunState`, `SubTask`, `TaskBatch`, `RunRecord` and the optional `kind` / `runState` / `batch` / `history` fields on `Task`. All optional, so old payloads still validate and `taskKind()` derives the kind from `triggerType` when absent.
+
+### 2026-06-15 — Added `TriggerSpec` union type and supporting types
+- Added `ScheduleTrigger` (kind, hour, minute, label, message?) for daily UTC schedule tasks.
+- Added `ConditionTrigger` (kind, sourceId, metric, op, threshold?, cooldownSeconds, messageTemplate, params?) for data-hub metric threshold tasks.
+- Added `ConditionOp` type union (`'gt' | 'lt' | 'gte' | 'lte' | 'changed'`).
+- Added `TriggerSpec = ScheduleTrigger | ConditionTrigger` union.
+- All new types are pure data with no logic — safe for JSON round-trip through the `trigger_spec` D1 column.
+
 ### 2026-06-15 — extended `IconName` with `table`
 - **Motivation**: the Artifacts gallery view switch needed a `table` glyph.
 

@@ -1,44 +1,35 @@
 # src/components/tasks/TasksView.tsx
 
 ## Responsibility
-Full-page task center rendered in the center column (replaces the old right rail). Header with active/paused summary, topic filter chips (only topics that actually have tasks), task cards in a two-column grid, and an empty-state nudge. Fully data-driven: no hardcoded cards. Creating a task is the sidebar header's page-aware "新建任务" (New Task) button (which seeds a chat), so this page no longer carries its own new-task button.
+Orchestrator for the Tasks page. Reads the URL (`useTasksUrl`) and renders one of
+two surfaces — the clean single-focus home screen (`TasksHome`) or the secondary
+"all tasks" manager (`AllTasksView`) — plus the detail drawer and the batch-upload
+dialog as overlays. Keeping the surface, view mode, open drawer and dialog in the
+URL makes every state bookmarkable and back-forward friendly.
 
 ## Dependencies
-- Upstream: store, topics, TaskCard, icons
-- Downstream: App (rendered when `view === 'tasks'`)
-
-## Key notes
-- Opened from the sidebar "任务" (Tasks) entry (`openTasks()` sets `view: 'tasks'`).
-- Filter now lives in the store (`tasksFilter`) so the sidebar `TasksNavList` can clear it before jumping to a task on another topic.
-- A just-created task flashes in via the nbtoast animation (same as the old rail).
-- Sidebar jump: a `focusItemId`/`focusItemTick` effect scrolls the matching `[data-cid]` task card into view; each task wrapper carries `data-cid={k.id}` and the page is the scroll container (`scrollRef`).
+- Upstream: `useTasksUrl`, `useAppStore` (`tasks`, `toast`), TasksHome, AllTasksView, TaskDetailDrawer, TaskUploadDialog, `styles/tasks.css`
+- Downstream: route `/_app/tasks` (`tasks.tsx`)
 
 ## Change history
 
+### 2026-06-15 — Redesigned into a clean single-focus home + secondary manager
+- **Motivation**: User feedback — the first screen must be clean, single-purpose, with one visual focus, not a dashboard listing all complexity (view switch, filters, table/board, batch bar) at once.
+- **Goal**: Make the home screen one focus (the task composer); push every management surface one click away.
+- **Key decisions**: TasksView became a thin orchestrator. The read-only two-column grid + `TaskCard` were replaced by `TasksHome` (composer + running overview) and `AllTasksView` (list/table/board), with the detail drawer and batch-upload dialog as URL-addressable overlays. Page state moved into the URL (`useTasksUrl`). `TaskCard.tsx` was removed. A new scoped stylesheet `styles/tasks.css` (imported here) carries the `nb-tk-*` classes; the old `nb-taskspage` / `nb-tcard` classes are no longer used.
+
 ### 2026-06-15 — remove hardcoded "gold live monitor" card and MONITOR_TOPIC_ID logic
-- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; the fake gold-monitor card (`$2,412.50` / `+2.8%` / static sparkline SVG) was placeholder demo content, not real data.
-- Deleted the `MONITOR_TOPIC_ID` constant, the conditional that rendered the monitor card above the task grid when the gold filter was selected, and the `Sparkline` import.
-- The page is now purely data-driven: filter chips, task grid, empty state — no extra hardcoded cards injected for any topic.
+- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; the fake gold-monitor card was placeholder demo content, not real data.
+- Deleted the `MONITOR_TOPIC_ID` constant, the monitor card conditional, and the `Sparkline` import.
 
 ### 2026-06-14 — remove the dead in-page "新建任务" button
-- **Motivation**: the toolbar's "新建任务" button never had an onClick (dead UI),
-  and the sidebar's page-aware "new" button now owns task creation (seeds a chat).
-  Two "新建任务" (New Task) affordances would be redundant.
-- **Change**: dropped the `nb-tool-ics` span and its button from the toolbar; the
-  toolbar now shows only the filter chips. `new-task-button` testid moved to the
-  sidebar.
+- **Motivation**: the toolbar's "新建任务" button never had an onClick (dead UI), and the sidebar's page-aware "new" button now owns task creation.
+- **Change**: dropped the toolbar button; `new-task-button` testid moved to the sidebar.
 
 ### 2026-06-13 — scroll-to-task from the sidebar index + store-backed filter
-- **Motivation**: the new `TasksNavList` sidebar index needs clicking a task to
-  bring its card into view, and to never be blocked by the page's topic filter.
-- **Goal**: react to the store's `focusItem` requests and let the sidebar clear
-  the filter — without a setState-in-effect anti-pattern.
-- **Change**: lifted the topic filter to the store (`tasksFilter` /
-  `setTasksFilter`); added a `scrollRef` on `.nb-taskspage`, `data-cid` on each
-  task wrapper, and a focus effect that scrolls the target into view. The
-  sidebar clears the filter in its click handler, so the effect only scrolls.
+- **Motivation**: clicking a task in the sidebar index must bring its card into view, never blocked by the page filter.
+- **Change**: lifted the topic filter to the store (`tasksFilter`); added a focus effect scrolling the target `[data-cid]` into view.
 
 ### 2026-06-12 — created
-- **Motivation**: user feedback — the always-on right rail crowded the chat page; tasks should be an explicit destination reached from the left sidebar instead of a third column.
-- **Goal**: keep every rail capability (topic scoping, gold monitor, toggle, empty-state nudge, new-task button) on a full-width surface consistent with the Today page layout.
-- **Key decisions**: topic scoping became user-driven filter chips instead of following the active chat topic, since the page is no longer rendered next to a conversation.
+- **Motivation**: the always-on right rail crowded the chat page; tasks should be an explicit destination reached from the left sidebar.
+- **Goal**: keep every rail capability on a full-width surface consistent with the Today page layout.
