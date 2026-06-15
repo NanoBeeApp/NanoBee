@@ -48,11 +48,11 @@ chrome is a transient generation-status / error pill. Imports the scoped
 - **Key decision**: call the dedicated `useResearchUrlSync()` here (the route
   component is the natural single mount point), keeping the sync logic isolated.
 
-### 2026-06-13 — Drop the canvas "新研究" button (new-research → sidebar)
+### 2026-06-13 — Drop the canvas "New Research" button (new-research → sidebar)
 - **Motivation**: The user wants creating a new research to live solely in the
-  left sidebar (ResearchNavList already has a "新研究" entry), not on the canvas.
+  left sidebar (ResearchNavList already has a "New Research" entry), not on the canvas.
 - **Goal**: Keep the canvas chrome to the bare minimum.
-- **Key decision**: Removed the floating "新研究" button; the top-left cluster now
+- **Key decision**: Removed the floating `"新研究"` ("New Research") button; the top-left cluster now
   renders only when there's generation status / an error to show.
 
 ### 2026-06-13 — Remove the top header bar

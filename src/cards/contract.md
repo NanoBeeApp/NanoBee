@@ -1,25 +1,25 @@
 # cards/contract.ts
 
-## 文件职责
-动态卡片 AI 输出契约：定义模型必须返回的 deck JSON 形状(zod schema)与容错解析。对"每种 kind 的卡片 schema"泛型化，所有 kind 复用同一信封 + 解析器。
+## Responsibility
+AI output contract for dynamic cards: defines the deck JSON shape the model must return (zod schema) and fault-tolerant parsing. Generalized over "the card schema for each kind" — all kinds share the same envelope and parser.
 
-## 核心导出 / API
-- `wordCardSchema`：单词卡片的 zod schema
-- `deckPayloadSchema(cardSchema)`：泛型 deck 信封 schema(title/subtitle?/cards[])
-- `parseDeckPayload(rawContent, cardSchema)`：把模型原文解析+校验为 deck payload，兼容裸 JSON 与夹带在散文中的 `{...}`
+## Core exports / API
+- `wordCardSchema`: zod schema for a word card
+- `deckPayloadSchema(cardSchema)`: generic deck envelope schema (title / subtitle? / cards[])
+- `parseDeckPayload(rawContent, cardSchema)`: parses and validates raw model output into a deck payload; handles both bare JSON and `{...}` embedded in surrounding prose
 
-## 依赖关系
-- 上游：zod、`cards/prompt.ts`(传入对应 kind 的 cardSchema)
-- 下游：`worker/cards/generate.ts`
+## Dependencies
+- Upstream: zod, `cards/prompt.ts` (supplies the per-kind `cardSchema`)
+- Downstream: `worker/cards/generate.ts`
 
-## 关键实现思路
-- 仿照 `research/contract.ts` 的容错解析(先 JSON.parse，失败再正则抓首个 `{...}`)
-- `cards` 数组 `min(1).max(30)` 防空 deck、限单次规模
-- 模型只返回 title/subtitle/cards；kind 与 metadata 由服务端附加
+## Key implementation notes
+- Fault-tolerant parsing modelled after `research/contract.ts`: tries `JSON.parse` first, falls back to a regex that extracts the first `{...}` block
+- `cards` array is `min(1).max(30)` to prevent empty decks and cap single-generation size
+- The model returns only `title` / `subtitle` / `cards`; `kind` and metadata are appended server-side
 
-## 变更历史
+## Change history
 
-### 2026-06-13 — 创建
-- **出发点**：需要稳定把 LLM 文本转成结构化卡片，且要能被多种卡片类型复用
-- **目标**：一个泛型契约 + 容错解析覆盖所有 kind
-- **关键决策**：`deckPayloadSchema` 接收 cardSchema 参数实现泛型，而不是为每种 kind 重写解析
+### 2026-06-13 — Created
+- **Motivation**: needed to reliably convert LLM text into structured cards in a way that could be reused across multiple card types
+- **Goal**: one generic contract plus fault-tolerant parsing covering all kinds
+- **Key decisions**: `deckPayloadSchema` accepts a `cardSchema` parameter for genericity instead of duplicating the parser for each kind

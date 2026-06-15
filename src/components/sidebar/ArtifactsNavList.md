@@ -16,12 +16,12 @@ list — `ArtifactsView` itself is detail-only.
 
 ## Key implementation notes
 - The active row tracks `selectedArtifactId`; clicking calls `selectArtifact`.
-- Shows "加载中…" / "还没有生成卡片" empty states based on `artifactsLoading`.
+- Shows "加载中…" (loading) / "还没有生成卡片" (no decks yet) empty states based on `artifactsLoading`.
 
 ## Change history
 
 ### 2026-06-15 — use shared `artifactMeta`
-- **Motivation**: the meta line ("单词 · 10 张") was duplicated here and in the
+- **Motivation**: the meta line (e.g. "单词 · 10 张" — vocabulary · 10 cards) was duplicated here and in the
   gallery's row/card/table; centralized it in `artifacts/format.ts`.
 - **Change**: drop the local `KIND_LABEL`, render `artifactMeta(a)`.
 

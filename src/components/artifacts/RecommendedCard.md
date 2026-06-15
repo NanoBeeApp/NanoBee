@@ -1,24 +1,24 @@
 # components/artifacts/RecommendedCard.tsx
 
-## 文件职责
-一张「推荐模板」卡片的纯渲染:分类 tab 与空态「为你推荐」里用。点击运行模板的预设 prompt 一键生成 deck。
+## Responsibility
+Pure rendering of a single "recommended template" card: used in category tabs and in the "Recommended for you" empty state. Clicking runs the template's preset prompt to generate a deck in one click.
 
-## 核心导出 / API
+## Core exports / API
 - `RecommendedCard({ template, icon, onRun, disabled })`
 
-## 依赖关系
-- 上游：`artifacts/recommended.ts`(RecommendedTemplate)、`types.ts`(IconName)、`icons/icons.tsx`
-- 下游：`ArtifactGallery.tsx`
+## Dependencies
+- Upstream: `artifacts/recommended.ts` (`RecommendedTemplate`), `types.ts` (`IconName`), `icons/icons.tsx`
+- Downstream: `ArtifactGallery.tsx`
 
-## 关键实现思路
-- 纯渲染;`onRun(prompt)` 由 gallery 接到 store.runArtifactShortcut
-- icon 由 gallery 解析分类图标传入,组件本身与分类解耦
-- 生成进行中 disabled 防重入
-- data-testid: recommended-card-{id}
+## Key implementation notes
+- Pure rendering; `onRun(prompt)` is wired by the gallery to `store.runArtifactShortcut`
+- The `icon` is resolved from the category icon by the gallery and passed in — the component itself is decoupled from categories
+- `disabled` during generation to prevent re-entrancy
+- `data-testid`: `recommended-card-{id}`
 
-## 变更历史
+## Change history
 
-### 2026-06-15 — 创建
-- **出发点**：分类 tab 与空态需要一键生成入口
-- **目标**：展示模板标题/副标题/徽标 + 一键生成
-- **关键决策**：复用既有 runArtifactShortcut 管线,点击即生成真实 artifact
+### 2026-06-15 — Created
+- **Motivation**: category tabs and the empty state needed a one-click generation entry point
+- **Goal**: display template title / subtitle / badge + one-click generation
+- **Key decisions**: reuses the existing `runArtifactShortcut` pipeline; clicking generates a real artifact

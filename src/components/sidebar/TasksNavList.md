@@ -1,9 +1,9 @@
 # src/components/sidebar/TasksNavList.tsx
 
 ## Responsibility
-The sidebar scroll-area list shown while the app is on the "任务" page. Lists
-every automated task split into 进行中 / 已暂停 so running tasks lead. Clicking
-an entry scrolls the task center to that task card.
+The sidebar scroll-area list shown while the app is on the Tasks page. Lists
+every automated task split into running (进行中) / paused (已暂停) so running
+tasks lead. Clicking an entry scrolls the task center to that task card.
 
 ## Core export / API
 - `TasksNavList()` — self-contained; reads `tasks`, `focusItem`,
@@ -23,7 +23,7 @@ an entry scrolls the task center to that task card.
 
 ### 2026-06-13 — created
 - **Motivation**: per the user request that each page's sidebar reflect its own
-  list; the 任务 page previously showed the chat history in the sidebar.
+  list; the Tasks page previously showed the chat history in the sidebar.
 - **Goal**: a status-grouped task index that lets the user jump to any task.
 - **Key decision**: the task-page filter was lifted into the store
   (`tasksFilter`) so the click handler can clear it from the sidebar without a

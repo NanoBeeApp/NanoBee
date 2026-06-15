@@ -51,9 +51,9 @@ diagnosable error (status + truncated body).
   user message, as the API requires one result turn per assistant tool turn.
 
 ### 2026-06-12 — add pingChatModel
-- **出发点**：连接测试要覆盖没有 /models 端点的 provider（智谱、通义）。
-- **目标**：发一个 max_tokens:1 的最小 chat 请求验证 key/host/model 连通性。
-- **关键决策**：复用两种协议的 URL/header 构造，2xx 即视为连通，失败抛带状态码的可诊断错误。
+- **Motivation**: the connection test must cover providers that have no `/models` endpoint (e.g. Zhipu, Tongyi).
+- **Goal**: send a minimal chat request with `max_tokens: 1` to verify key / host / model connectivity.
+- **Key decisions**: reuse the URL and header construction for both protocols; any 2xx is treated as success; failures throw a diagnosable error that includes the status code.
 
 ### 2026-06-14 — add streamAgentText (SSE streaming)
 - **Motivation**: the research reading detail page lost its typewriter output —

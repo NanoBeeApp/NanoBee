@@ -120,7 +120,7 @@ indented under its parent along a vertical rail.
 ### 2026-06-13 — Replace tidy-tree with nested-outline hierarchical view
 - **Motivation**: The ported canvas defaulted to a top-down tidy-tree *diagram*,
   which is not how Curve's canvas works — Curve's default is a nested outline
-  (the "层级视图"). The user flagged the tree default as wrong.
+  (the hierarchical view, `"层级视图"`). The user flagged the tree default as wrong.
 - **Goal**: Default the canvas to Curve's hierarchical nested-outline layout
   while keeping the pan/zoom board interaction.
 - **Key decision**: Render structure from `parentId`/`order` in document flow

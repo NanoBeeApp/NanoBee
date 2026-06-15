@@ -33,7 +33,7 @@ menu offers login/register plus the shared settings actions.
 
 ## Change history
 
-### 2026-06-13 — "AI 模型设置" navigates to /settings (was: open modal)
+### 2026-06-13 — "AI 模型设置" (AI Model Settings) navigates to /settings (was: open modal)
 - **Motivation**: settings became a page with its own URL instead of a modal.
 - **Change**: both account-menu "AI 模型设置" entries (signed-in and signed-out)
   now call `openSettings()` (router navigation) after closing the menu; the
@@ -64,7 +64,7 @@ menu offers login/register plus the shared settings actions.
   (`DownloadAppsMenu`) so AccountFoot stays focused on auth state; the
   footer became a flex row to host both triggers.
 
-### 2026-06-12 — "AI 模型设置" menu entry
+### 2026-06-12 — "AI 模型设置" (AI Model Settings) menu entry
 - **Motivation**: users need a way to revisit their AI provider settings
   after onboarding; the account popover is the existing home for
   account-level actions.
@@ -94,7 +94,7 @@ menu offers login/register plus the shared settings actions.
   avatar (drop the standalone bell) with the dropdown caret on the right.
 - **Goal**: one account pill that absorbs every other top-right action.
 - **Key decision**: drop the `SettingsMenu` import; the bell becomes a
-  「最近动态」menu entry (still drives `setNotifOpen`) and the gear's download
+  「最近动态」(Recent Updates) menu entry (still drives `setNotifOpen`) and the gear's download
   links move inline. The trigger stops being a square `.fbtn` (whose centered
   grid stacked the caret *under* the avatar and clipped it) and becomes a
   horizontal pill — `.nb-account-trigger` is now `inline-flex` with `width:auto`

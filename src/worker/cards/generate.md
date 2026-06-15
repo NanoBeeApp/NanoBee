@@ -1,23 +1,23 @@
 # worker/cards/generate.ts
 
-## 文件职责
-卡片 deck 生成：用 kind 专属 prompt 驱动配置的 AI 模型，按该 kind 的契约校验回复，首次失败则带修复指令重试一次。
+## Responsibility
+Card deck generation: drives the configured AI model with a kind-specific prompt, validates the response against that kind's contract, and retries once with a repair instruction on the first failure.
 
-## 核心导出 / API
-- `generateCardDeck(cfg, input)`：生成一个 `CardDeck`；模型不可达或两次都违约则抛错
+## Core exports / API
+- `generateCardDeck(cfg, input)`: generates one `CardDeck`; throws if the model is unreachable or both attempts violate the contract
 
-## 依赖关系
-- 上游：`worker/ai/client.ts`(generateChatText)、`worker/ai/settings.ts`(AiRuntimeConfig)、`cards/contract.ts`、`cards/prompt.ts`、`cards/types.ts`
-- 下游：`worker/routes/cards.ts`
+## Dependencies
+- Upstream: `worker/ai/client.ts` (generateChatText), `worker/ai/settings.ts` (AiRuntimeConfig), `cards/contract.ts`, `cards/prompt.ts`, `cards/types.ts`
+- Downstream: `worker/routes/cards.ts`
 
-## 关键实现思路
-- 复用聊天链路同一套 per-user provider 配置(与 research 功能相同的集成点)
-- 仿 `research/generate.ts` 的"先解析→失败带上一条坏回复 + REPAIR 指令重试一次"
-- kind/metadata 在 `finalize` 中附加到模型 payload 上
+## Key implementation notes
+- Reuses the same per-user provider configuration as the chat pipeline (same integration point as the research feature)
+- Follows the pattern from `research/generate.ts`: parse first; on failure, retry with the previous bad response plus the `REPAIR` instruction
+- `kind` and metadata are attached to the model payload in `finalize`
 
-## 变更历史
+## Change history
 
-### 2026-06-13 — 创建
-- **出发点**：动态卡片需要把 LLM 输出稳定转成校验通过的 deck
-- **目标**：通用生成函数，按 kind 查 spec 取 prompt 与 schema
-- **关键决策**：复用 generateChatText 而非新建模型客户端；保留一次修复重试提升健壮性
+### 2026-06-13 — Created
+- **Motivation**: dynamic cards required a reliable path from LLM output to a validated deck
+- **Goal**: a generic generation function that looks up the spec by kind to obtain the prompt and schema
+- **Key decisions**: reuse `generateChatText` rather than instantiating a new model client; retain a single repair retry to improve robustness

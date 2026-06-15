@@ -2,13 +2,14 @@
 
 ## Responsibility
 Left rail: brand row with collapse button, a uniform 3×2 nav grid (聊天 / 今日事项
-/ 任务 / Artifacts / 研究画布 / 设置), the history/topics switch, then the
-"新建对话" (⌘N) button at the foot of the fixed header. The scroll area below is
+/ 任务 / Artifacts / 研究画布 / 设置 — Chat / Today / Tasks / Artifacts / Research
+Canvas / Settings), the history/topics switch, then the "新建对话" (⌘N — New Chat)
+button at the foot of the fixed header. The scroll area below is
 **context-aware**: it renders the list that belongs to the current page (chats,
 today items, tasks, decks, or research projects). The history/topics switch only
 shows on the chat view. The account avatar lives in the top-right floating bar
-(`FloatingControls` / `AccountFoot`); the 设置 tile opens the AI/settings dialog
-(`setAiSetupOpen`).
+(`FloatingControls` / `AccountFoot`); the Settings tile opens the AI/settings
+dialog (`setAiSetupOpen`).
 
 ## Dependencies
 - Upstream: store, ChatHistoryList, TopicGroupList, TodayNavList, TasksNavList,
@@ -18,18 +19,19 @@ shows on the chat view. The account avatar lives in the top-right floating bar
 ## Change history
 
 ### 2026-06-14 — page-aware "new" button (label + action follow the page)
-- **Motivation**: user feedback — the foot button always said "新建对话" and made
-  a chat, even on the 任务 / Artifacts / 研究画布 pages where "new" should create
-  that page's own entity.
+- **Motivation**: user feedback — the foot button always said "新建对话" (New Chat)
+  and made a chat, even on the Tasks / Artifacts / Research Canvas pages where
+  "new" should create that page's own entity.
 - **Change**: the button now reads its label + test id from `NEW_ACTION[view]`
-  (新建对话 / 新建任务 / 新建 Artifact / 新建研究) and its onClick calls the
-  store's `newForView()` dispatch (same action ⌘N triggers). Replaced the
-  `newChat` binding with `newForView`. The now-redundant "新研究" item was dropped
-  from `ResearchNavList` and the dead "新建任务" placeholder from `TasksView`, so
-  each page has a single canonical "new" affordance.
+  (新建对话 / 新建任务 / 新建 Artifact / 新建研究 — New Chat / New Task / New
+  Artifact / New Research) and its onClick calls the store's `newForView()`
+  dispatch (same action ⌘N triggers). Replaced the `newChat` binding with
+  `newForView`. The now-redundant "New Research" item was dropped from
+  `ResearchNavList` and the dead "New Task" placeholder from `TasksView`, so each
+  page has a single canonical "new" affordance.
 
-### 2026-06-14 — drop nav count badges (今日事项 / 任务)
-- **Motivation**: user feedback — the "5" / "25" pills on the 今日事项 and 任务
+### 2026-06-14 — drop nav count badges (Today / Tasks)
+- **Motivation**: user feedback — the "5" / "25" pills on the Today and Tasks
   tiles were unnecessary visual noise on the rail. Per the project's minimalism
   rule (only keep elements that carry core function), badges that merely repeat a
   count are decoration.
@@ -40,7 +42,7 @@ shows on the chat view. The account avatar lives in the top-right floating bar
 
 ### 2026-06-13 — settings tile navigates to /settings (was: open modal)
 - **Motivation**: settings became a page with its own URL instead of a modal.
-- **Change**: the "设置" tile now calls `openSettings()` (router navigation) and
+- **Change**: the Settings tile now calls `openSettings()` (router navigation) and
   gets an `active` state when `view === 'settings'`, like the other nav tiles;
   the `setAiSetupOpen` import was replaced by `openSettings`.
 
@@ -69,35 +71,35 @@ shows on the chat view. The account avatar lives in the top-right floating bar
   (15→13px). The count badge stops being an absolute top-right pill and trails
   inline at the right end (`margin-left:auto`).
 
-### 2026-06-13 — uniform 3×2 grid, 设置 tile, new-chat moved to foot
+### 2026-06-13 — uniform 3×2 grid, Settings tile, new-chat moved to foot
 - **Motivation**: design handoff — the user wanted the rail laid out as six
-  equal tiles (聊天 leading a balanced 3×2 grid instead of a wide row), a 设置
-  entry surfaced as a first-class tile, a count badge on 今日事项, and the
+  equal tiles (Chat leading a balanced 3×2 grid instead of a wide row), a
+  Settings entry surfaced as a first-class tile, a count badge on Today, and the
   new-chat action relocated to the bottom of the fixed header as a quiet white
   button.
 - **Goal**: match the mockup — amber tiles as the rail's anchor, new-chat
   secondary.
-- **Key decisions**: (1) dropped the `wide` modifier so 聊天 is a normal tile;
-  every tile is now the same size with icon top-left / label bottom-left. (2)
-  Added a 设置 tile wired to `setAiSetupOpen(true)` — the app's only settings
-  surface today; it is an action tile (no persistent active state). (3) 今日事项
-  shows a `today-count` badge (count of `updates` in the "今天" group), mirroring
-  the existing 任务 active-count badge. (4) Moved `nb-newchat` below the switch
-  and restyled it white/outlined (was brand-filled, above the grid); renamed
-  "新对话" → "新建对话".
+- **Key decisions**: (1) dropped the `wide` modifier so the Chat tile is a
+  normal tile; every tile is now the same size with icon top-left / label
+  bottom-left. (2) Added a Settings tile wired to `setAiSetupOpen(true)` — the
+  app's only settings surface today; it is an action tile (no persistent active
+  state). (3) The Today tile shows a `today-count` badge (count of `updates` in
+  the "今天" group), mirroring the existing Tasks active-count badge. (4) Moved
+  `nb-newchat` below the switch and restyled it white/outlined (was brand-filled,
+  above the grid); renamed "新对话" → "新建对话" (New Chat).
 
-### 2026-06-13 — context-aware sidebar list + "聊天" nav tile
+### 2026-06-13 — context-aware sidebar list + Chat nav tile
 - **Motivation**: the user wanted the sidebar list to reflect the current page
-  (today items on 今日事项, tasks on 任务, decks on Artifacts, projects on
-  研究画布) instead of always showing the chat history, plus a dedicated "聊天"
-  card to return to the chat view from any page.
+  (today items on Today, tasks on Tasks, decks on Artifacts, projects on
+  Research Canvas) instead of always showing the chat history, plus a dedicated
+  Chat tile to return to the chat view from any page.
 - **Goal**: per-page sidebar lists, with the chat view keeping its
   history/topics list + switch.
-- **Key decision**: added a wide `nb-nav-tile` for 聊天 (it is both the primary
+- **Key decision**: added a wide `nb-nav-tile` for Chat (it is both the primary
   view and the way back to chat, so it leads the grid) and dispatched the
   scroll-area content by `view` to four new self-contained list components. This
   reverses the earlier "chat lists stay visible on every page" decision — the
-  new 聊天 tile is now the one-click way back, so the chat list no longer needs
+  new Chat tile is now the one-click way back, so the chat list no longer needs
   to be omnipresent. The history/topics switch is gated to the chat view.
 
 ### 2026-06-13 — account footer moved to the top-right corner
@@ -118,9 +120,9 @@ shows on the chat view. The account avatar lives in the top-right floating bar
   no-op when not peeking, so it is safe to attach unconditionally.
 
 ### 2026-06-13 — Arc-style two-column nav grid
-- **Motivation**: the four navigation entries (今日事项 / 任务 / 动态卡片 /
-  研究画布) were stacked as full-width rows, eating vertical space and pushing
-  the chat list down. The user wanted the Arc browser sidebar look.
+- **Motivation**: the four navigation entries (Today / Tasks / Updates Cards /
+  Research Canvas) were stacked as full-width rows, eating vertical space and
+  pushing the chat list down. The user wanted the Arc browser sidebar look.
 - **Goal**: lay the four entries out as a compact 2×2 grid of tiles.
 - **Change**: wrapped them in `.nb-nav-grid` and replaced the per-entry
   classes (`nb-inbox-entry` / `nb-tasks-entry`) with a single unified
@@ -129,10 +131,10 @@ shows on the chat view. The account avatar lives in the top-right floating bar
   active tile keeps the amber border + glow ring.
 
 ### 2026-06-13 — chat lists stay visible on the Today page (TodayNav removed)
-- **Motivation**: opening 今日事项 swapped the sidebar body for TodayNav, so the
-  chat lists vanished and the only obvious way back was "新对话" — the
-  "返回聊天" row was buried at the bottom of the filters. The Tasks page already
-  kept the chat lists, so Today was also inconsistent.
+- **Motivation**: opening Today swapped the sidebar body for TodayNav, so the
+  chat lists vanished and the only obvious way back was the New Chat button —
+  the "Back to Chat" row was buried at the bottom of the filters. The Tasks page
+  already kept the chat lists, so Today was also inconsistent.
 - **Goal**: the sidebar is stable global navigation — clicking any chat (or the
   history/topics switch) works from every view, so no dedicated back button is
   needed. The Today filters moved into the page itself (`TodayFilterBar`).
@@ -141,10 +143,10 @@ shows on the chat view. The account avatar lives in the top-right floating bar
 
 ### 2026-06-13 — remove the read/unread feature
 - **Motivation**: user asked to drop read-state management entirely.
-- **Change**: the 今日事项 entry no longer shows an unread-count badge.
+- **Change**: the Today entry no longer shows an unread-count badge.
 
 ### 2026-06-12 — created
-- **Motivation**: design handoff; the inbox entry is intentionally amber — the "AI reaches you" soul of the product gets the accent color.
+- **Motivation**: design handoff; the Today entry is intentionally amber — the "AI reaches you" soul of the product gets the accent color.
 
 ### 2026-06-12 — server-backed chats
 - **Motivation**: the sidebar listed the static demo chats, so chats created
@@ -152,26 +154,26 @@ shows on the chat view. The account avatar lives in the top-right floating bar
   `chats` down to both list views.
 
 ### 2026-06-12 — real account footer
-- **Motivation**: the footer showed a hardcoded demo persona ("林晚晴");
+- **Motivation**: the footer showed a hardcoded demo persona;
   with the auth system the shell must reflect the real session.
 - **Goal**: footer delegated to the new `AccountFoot` component
   (login entry when signed out, user summary + logout when signed in).
 
-### 2026-06-12 — "任务" entry added
+### 2026-06-12 — Tasks entry added
 - **Motivation**: the right task rail was removed (it crowded the chat page);
   the task list needed a first-class entry point in the left sidebar.
-- **Goal**: a neutral entry below "今日事项" that opens `TasksView` and shows
-  the number of running tasks; amber stays reserved for the inbox soul.
+- **Goal**: a neutral entry below Today that opens `TasksView` and shows the
+  number of running tasks; amber stays reserved for the Today/inbox soul.
 
 ### 2026-06-12 — sidebar stays on the Today page (TodayNav body)
 - **Motivation**: the Today page used to hide the sidebar entirely; the user
   asked for it to stay there with useful features.
 - **Goal**: on the Today page the body swaps to `TodayNav` (reading progress,
   unread/topic filters, quick actions) and the history/topics switch hides —
-  chat lists are not relevant while reading.
+  chat lists are not relevant while reading updates.
 
 ### 2026-06-13 — Artifacts nav entry
-- **Motivation**: the standalone "动态卡片" page was replaced by the
+- **Motivation**: the standalone Updates Cards page was replaced by the
   chat-triggered Artifacts page.
 - **Goal**: the nav tile now opens the Artifacts view (`openArtifacts()`,
   testid `artifacts-entry`, label "Artifacts") instead of the cards view.

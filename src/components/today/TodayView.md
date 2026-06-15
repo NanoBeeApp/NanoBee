@@ -1,14 +1,14 @@
 # src/components/today/TodayView.tsx
 
 ## Responsibility
-"今日事项" reading surface: date header, the in-page `TodayFilterBar` chips plus compact icon toolbar (timeline/list/card switch, "more" menu with collapse-all), grouped items (今天/本周) and the empty state.
+"今日事项" (Today) reading surface: date header, the in-page `TodayFilterBar` chips plus compact icon toolbar (timeline/list/card switch, "more" menu with collapse-all), grouped items (「今天/本周」 — Today / This Week) and the empty state.
 
 ## Dependencies
 - Upstream: store, TodayFilterBar, TimelineCard, ReadRow, ReadCard
 - Downstream: App
 
 ## Key notes
-- Context awareness: a scroll listener (rAF-throttled) reports the first visible [data-cid] item to the store as the quick-chat "正在看" context.
+- Context awareness: a scroll listener (rAF-throttled) reports the first visible [data-cid] item to the store as the quick-chat "正在看" (currently viewing) context.
 - Non-essential actions are folded into the ⋯ menu per the "maximize reading area, no fixed header" iteration.
 - Sidebar jump: a second effect watches `focusItemId` / `focusItemTick` and scrolls the matching `[data-cid]` element into view when the sidebar `TodayNavList` requests it (rAF so a just-cleared filter renders the target first).
 
@@ -31,12 +31,12 @@
   `TodayFilterBar` chip row; `topicById`/`setTodayFilter` usage moved there.
 
 ### 2026-06-13 — remove the read/unread feature
-- **Motivation**: user asked to drop read-state management entirely (the "全部读完了 / 还有 N 件未读" summary and all mark-as-read flows).
+- **Motivation**: user asked to drop read-state management entirely (the "全部读完了 / 还有 N 件未读" (all caught up / N items unread) summary and all mark-as-read flows).
 - **Change**: removed the unread summary line, the mark-all-read button and menu row, the scroll-past auto-read observer + toggle, the 'unread' filter branch and all `markRead` calls; the empty-state copy no longer implies reading progress.
 
 ### 2026-06-12 — removed the reading progress bar
 - **Motivation**: user asked to remove the reading-progress UI; the
-  "还有 N 件未读" summary next to the title already communicates progress.
+  "还有 N 件未读" (N items unread) summary next to the title already communicates progress.
 - **Goal**: less chrome above the reading list.
 
 ### 2026-06-12 — created

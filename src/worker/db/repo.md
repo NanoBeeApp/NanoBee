@@ -24,7 +24,7 @@ the JSON-payload (de)serialization so route handlers stay thin.
 ## Change history
 
 ### 2026-06-14 — newly created chats must appear at the top of the list
-- **Motivation**: user reported that a newly created chat ("话题") showed up at
+- **Motivation**: user reported that a newly created chat ("话题", Topic) showed up at
   the *bottom* of its time-group instead of the top after reload — a basic
   ordering expectation any chat UI must meet.
 - **Root cause**: `listChats` ordered by `rowid ASC`, so freshly inserted chats

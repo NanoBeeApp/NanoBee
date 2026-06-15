@@ -1,14 +1,14 @@
 # src/components/sidebar/ChatHistoryList.tsx
 
 ## Responsibility
-ChatGPT-style flat history: session ("刚刚") chats on top, then time-grouped chats. Each row shows only the title — no leading icon, no subtext.
+ChatGPT-style flat history: session ("刚刚" — "just now") chats on top, then time-grouped chats. Each row shows only the title — no leading icon, no subtext.
 
 ## Dependencies
 - Upstream: types (ChatMeta, SessionMeta)
 - Downstream: Sidebar
 
 ## Key notes
-- Chats arrive via the `chats` prop (server-loaded through the store), not the static demo module; chats created in past sessions land in "今天" after a reload.
+- Chats arrive via the `chats` prop (server-loaded through the store), not the static demo module; chats created in past sessions land in "今天" (today) after a reload.
 - Session ids are filtered out of the grouped lists so a chat never renders twice if the store re-bootstraps mid-session.
 
 ## Change history
@@ -23,9 +23,9 @@ ChatGPT-style flat history: session ("刚刚") chats on top, then time-grouped c
 - **Motivation**: on the new white sidebar the per-item topic-color dots read as random yellow specks and added visual noise; removed them so titles align flat. The pinned star stays as the only leading marker, and the now-unused topics import was dropped.
 
 ### 2026-06-12 — title-only rows (no icon, no subtext)
-- **Motivation**: user wanted the history list as clean as possible. Removed the pinned star (the last remaining icon, plus its icons import) and the `.sub` description line ("快速对话" / per-chat subtitle) so each row renders just the title.
+- **Motivation**: user wanted the history list as clean as possible. Removed the pinned star (the last remaining icon, plus its icons import) and the `.sub` description line (per-chat subtitle) so each row renders just the title.
 
 ### 2026-06-15 — remove `data/chats` dependency; inline the group-label const
 - **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty and is driven by real use; `data/chats.ts` (which contained `CHAT_HISTORY_GROUPS` alongside demo chat fixtures) was deleted.
-- The `CHAT_HISTORY_GROUPS` array `['今天', '昨天', '近 7 天']` is now a module-level const inside this file — it is not demo data (these are time-bucket labels set by the server), just a layout constant.
+- The `CHAT_HISTORY_GROUPS` array `['今天', '昨天', '近 7 天']` (Today / Yesterday / Past 7 days) is now a module-level const inside this file — it is not demo data (these are time-bucket labels set by the server), just a layout constant.
 - No behavior change; the import line is gone and the const is self-contained.

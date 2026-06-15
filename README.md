@@ -4,8 +4,6 @@
 care about and reaches out when something important happens — instead of
 waiting to be asked.
 
-> 一个"主动找你"的 AI 助理：你告诉它你关心什么，重要的事它来通知你。
-
 ## Product surfaces
 
 - **Chat home** — a ChatGPT-style conversation surface. Proactive,
@@ -13,12 +11,12 @@ waiting to be asked.
   from the conversation: AI-proposed task cards (one click to confirm,
   configuration collapsed into chips), text-selection → "set as reminder",
   or `/` slash commands in the composer.
-- **Today page (今日事项)** — an Inoreader-style reading surface for
+- **Today page** — an Inoreader-style reading surface for
   everything you need to care about right now: timeline (tweet-card,
   default) / list / card views, topic filters, expand-to-read,
   scroll-past auto-read and a reading progress bar.
 - **Sidebar** — switches between flat chat history and AI-managed topic
-  groups (e.g. gold · investing, kids' education); an amber "今日事项"
+  groups (e.g. gold · investing, kids' education); an amber "Today"
   entry carries the unread count.
 - **Task rail** — the current topic's live monitor and task cards with
   trigger, latest result, next run and an on/off toggle.

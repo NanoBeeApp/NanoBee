@@ -52,26 +52,14 @@ math, highlight.js code blocks, gemoji shortcodes, CJK-friendly line breaks.
 - highlight.js github theme is light-only (NanoBee forbids dark themes); its
   `.hljs` background/padding is stripped so the `<pre>` container owns the surface.
 
-## 变更历史
+## Change history
 
-### 2026-06-14 — 新增流式 `streaming` 模式
-- **出发点**：研究阅读页打字机流式输出时，每个 token 都把「不完整的 markdown」整篇
-  重新解析，未闭合标记（`**`、围栏 ```` ``` ````、标题 `#`、`$$`）会先以原始文本渲染，
-  等闭合标记到达又突然变成块/行内元素，触发整篇重排，视觉上文字排版不断跳动。
-- **目标**：让流式每一帧的块/行内结构与最终结果一致（只是更短），消除「文本→元素」
-  的结构突变与重排。
-- **关键决策**：(1) 新增 `streaming` prop，开启时先用 `completeStreamingMarkdown`
-  临时补全未闭合标记再渲染；(2) 流式期间禁用 rehype-highlight（逐 token 重新高亮既慢
-  又闪色），最终态恢复完整高亮；(3) 用 `useMemo` 缓存 normalize/complete 管线与渲染源。
+### 2026-06-14 — add streaming `streaming` mode
+- **Motivation**: on the research reading page, typewriter-style streaming re-parsed the whole "incomplete markdown" on every token. Unclosed markers (`**`, fenced ```` ``` ````, headings `#`, `$$`) first rendered as raw text, then snapped into block/inline elements when the closing marker arrived, causing full re-layouts and visually jumpy typography.
+- **Goal**: make every streaming frame's block/inline structure consistent with the final result (just shorter), eliminating the "text → element" structural jumps and re-layouts.
+- **Key decisions**: (1) add the `streaming` prop — when set, pre-pass content through `completeStreamingMarkdown` to temporarily close open markers before parsing; (2) disable rehype-highlight during streaming (re-highlighting every token is both slow and causes color flicker); restore full highlighting on the final render; (3) memoize the normalize/complete pipeline and the rendered source via `useMemo`.
 
-### 2026-06-13 — 创建
-- **出发点**：聊天 AI 回复其实是 LLM 输出的 markdown 文本，但旧链路（textToParas +
-  InlineSegments）只认纯文本/加粗/数字，markdown 语法（标题、列表、代码块、链接、
-  表格、公式）全被当字面量显示。用户要求「聊天内容显示参考 curve 的代码显示
-  markdown，提取公共组件」。
-- **目标**：把 curve 的 react-markdown 渲染链路抽成一个公共组件，聊天与研究阅读共用，
-  统一 markdown 显示效果。
-- **关键决策**：(1) 渲染代码 1:1 照搬 curve（插件配置、normalize-math、自定义
-  a/img），但 CSS 用 NanoBee 设计变量重写，不带 curve 的手绘草图主题；(2) 用可选
-  `onTermClick` 把研究阅读「加粗即可点深入」的交互并入同一组件，避免两套渲染器；
-  (3) 该方案在已知违反「轻量依赖铁律」的前提下经用户明确选择。
+### 2026-06-13 — created
+- **Motivation**: AI chat replies are LLM-generated markdown, but the old pipeline (`textToParas` + `InlineSegments`) only understood plain text, bold, and numbers — markdown syntax (headings, lists, code blocks, links, tables, math) was displayed as literal text. The user requested "render chat content as markdown, referencing the Curve project's implementation, and extract a shared component."
+- **Goal**: extract Curve's react-markdown rendering pipeline into a shared component, consumed by both chat and the research reading view, for a unified markdown display.
+- **Key decisions**: (1) rendering code ported 1:1 from Curve (plugin config, normalize-math, custom `a`/`img` renderers), but CSS rewritten with NanoBee design tokens — no Curve's hand-drawn/sketchpad theme; (2) the optional `onTermClick` prop folds the research reading "click bold text to deep-dive" interaction into the same component, avoiding two separate renderers; (3) this approach knowingly trades the lightweight-dependency principle, a trade-off the user explicitly accepted.

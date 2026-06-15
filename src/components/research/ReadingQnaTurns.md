@@ -17,8 +17,8 @@ back-and-forth stays attached to the article it was asked about.
 ## Key implementation notes
 - Each turn shows the question as a quiet inset block (background, not border)
   and the answer as streamed `<Markdown>`. While `status === "loading"` with no
-  text yet it shows "AI 正在回答…"; once tokens arrive the answer streams with a
-  blinking-cursor footer.
+  text yet it shows `"AI 正在回答…"` ("AI is answering…"); once tokens arrive
+  the answer streams with a blinking-cursor footer.
 - The answer is produced by reusing the content-mode stream (`askInReading`),
   grounded in the node's own article via context. A dedicated concise Q&A prompt
   is a possible future refinement (today the answer is a full-length article).

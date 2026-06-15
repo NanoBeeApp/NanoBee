@@ -1,23 +1,23 @@
 # components/artifacts/ArtifactsTabs.tsx
 
-## 文件职责
-Artifacts 页面顶部 tab 栏的纯渲染组件:两个固定个人 tab(你创建的 / 你收藏的)+ 分类 tab(金融/科技/开发者…)。
+## Responsibility
+Pure-render component for the tab bar at the top of the Artifacts page: two fixed personal tabs (`你创建的` (Your creations) / `你收藏的` (Your favorites)) plus category tabs (Finance / Tech / Developer …).
 
-## 核心导出 / API
+## Core exports / API
 - `ArtifactsTabs({ activeTab, onSelect })`
 
-## 依赖关系
-- 上游：`artifacts/recommended.ts`(ARTIFACT_CATEGORIES)、`icons/icons.tsx`
-- 下游：`ArtifactsView.tsx`
+## Dependencies
+- Upstream: `artifacts/recommended.ts` (`ARTIFACT_CATEGORIES`), `icons/icons.tsx`
+- Downstream: `ArtifactsView.tsx`
 
-## 关键实现思路
-- 纯渲染,active 与切换回调由父级(经 useArtifactsUrlSync)传入,tab 值即 URL `tab` 参数
-- 个人 tab 与分类 tab 间用空白 gap 分隔(不画硬线,遵守弱化 border 规则)
-- 每个 tab 带 role/aria-selected 与 data-testid
+## Key implementation notes
+- Pure rendering; active state and the select callback come from the parent (via `useArtifactsUrlSync`); tab values are the URL `tab` parameter
+- Personal tabs and category tabs are separated by a blank gap (no hard divider line — follows the "reduce border emphasis" rule)
+- Each tab carries `role` / `aria-selected` and `data-testid`
 
-## 变更历史
+## Change history
 
-### 2026-06-15 — 创建
-- **出发点**：artifacts 页需要顶部 tabs
-- **目标**：个人 tab + 分类 tab 的纯渲染栏
-- **关键决策**：分类来自 recommended 目录,纯渲染易测;用 gap 而非分割线
+### 2026-06-15 — Created
+- **Motivation**: the artifacts page needed a top tab bar
+- **Goal**: pure-render bar with personal tabs + category tabs
+- **Key decisions**: categories sourced from the `recommended` module; pure rendering makes it easy to test; gap instead of divider

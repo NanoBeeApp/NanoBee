@@ -1,8 +1,9 @@
 # ResearchOutlineTree
 
 ## Responsibility
-Renders the left-rail outline tree (研究目录) for the currently open research
-project: a recursive, depth-indented table of contents of the project's nodes.
+Renders the left-rail outline tree (research directory, `研究目录`) for the
+currently open research project: a recursive, depth-indented table of contents
+of the project's nodes.
 Each row jumps to that node's reading overlay; the active node is highlighted.
 This is the sidebar counterpart to the in-canvas outline drawn by
 `ResearchCanvas`.
@@ -13,7 +14,8 @@ This is the sidebar counterpart to the in-canvas outline drawn by
   parent→children map from `parentId` + `order`; renders the root's children as a
   nested `<ul>`. Clicking a row calls `openNode(id)` — the reading overlay opens
   immediately (the canvas scrolls to the node behind it). Renders a
-  "大纲生成中…" placeholder while the root has no children yet.
+  `"大纲生成中…"` ("Generating outline…") placeholder while the root has no
+  children yet.
 - `OutlineRow` (file-local, recursive) — one node row + its indented children,
   mirroring `ResearchCanvas`'s `NodeBranch` pattern (recursive helper co-located
   with its connected parent).

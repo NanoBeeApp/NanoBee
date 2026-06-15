@@ -50,7 +50,7 @@ Floating corner buttons replacing a fixed header: top-left (when the sidebar is 
   → a temporary overlay that auto-closes when the pointer leaves the rail; only
   the dedicated panel-toggle icon (`setSideCollapsed(false)`) pins it open.
 - **Change**: edge-reveal `onClick` → `peekSidebar`; titles updated to
-  「临时展开边栏」(edge) vs「固定展开边栏」(icon).
+  "Temporarily expand sidebar" (edge) vs "Pin sidebar open" (icon).
 
 ### 2026-06-13 — left-edge reveal zone for the collapsed sidebar
 - **Motivation**: users had to aim precisely for the small top-left toggle to
@@ -64,11 +64,11 @@ Floating corner buttons replacing a fixed header: top-left (when the sidebar is 
 - **Change**: removed the amber unread dots from the expand-sidebar button and the notification bell.
 
 ### 2026-06-12 — created
-- **Motivation**: user iteration "尽量让可视区域最大化…不要有固定的 header" — chrome becomes translucent corner buttons.
+- **Motivation**: user requirement to maximize the visible content area and avoid a fixed header — chrome becomes translucent corner buttons.
 
 ### 2026-06-12 — expand-task-rail button removed
 - **Motivation**: the right task rail no longer exists (tasks moved to the
-  sidebar "任务" entry + full-page TasksView), so its expand control and the
+  sidebar "Tasks" entry + full-page TasksView), so its expand control and the
   topic task count became dead UI.
 
 ### 2026-06-12 — top-left controls only when the sidebar is collapsed

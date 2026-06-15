@@ -1,23 +1,23 @@
 # components/artifacts/RecommendedRow.tsx
 
-## 文件职责
-列表视图里一行推荐模板。与 ArtifactRow 同律的平铺行：图标 + 标题（+可选徽标）+ 副标题 + 尾部「生成」。整行点击运行模板预设 prompt 一键生成。纯渲染。
+## Responsibility
+A single recommended-template row in the list view. Follows the same flat-row convention as `ArtifactRow`: icon + title (+ optional badge) + subtitle + a "Generate" action at the tail. Clicking the entire row runs the template's preset prompt to generate in one click. Pure rendering.
 
-## 核心导出 / API
+## Core exports / API
 - `RecommendedRow({ template, icon, onRun, disabled })`
 
-## 依赖关系
-- 上游：`types.ts`(IconName)、`artifacts/recommended.ts`(RecommendedTemplate)、`icons/icons.tsx`
-- 下游：`ArtifactGallery.tsx`（list 视图：分类 + 空态推荐）
+## Dependencies
+- Upstream: `types.ts` (`IconName`), `artifacts/recommended.ts` (`RecommendedTemplate`), `icons/icons.tsx`
+- Downstream: `ArtifactGallery.tsx` (list view: category tabs + empty-state recommendations)
 
-## 关键实现思路
-- 整行是 button，generating 时 disabled
-- 徽标复用 `.nb-rec-card-badge`
-- data-testid=recommended-row-{id}
+## Key implementation notes
+- The entire row is a `button`; `disabled` during generation
+- Badge reuses `.nb-rec-card-badge`
+- `data-testid=recommended-row-{id}`
 
-## 变更历史
+## Change history
 
-### 2026-06-15 — 创建
-- **出发点**：推荐区也从笨重卡片改成轻量平铺行（默认 list 视图）
-- **目标**：与 owned 行视觉一致的推荐行
-- **关键决策**：复用 badge 样式；整行可点即生成
+### 2026-06-15 — Created
+- **Motivation**: the recommendations section was also switched from heavy cards to lightweight flat rows (default list view)
+- **Goal**: recommendation row that is visually consistent with owned rows
+- **Key decisions**: reuses the badge style; entire row is clickable to generate

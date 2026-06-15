@@ -16,8 +16,9 @@ laid out in normal flow by the parent canvas.
   vertical rail and the card fills its column.
 - Title + brief carry the content; the whole card is one clickable button, so
   no per-card "click to read" CTA or expand/expanded status text is shown. Only
-  the root keeps a "研究方向" kind badge; a spinner shows while loading and a
-  failed state on error. `depth-N` drives subtle per-level styling.
+  the root keeps a `"研究方向"` ("Research direction") kind badge; a spinner
+  shows while loading and a failed state on error. `depth-N` drives subtle
+  per-level styling.
 
 ## Change history
 
@@ -32,11 +33,11 @@ laid out in normal flow by the parent canvas.
   their brand styling).
 
 ### 2026-06-14 — Strip redundant chrome to reduce visual noise
-- **Motivation**: The "待展开/已展开" status badge and the "点击阅读/继续阅读"
-  footer CTA (with book icon) restated what the clickable card already conveys —
-  pure distraction.
-- **Goal**: Keep only content-bearing elements per the "极简优先 · 禁止多余干扰
-  元素" rule.
+- **Motivation**: The `"待展开/已展开"` ("Pending/Expanded") status badge and the
+  `"点击阅读/继续阅读"` ("Click to read / Continue reading") footer CTA (with book
+  icon) restated what the clickable card already conveys — pure distraction.
+- **Goal**: Keep only content-bearing elements per the "minimal-first, no
+  gratuitous decorative elements" rule.
 - **Key decision**: Removed the non-root kind badge and the whole `rc-node-foot`
   footer (and the now-unused `Icons` import); the card head now renders only for
   the root badge or the loading spinner.

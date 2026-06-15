@@ -1,32 +1,32 @@
 # components/artifacts/useArtifactsUrlSync.ts
 
-## 文件职责
-Artifacts 页面 URL search 参数(`?tab=&artifact=&vm=`)与 store 的桥接 hook,保证刷新/深链/前进后退后 tab、打开的 deck 与视图模式一致、可收藏分享。
+## Responsibility
+Bridge hook between the Artifacts page URL search params (`?tab=&artifact=&vm=`) and the store. Ensures that tab, open deck, and view mode are consistent and bookmarkable/shareable after a page refresh, deep-link navigation, or browser back/forward.
 
-## 核心导出 / API
-- `DEFAULT_ARTIFACTS_TAB`('mine')、`DEFAULT_ARTIFACTS_VM`('list')
-- `useArtifactsUrlSync()`：返回 `{ tab, setTab, viewMode, setViewMode }`
+## Core exports / API
+- `DEFAULT_ARTIFACTS_TAB` ('mine'), `DEFAULT_ARTIFACTS_VM` ('list')
+- `useArtifactsUrlSync()`: returns `{ tab, setTab, viewMode, setViewMode }`
 
-## 依赖关系
-- 上游：`@tanstack/react-router`(getRouteApi/useNavigate)、`store/useAppStore.ts`(selectedArtifactId/selectArtifact)
-- 下游：`ArtifactsView.tsx`
+## Dependencies
+- Upstream: `@tanstack/react-router` (getRouteApi/useNavigate), `store/useAppStore.ts` (selectedArtifactId/selectArtifact)
+- Downstream: `ArtifactsView.tsx`
 
-## 关键实现思路
-- `tab` 只存 URL(页面本地);`setTab` 写新 tab 并丢弃 `artifact`(切 tab 即关详情);默认 tab 省略参数保持 URL 干净
-- `artifact` ↔ store.selectedArtifactId 双向同步,**两侧各用 ref 记住上一次值**区分"真实变化"与"初始水合",只在真实差异时动作 → 收敛不循环、不互相清空:
-  - URL→store:URL 有 artifact 就采用;param 从"有"变"无"(浏览器后退 / 切 tab)才清 store;初始空 URL 不动 store(避免把 `openArtifacts(id)`(聊天引用打开)已设的选中清掉)
-  - store→URL:选中非空就写入;仅当选中由非空→null(真实关闭)才清 param;初始 null + 深链留给 URL→store 采用
-- 支持刷新 / 深链 / 浏览器前进后退(URL 即状态铁律)
-- 参照 `research/useResearchUrlSync` 的成熟模式
+## Key implementation notes
+- `tab` is stored in the URL only (page-local); `setTab` writes the new tab and drops `artifact` (switching tabs closes the detail panel); the default tab omits the param to keep the URL clean.
+- `artifact` ↔ `store.selectedArtifactId` are kept in two-way sync. **Each side tracks the previous value with a ref** to distinguish a genuine change from the initial hydration, and only acts on a real difference — converges without looping or clearing each other:
+  - URL → store: if the URL has `artifact`, adopt it; if the param goes from present to absent (browser back / tab switch), clear the store; an initially empty URL leaves the store untouched (avoids clearing a selection already set by `openArtifacts(id)` from a chat reference).
+  - store → URL: a non-empty selection is written to the URL; only a non-null → null transition (a genuine close) clears the param; initial null + deep-link is left for the URL→store direction to handle.
+- Supports page refresh / deep links / browser back-forward (URL-as-state principle).
+- Modeled on the established pattern in `research/useResearchUrlSync`.
 
-## 变更历史
+## Change history
 
-### 2026-06-15 — 加 vm 视图模式
-- **出发点**：列表/表格/卡片视图切换状态属于"能改变可见内容"的视图状态,须进 URL
-- **目标**：viewMode + setViewMode 进 URL(`?vm=`),默认 list 省略
-- **关键决策**：vm 像 tab 一样纯 URL(页面本地);用 `mkSearch` 统一构造 search 并在默认值省略;切 tab / 开关详情 / setViewMode 都保留其它两个参数(互不丢失)
+### 2026-06-15 — add vm view mode
+- **Motivation**: the list/table/card view-toggle state affects visible content and therefore must live in the URL.
+- **Goal**: expose `viewMode` + `setViewMode` via `?vm=`; omit the param when the value is the default `list`.
+- **Key decisions**: `vm` is URL-only (page-local), like `tab`; use `mkSearch` to build the search string consistently and omit defaults; `setTab`, opening/closing the detail panel, and `setViewMode` all preserve the other two params (no accidental drops).
 
-### 2026-06-15 — 创建
-- **出发点**：tabs 与打开的 deck 属于"能改变可见内容"的视图状态,按 URL 即状态铁律必须进 URL
-- **目标**：tab + 选中 deck 进 URL 并与 store 同步
-- **关键决策**：tab 纯 URL、artifact 双向同步;切 tab 丢 artifact 以关闭详情
+### 2026-06-15 — created
+- **Motivation**: the active tab and the open deck are view state that affects visible content; per the URL-as-state principle they must be encoded in the URL.
+- **Goal**: sync `tab` + selected deck into the URL and keep them in sync with the store.
+- **Key decisions**: `tab` is URL-only; `artifact` is two-way; switching tabs drops `artifact` to close the detail panel.

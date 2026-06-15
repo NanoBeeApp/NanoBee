@@ -1,28 +1,28 @@
 # components/artifacts/ArtifactCard.tsx
 
-## 文件职责
-gallery 网格里一张「已创建 artifact」卡片的纯渲染。点卡片主体打开 deck 详情;角上按钮收藏 / 删除(不打开)。
+## Responsibility
+Pure rendering of a single "created artifact" card in the gallery grid. Clicking the card body opens the deck detail; the corner buttons favorite / delete without opening.
 
-## 核心导出 / API
+## Core exports / API
 - `ArtifactCard({ artifact, onOpen, onToggleFavorite, onDelete })`
 
-## 依赖关系
-- 上游：`artifacts/types.ts`(Artifact)、`icons/icons.tsx`
-- 下游：`ArtifactGallery.tsx`
+## Dependencies
+- Upstream: `artifacts/types.ts` (Artifact), `icons/icons.tsx`
+- Downstream: `ArtifactGallery.tsx`
 
-## 关键实现思路
-- 纯渲染,所有动作由 gallery 注入
-- 收藏星常显(反映状态),删除按钮 hover 才显
-- 角上按钮 stopPropagation 避免冒泡到打开;支持 Enter/Space 键盘打开
-- data-testid 用业务语义(artifact-card-{id}/artifact-favorite-{id}/artifact-card-delete-{id})
+## Key implementation notes
+- Pure rendering — all actions are injected by the gallery
+- The favorite star is always visible (reflects state); the delete button only appears on hover
+- Corner buttons call `stopPropagation` to prevent bubbling up to the open handler; supports `Enter`/`Space` keyboard activation
+- `data-testid` uses business semantics (`artifact-card-{id}` / `artifact-favorite-{id}` / `artifact-card-delete-{id}`)
 
-## 变更历史
+## Change history
 
-### 2026-06-15 — 改用共享 format + 成为「卡片」视图之一
-- **出发点**：artifacts 加列表/表格/卡片视图;卡片只是可选视图之一,元信息格式化下沉到 `artifacts/format.ts`
-- **关键决策**：去掉本地 KIND_LABEL,改用 `artifactMeta()`;卡片样式保留
+### 2026-06-15 — Switched to shared format + became one of the card views
+- **Motivation**: artifacts gained list / table / card views; the card is now just one optional view; metadata formatting was moved down to `artifacts/format.ts`
+- **Key decisions**: removed the local `KIND_LABEL` map, now calls `artifactMeta()`; card styles retained
 
-### 2026-06-15 — 创建
-- **出发点**：你创建的/你收藏的 tab 需要网格卡片
-- **目标**：可点击打开 + 收藏 + 删除的纯渲染卡片
-- **关键决策**：纯渲染、动作注入;星常显删 hover 显,降低静止时视觉噪音
+### 2026-06-15 — Created
+- **Motivation**: the `你创建的` (Your creations) / `你收藏的` (Your favorites) tabs needed grid cards
+- **Goal**: pure-render card that can be clicked to open, favorited, and deleted
+- **Key decisions**: pure rendering with injected actions; star always visible, delete only on hover — reduces visual noise at rest

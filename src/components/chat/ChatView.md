@@ -17,9 +17,7 @@ Center chat surface: auto-scrolling message feed, pending indicator, composer, a
 - **Motivation**: design handoff; isolates feed scrolling behavior from the App shell.
 
 ### 2026-06-12 — created-state from persisted tasks
-- **Motivation**: after a reload, a confirmed suggestion card showed "创建任务"
-  again because `createdTaskIds` is session memory. The card now also counts a
-  suggestion as created when its id exists in the persisted task list.
+- **Motivation**: after a reload, a confirmed suggestion card showed "创建任务" ("Create task") again because `createdTaskIds` is session memory. The card now also counts a suggestion as created when its id exists in the persisted task list.
 
 ### 2026-06-12 — pass `showQuick={false}` to Composer in empty state
 - **Motivation**: the welcome screen already shows four guide cards; the three quick-suggestion chips below the composer repeat the same actions and clutter the screen.

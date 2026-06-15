@@ -1,22 +1,22 @@
 # components/artifacts/ArtifactRow.tsx
 
-## 文件职责
-列表视图里一行「已创建 artifact」（你创建的 / 你收藏的）。Twitter feed 式平铺行——无卡片边框，靠 hairline 分割线 + hover 背景区分，不做成盒子。点整行进 deck 详情；尾部按钮收藏/删除不触发打开。纯渲染。
+## Responsibility
+A single row in the list view for a "created artifact" (your creations / your favorites). Twitter-feed-style flat row — no card border; rows are distinguished by a hairline divider and hover background rather than a box. Clicking the entire row opens the deck detail; tail buttons for favorite / delete do not trigger open. Pure rendering.
 
-## 核心导出 / API
+## Core exports / API
 - `ArtifactRow({ artifact, onOpen, onToggleFavorite, onDelete })`
 
-## 依赖关系
-- 上游：`artifacts/types.ts`、`artifacts/format.ts`(artifactMeta)、`icons/icons.tsx`
-- 下游：`ArtifactGallery.tsx`（list 视图）
+## Dependencies
+- Upstream: `artifacts/types.ts`, `artifacts/format.ts` (`artifactMeta`), `icons/icons.tsx`
+- Downstream: `ArtifactGallery.tsx` (list view)
 
-## 关键实现思路
-- 复用 `.nb-arti-card-fav` / `.nb-arti-card-del` 按钮样式（删除 hover 才显）
-- 收藏 testid 与卡片一致 `artifact-favorite-{id}`（同时只渲染一种视图，不冲突）
+## Key implementation notes
+- Reuses `.nb-arti-card-fav` / `.nb-arti-card-del` button styles (delete only visible on hover)
+- Favorite `testid` matches the card: `artifact-favorite-{id}` (only one view is rendered at a time, so no collision)
 
-## 变更历史
+## Change history
 
-### 2026-06-15 — 创建
-- **出发点**：用户嫌卡片丑，默认改用轻量平铺列表
-- **目标**：无卡片 chrome 的平铺行
-- **关键决策**：hairline 分割线 + hover 背景（遵守「列表参考 Twitter 平铺、禁逐条做卡片」）
+### 2026-06-15 — Created
+- **Motivation**: users found cards ugly; switched default to a lightweight flat list
+- **Goal**: flat row with no card chrome
+- **Key decisions**: hairline divider + hover background (follows the "list rows reference Twitter flat style, no per-item cards" rule)

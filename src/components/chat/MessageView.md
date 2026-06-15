@@ -1,7 +1,7 @@
 # src/components/chat/MessageView.tsx
 
 ## Responsibility
-Renders one chat message: user bubble / AI reply (minimal "NanoBee" role row, rich paragraphs only) / proactive amber card with "NanoBee 主动推送" tag.
+Renders one chat message: user bubble / AI reply (minimal "NanoBee" role row, rich paragraphs only) / proactive amber card with "NanoBee 主动推送" ("NanoBee proactive push") tag.
 
 ## Dependencies
 - Upstream: types, icons, `common/Markdown`, `lib/paras-to-markdown`
@@ -27,9 +27,7 @@ Renders one chat message: user bubble / AI reply (minimal "NanoBee" role row, ri
 
 ### 2026-06-13 — agent-trace debug entry
 - **Motivation**: surface the agent execution process per AI reply.
-- **Goal**: messages whose payload carries `trace` render an「执行过程」
-  pill in the role row (testid `agent-trace-open-button`) that toggles
-  `AgentTraceModal`; the open/close flag is local UI state.
+- **Goal**: messages whose payload carries `trace` render an「执行过程」("execution process") pill in the role row (testid `agent-trace-open-button`) that toggles `AgentTraceModal`; the open/close flag is local UI state.
 
 ### 2026-06-13 — inline artifact references
 - **Motivation**: replies that generate card-deck artifacts should link to them

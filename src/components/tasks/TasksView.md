@@ -1,14 +1,14 @@
 # src/components/tasks/TasksView.tsx
 
 ## Responsibility
-Full-page task center rendered in the center column (replaces the old right rail). Header with active/paused summary, topic filter chips (only topics that actually have tasks), task cards in a two-column grid, and an empty-state nudge. Fully data-driven: no hardcoded cards. Creating a task is the sidebar header's page-aware "新建任务" button (which seeds a chat), so this page no longer carries its own new-task button.
+Full-page task center rendered in the center column (replaces the old right rail). Header with active/paused summary, topic filter chips (only topics that actually have tasks), task cards in a two-column grid, and an empty-state nudge. Fully data-driven: no hardcoded cards. Creating a task is the sidebar header's page-aware "新建任务" (New Task) button (which seeds a chat), so this page no longer carries its own new-task button.
 
 ## Dependencies
 - Upstream: store, topics, TaskCard, icons
 - Downstream: App (rendered when `view === 'tasks'`)
 
 ## Key notes
-- Opened from the sidebar "任务" entry (`openTasks()` sets `view: 'tasks'`).
+- Opened from the sidebar "任务" (Tasks) entry (`openTasks()` sets `view: 'tasks'`).
 - Filter now lives in the store (`tasksFilter`) so the sidebar `TasksNavList` can clear it before jumping to a task on another topic.
 - A just-created task flashes in via the nbtoast animation (same as the old rail).
 - Sidebar jump: a `focusItemId`/`focusItemTick` effect scrolls the matching `[data-cid]` task card into view; each task wrapper carries `data-cid={k.id}` and the page is the scroll container (`scrollRef`).
@@ -23,7 +23,7 @@ Full-page task center rendered in the center column (replaces the old right rail
 ### 2026-06-14 — remove the dead in-page "新建任务" button
 - **Motivation**: the toolbar's "新建任务" button never had an onClick (dead UI),
   and the sidebar's page-aware "new" button now owns task creation (seeds a chat).
-  Two "新建任务" affordances would be redundant.
+  Two "新建任务" (New Task) affordances would be redundant.
 - **Change**: dropped the `nb-tool-ics` span and its button from the toolbar; the
   toolbar now shows only the filter chips. `new-task-button` testid moved to the
   sidebar.

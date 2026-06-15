@@ -1,23 +1,23 @@
 # components/cards/WordCardItem.tsx
 
-## 文件职责
-单个"单词"卡片的渲染器。纯展示组件：顶部 word + 音标 + 词性，中文释义作为醒目主义项，英文释义，带翻译的例句，可选近义词与记忆法。当前仅展示，交互(翻面/标记已掌握/发音)后续再加。
+## Responsibility
+Renderer for a single "word" card. Pure display component: the top section shows the word, phonetic transcription, and part of speech; the Chinese definition is the prominent primary gloss; below that is the English definition, then an example sentence with translation; optional synonyms and mnemonic follow. Interaction (flip, mark as learned, pronunciation) is left for a later iteration.
 
-## 核心导出 / API
+## Core exports / API
 - `WordCardItem({ card, index })`
 
-## 依赖关系
-- 上游：`icons/icons.tsx`、`cards/types.ts`(WordCard)
-- 下游：`components/cards/CardDeckRenderer.tsx`
+## Dependencies
+- Upstream: `icons/icons.tsx`, `cards/types.ts` (WordCard)
+- Downstream: `components/cards/CardDeckRenderer.tsx`
 
-## 关键实现思路
-- 纯渲染、无状态，接 props
-- 样式类在 `styles/cards.css`(.nb-wordcard*)
-- 每张卡与子区域带业务化 data-testid(word-card-{i} 等)
+## Key implementation notes
+- Pure render, stateless — driven entirely by props.
+- Styles live in `styles/cards.css` (`.nb-wordcard*` classes).
+- Each card and its sub-regions carry business-meaningful `data-testid` values (`word-card-{i}`, etc.).
 
-## 变更历史
+## Change history
 
-### 2026-06-13 — 创建
-- **出发点**：单词数据需要专属卡片样式(不同数据不同样式的首个落地)
-- **目标**：清晰承载音标/释义/例句/记忆法的信息层级
-- **关键决策**：中文释义提为主义项视觉权重最高，英文释义次之，例句用浅底块区分
+### 2026-06-13 — created
+- **Motivation**: word data needs a dedicated card style (the first concrete landing of the "different data, different style" approach).
+- **Goal**: a clear information hierarchy for phonetics / definitions / example sentences / mnemonics.
+- **Key decisions**: the Chinese definition is elevated to the primary visual weight; the English definition is secondary; example sentences are visually separated by a light-background block.

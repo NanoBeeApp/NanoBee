@@ -1,30 +1,30 @@
 # components/artifacts/ArtifactGallery.tsx
 
-## 文件职责
-tab 栏下方的内容区。按 active tab 决定展示:mine=你的 deck(空→空态+「为你推荐」)、favorites=收藏的 deck(空→空态+推荐)、分类=该分类的一键生成模板。拥有 store 接线(打开/收藏/删除/生成),卡片(ArtifactCard/RecommendedCard)保持纯渲染。
+## Responsibility
+Content area below the tab bar. Decides what to display based on the active tab: `mine` = your decks (empty → empty state + "Recommended for you"); `favorites` = favorited decks (empty → empty state + recommendations); category tab = one-click generation templates for that category. Owns the store wiring (open / favorite / delete / generate); `ArtifactCard` / `RecommendedCard` stay pure-render.
 
-## 核心导出 / API
+## Core exports / API
 - `ArtifactGallery({ tab, viewMode, onViewModeChange })`
 
-## 依赖关系
-- 上游：`store/useAppStore.ts`(artifacts/artifactGenerating/selectArtifact/toggleFavorite/deleteArtifact/runArtifactShortcut)、`artifacts/recommended.ts`、`artifacts/format.ts`、`ArtifactRow`/`ArtifactCard`、`RecommendedRow`/`RecommendedCard`、`ArtifactsViewSwitch`、`icons/icons.tsx`
-- 下游：`ArtifactsView.tsx`
+## Dependencies
+- Upstream: `store/useAppStore.ts` (`artifacts` / `artifactGenerating` / `selectArtifact` / `toggleFavorite` / `deleteArtifact` / `runArtifactShortcut`), `artifacts/recommended.ts`, `artifacts/format.ts`, `ArtifactRow` / `ArtifactCard`, `RecommendedRow` / `RecommendedCard`, `ArtifactsViewSwitch`, `icons/icons.tsx`
+- Downstream: `ArtifactsView.tsx`
 
-## 关键实现思路
-- `isCategory` 判断 tab 是否分类;分类→模板;mine/favorites→owned 或空态+推荐
-- **按 viewMode 分发**:`renderOwned`/`renderTemplates` 各支持 list(默认,Row 组件)/table(内联 `<table>`)/card(Card 组件);table 行直接接 store 动作
-- 有可切换列表时(分类有模板 或 owned 非空)顶部右对齐渲染 `ArtifactsViewSwitch`;纯空态不显示切换
-- 空态底部「为你推荐 · 热门项目」用 recommendedForYou()(各分类首个,保证多样)
-- 收藏过滤直接 artifacts.filter(a => a.favorited),数据层一次返回 favorited
+## Key implementation notes
+- `isCategory` determines whether the active tab is a category; category → templates; `mine` / `favorites` → owned decks or empty state + recommendations
+- **Dispatches by `viewMode`**: `renderOwned` / `renderTemplates` each support `list` (default, `Row` components) / `table` (inline `<table>`) / `card` (`Card` components); table rows wire directly to store actions
+- When a switchable list is present (category has templates, or owned list is non-empty) renders `ArtifactsViewSwitch` aligned to the top-right; pure empty state hides the switch
+- The empty-state "Recommended for you · Popular" section uses `recommendedForYou()` (first item per category, ensuring variety)
+- Favorites are filtered directly with `artifacts.filter(a => a.favorited)` — the data layer returns the `favorited` flag in a single pass
 
-## 变更历史
+## Change history
 
-### 2026-06-15 — 列表/表格/卡片三视图分发
-- **出发点**：用户嫌卡片丑,要默认非卡片 + 列表/表格/卡片视图切换
-- **目标**：gallery 按 viewMode 渲染三种视图,owned 与 recommended 都支持
-- **关键决策**：默认 list(轻量平铺行,非卡片);table 用内联 `<table>`(行简单,不另立组件);card 保留;视图切换控件仅在有可切换列表时显示;table 行直接接 store 动作
+### 2026-06-15 — List / table / card three-view dispatch
+- **Motivation**: users found cards ugly; requested a non-card default and view switching between list / table / card
+- **Goal**: gallery renders three views based on `viewMode`, supported for both owned and recommended items
+- **Key decisions**: default `list` (lightweight flat rows, not cards); `table` uses an inline `<table>` (rows are simple, no separate component needed); `card` retained; view-switch control only shown when there is a switchable list; table rows wire directly to store actions
 
-### 2026-06-15 — 创建
-- **出发点**：tabs 改造需要按 tab 切换的内容区,空态要展示推荐/热门
-- **目标**：mine/favorites/分类三类内容 + 空态推荐
-- **关键决策**：container 接 store,卡片纯渲染;推荐复用快捷生成管线;空态用跨分类推荐保证多样性
+### 2026-06-15 — Created
+- **Motivation**: the tabs refactor needed a content area that switches by tab; empty state should show recommendations / popular items
+- **Goal**: three content types (mine / favorites / category) + empty-state recommendations
+- **Key decisions**: container owns the store wiring, cards stay pure-render; recommendations reuse the shortcut generation pipeline; empty state uses cross-category recommendations to ensure variety

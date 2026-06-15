@@ -1,23 +1,23 @@
 # components/artifacts/ArtifactDetail.tsx
 
-## 文件职责
-单个打开 deck 的详情视图:返回 gallery 的入口、deck 标题 + 收藏/删除动作,再用共享 CardDeckRenderer 渲染 deck。由 ArtifactsView 在有选中 artifact(URL `?artifact=`)时渲染,隐藏 tab 让 deck 占满。
+## Responsibility
+Detail view for a single open deck: an entry point to return to the gallery, the deck title with favorite / delete actions, and the deck rendered by the shared `CardDeckRenderer`. Rendered by `ArtifactsView` when an artifact is selected (URL `?artifact=`), hiding the tabs so the deck fills the entire surface.
 
-## 核心导出 / API
+## Core exports / API
 - `ArtifactDetail({ artifact })`
 
-## 依赖关系
-- 上游：`store/useAppStore.ts`(selectArtifact/deleteArtifact/toggleFavorite)、`artifacts/types.ts`、`icons/icons.tsx`、`components/cards/CardDeckRenderer.tsx`
-- 下游：`ArtifactsView.tsx`
+## Dependencies
+- Upstream: `store/useAppStore.ts` (`selectArtifact` / `deleteArtifact` / `toggleFavorite`), `artifacts/types.ts`, `icons/icons.tsx`, `components/cards/CardDeckRenderer.tsx`
+- Downstream: `ArtifactsView.tsx`
 
-## 关键实现思路
-- 返回 = selectArtifact(null) → 经 URL 同步回 gallery
-- 删除 = deleteArtifact(id) 后 selectArtifact(null) 强制回 gallery(而非自动跳到另一张)
-- 复用 CardDeckRenderer,渲染零重复
+## Key implementation notes
+- Back = `selectArtifact(null)` → returns to gallery via URL sync
+- Delete = `deleteArtifact(id)` followed by `selectArtifact(null)` to force a return to the gallery (rather than auto-advancing to another deck)
+- Reuses `CardDeckRenderer` — zero duplicated rendering logic
 
-## 变更历史
+## Change history
 
-### 2026-06-15 — 创建(从旧 ArtifactsView 抽出)
-- **出发点**：tabs 改造后详情成为 gallery 的子视图,需要单独的聚焦视图
-- **目标**：把旧 detail-only 渲染抽成独立组件 + 返回入口
-- **关键决策**：删除后强制回 gallery;收藏/删除动作并排放在标题右侧,不占额外栏
+### 2026-06-15 — Created (extracted from the old `ArtifactsView`)
+- **Motivation**: after the tabs refactor, the detail view became a sub-view of the gallery and needed its own focused component
+- **Goal**: extract the old detail-only rendering into a standalone component with a back entry point
+- **Key decisions**: force return to gallery after deletion; favorite / delete actions placed side-by-side to the right of the title, no extra toolbar row

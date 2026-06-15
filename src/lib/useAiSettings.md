@@ -40,9 +40,9 @@ settings entry.
   on provider change and depends on the in-form key/host, not a stable key.
 
 ### 2026-06-12 — add useTestConnection
-- **出发点**：双栏弹窗的「连接测试」需要前端 mutation。
-- **目标**：`useTestConnection` 调 POST /api/ai/test，返回 `{ok,latencyMs,modelCount?,error?}`。
-- **关键决策**：失败的连接以 `{ok:false}` 返回而非 throw，组件按结果渲染三态。
+- **Motivation**: the two-column dialog's "connection test" action needs a frontend mutation.
+- **Goal**: `useTestConnection` calls POST /api/ai/test and returns `{ok,latencyMs,modelCount?,error?}`.
+- **Key decision**: a failed connection returns `{ok:false}` rather than throwing, so the component renders three distinct states based on the result.
 
 ### 2026-06-13 — web-search key field
 - **Motivation**: the settings dialog gains a Tavily key input.

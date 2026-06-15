@@ -1,22 +1,22 @@
 # components/cards/CardDeckRenderer.tsx
 
-## 文件职责
-Deck 渲染器——把 deck 的 `kind` 映射到对应渲染器的唯一 switch 点。这是动态卡片功能的通用接缝：新增数据类型只需在此加一个 case + 对应的 item 组件，视图与生成管线均无需改动。
+## Responsibility
+Deck renderer — the single switch point that maps a deck's `kind` to its renderer. This is the universal extension seam for the dynamic-cards feature: adding a new data type only requires a new `case` here plus a corresponding item component; neither the view layer nor the generation pipeline needs to change.
 
-## 核心导出 / API
+## Core exports / API
 - `CardDeckRenderer({ deck })`
 
-## 依赖关系
-- 上游：`cards/types.ts`、`components/cards/WordCardItem.tsx`
-- 下游：`components/cards/CardsView.tsx`
+## Dependencies
+- Upstream: `cards/types.ts`, `components/cards/WordCardItem.tsx`
+- Downstream: `components/cards/CardsView.tsx`
 
-## 关键实现思路
-- 按 `deck.kind` switch；word 用网格布局渲染 WordCardItem
-- default 返回 null，保持 switch 在新增 kind 时显式
+## Key implementation notes
+- Switches on `deck.kind`; the `word` case renders `WordCardItem` in a grid layout.
+- The `default` returns `null`, keeping the switch explicit when a new `kind` is added.
 
-## 变更历史
+## Change history
 
-### 2026-06-13 — 创建
-- **出发点**：需要一个集中点决定"这种 kind 用哪种卡片样式"
-- **目标**：让卡片样式按数据类型可插拔
-- **关键决策**：单一 switch 接缝而非在视图里散落条件，扩展只动这一处
+### 2026-06-13 — created
+- **Motivation**: a centralized place was needed to decide "which card style does this kind use".
+- **Goal**: make card styles pluggable per data type.
+- **Key decisions**: a single switch seam rather than scattered conditionals in the view; extensions touch only this one file.

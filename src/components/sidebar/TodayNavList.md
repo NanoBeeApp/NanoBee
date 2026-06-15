@@ -1,10 +1,10 @@
 # src/components/sidebar/TodayNavList.tsx
 
 ## Responsibility
-The sidebar scroll-area list shown while the app is on the "今日事项" page. A
-compact, scannable index of today's proactive updates, grouped 今天 / 本周 to
-mirror the reading surface. Clicking an entry scrolls the reading surface to
-that item.
+The sidebar scroll-area list shown while the app is on the Today page. A
+compact, scannable index of today's proactive updates, grouped Today (今天) /
+This Week (本周) to mirror the reading surface. Clicking an entry scrolls the
+reading surface to that item.
 
 ## Core export / API
 - `TodayNavList()` — self-contained; reads `updates`, `todayFilter`,
@@ -25,8 +25,8 @@ that item.
 
 ### 2026-06-13 — created
 - **Motivation**: the user asked that each page's sidebar list show the list
-  that belongs to that page; on 今日事项 the sidebar should index today's items
-  instead of the chat history.
+  that belongs to that page; on the Today page the sidebar should index today's
+  items instead of the chat history.
 - **Goal**: a quiet, jump-to index of today's items that keeps the reading
   surface as the place to actually read.
 - **Key decision**: reuse the existing `.nb-item` list style and the store's

@@ -1,7 +1,7 @@
 # src/components/quickchat/QuickChat.tsx
 
 ## Responsibility
-Customer-service-style floating quick-chat widget, present on every non-chat surface (today / tasks / artifacts / research). A launcher bubble pinned bottom-right; clicking it opens a popup chat panel above it. Popup, top-to-bottom: header (bee glyph + "快速对话" + "在聊天页打开" handoff once there are messages + close ×), context chip ("正在看 · …" with clear button), message feed reusing MessageView (or a centered empty state), composer. Styles live in `styles/quickchat.css` (`.nb-qc-bubble` / `.nb-qc-pop`); panel internals reuse the `.nb-rc-*` / `.nb-qc` styles from app.css.
+Customer-service-style floating quick-chat widget, present on every non-chat surface (today / tasks / artifacts / research). A launcher bubble pinned bottom-right; clicking it opens a popup chat panel above it. Popup, top-to-bottom: header (bee glyph + `"快速对话"` ("Quick chat") + `"在聊天页打开"` ("Open in chat") handoff once there are messages + close ×), context chip (`"正在看 · …"` ("Now viewing · …") with clear button), message feed reusing MessageView (or a centered empty state), composer. Styles live in `styles/quickchat.css` (`.nb-qc-bubble` / `.nb-qc-pop`); panel internals reuse the `.nb-rc-*` / `.nb-qc` styles from app.css.
 
 ## Dependencies
 - Upstream: store, icons, MessageView, ThinkingIndicator, `lib/useImeComposition`, `styles/quickchat.css`
@@ -13,7 +13,7 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 - **⌘J / Ctrl+J toggles the popup, and Escape closes it when open** (the listener is inert on the chat / settings surfaces where the widget isn't rendered). It `preventDefault`s so the browser's own ⌘J (downloads) stays out of the way while the app owns it. The shortcut is surfaced to the user via the bubble's hover tooltip and a `⌘J` kbd chip in the popup header; the close button's tooltip notes `Esc`. Opening the popup (via the shortcut or a bubble click) auto-focuses the composer.
 - The popup floats over content (fixed, bottom-right) instead of squeezing a grid column, so opening/closing it never reflows the page.
 - The feed pins to the bottom on new messages, on the pending indicator, and whenever the popup (re)opens.
-- Quick conversations get session metadata so they appear in the sidebar's "刚刚" group.
+- Quick conversations get session metadata so they appear in the sidebar's `"刚刚"` ("Just now") group.
 
 ## Change history
 
@@ -34,12 +34,12 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 ### 2026-06-14 — open shortcut reverted from Space back to ⌘J
 - **Motivation**: the user asked to switch the bottom-right bubble's open shortcut back from Space to ⌘J. A bare Space, even gated on a non-input state, proved too easy to fire by accident.
 - **Goal**: restore the ⌘J / Ctrl+J toggle as the single, modifier-guarded way to open/close the popup from the keyboard.
-- **Key decisions**: reinstated the `(metaKey || ctrlKey) && key === 'j'` toggle with `preventDefault` (so the browser's ⌘J/downloads stays out of the way); dropped the Space + `document.activeElement === document.body` branch. Kept Escape-to-close and the IME composition guard. The header kbd chip and bubble tooltip read `⌘J` again.
+- **Key decisions**: reinstated the `(metaKey || ctrlKey) && key === 'j'` toggle with `preventDefault` (so the browser's ⌘J / downloads stays out of the way); dropped the Space + `document.activeElement === document.body` branch. Kept Escape-to-close and the IME composition guard. The header kbd chip and bubble tooltip read `⌘J` again.
 
 ### 2026-06-14 — open shortcut changed from ⌘J to Space (non-input only)
 - **Motivation**: the user wanted to open the bubble by simply pressing Space, explicitly only when not in an input state.
 - **Goal**: Space opens the popup without ever interfering with typing, focused controls, or scrolling.
-- **Key decisions**: dropped the ⌘J toggle; Space opens only when the popup is folded, no modifier is held, and `document.activeElement === document.body` (nothing interactive/editable focused). `preventDefault` runs only when we actually open. Kept Escape-to-close and the IME composition guard. The header kbd chip and bubble tooltip now read `空格`.
+- **Key decisions**: dropped the ⌘J toggle; Space opens only when the popup is folded, no modifier is held, and `document.activeElement === document.body` (nothing interactive/editable focused). `preventDefault` runs only when we actually open. Kept Escape-to-close and the IME composition guard. The header kbd chip and bubble tooltip now read `"空格"` ("Space").
 
 ### 2026-06-14 — IME-safe Escape / Enter (composition guard)
 - **Motivation**: under a Chinese IME the Esc that cancels an in-progress composition was also closing the popup (and Enter while picking a candidate would prematurely send). `KeyboardEvent.isComposing` is unreliable for Escape across browsers.
@@ -74,12 +74,12 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
 - **Key decisions**: dropped the slide-up overlay, the per-conversation
   expand/collapse chevron and the `quickOpen` store flag (the feed is always
   visible now); added a centered empty state for the pre-first-message panel;
-  the "在聊天页打开" handoff stays (icon-only) and appears once the conversation
+  the "Open in chat" handoff stays (icon-only) and appears once the conversation
   has messages; a `panelRight` header button collapses the entire panel
   (`setRightCollapsed`), re-opened from FloatingControls' top-right control.
 
 ### 2026-06-12 — created
-- **Motivation**: user iteration "这个浮动输入框和聊天弹出是全局的，任何地方都要有；AI 要知道用户正在看的内容".
+- **Motivation**: user requirement that the floating input and chat popup be global (present everywhere), and that the AI know what the user is currently viewing.
 
 ### 2026-06-12 — created-state from persisted tasks
 - **Motivation**: same reload issue as ChatView — suggestion cards in the
@@ -87,7 +87,7 @@ Customer-service-style floating quick-chat widget, present on every non-chat sur
   already created.
 
 ### 2026-06-12 — focus & keyboard fixes
-- **Motivation**: UI-detail review — focus was lost after clicking send or "展开对话", and the overlay had no keyboard way to collapse.
+- **Motivation**: UI-detail review — focus was lost after clicking send or the expand button, and the overlay had no keyboard way to collapse.
 - **Changes**: refocus the input after a button-click send; Escape collapses the overlay; expanding via the chevron keeps focus in the input.
 
 ### 2026-06-12 — drop task-card plumbing

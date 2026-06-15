@@ -1,7 +1,7 @@
 # src/components/chat/ThinkingIndicator.tsx
 
 ## Responsibility
-"正在思考…" pending row with NanoBee avatar and blinking dots.
+"正在思考…" ("Thinking…") pending row with NanoBee avatar and blinking dots.
 
 ## Dependencies
 - Downstream: ChatView, QuickChat

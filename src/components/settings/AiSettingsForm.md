@@ -2,7 +2,7 @@
 
 ## Responsibility
 Pure render component for the AI settings page. Master-detail layout: a provider
-list on the left (model providers + a standalone "Web 搜索" entry), the selected
+list on the left (model providers + a standalone "Web 搜索" (Web Search) entry), the selected
 provider's settings on the right (API key with show/hide, API host, model picker
 with auto-fetch, connection test). Stateless except for UI-only
 password-visibility and active-pane toggles; all data + callbacks come from

@@ -1,33 +1,33 @@
 # worker/artifacts/repo.ts
 
-## 文件职责
-artifacts 表的 D1 持久化。每个 artifact 一行,完整卡片 deck 以 JSON blob 存储,按 owner(登录用户 id 或 "anon")隔离。
+## Responsibility
+D1 persistence for the artifacts table. Each artifact occupies one row; the full card deck is stored as a JSON blob. Rows are isolated by owner (logged-in user id or `"anon"`).
 
-## 核心导出 / API
-- `ANON_OWNER`：未登录访客桶
-- `createArtifact(db, owner, deck, chatId?)`：插入并返回 Artifact(id 在此生成)
-- `listArtifacts(db, owner)`：按时间倒序列出(含完整 deck,上限 100)
-- `getArtifact(db, owner, id)`：取单个
-- `setArtifactFavorited(db, owner, id, favorited)`：设置收藏标记,返回新值或 null(无此 owned 行)
-- `deleteArtifact(db, owner, id)`：删除
+## Core exports / API
+- `ANON_OWNER`: bucket identifier for unauthenticated visitors
+- `createArtifact(db, owner, deck, chatId?)`: inserts a row and returns the `Artifact` (id generated here)
+- `listArtifacts(db, owner)`: lists artifacts in reverse-chronological order, including full deck, up to 100 rows
+- `getArtifact(db, owner, id)`: fetches a single artifact
+- `setArtifactFavorited(db, owner, id, favorited)`: sets the favorited flag; returns the new value, or `null` if no owned row matched
+- `deleteArtifact(db, owner, id)`: deletes an artifact
 
-## 依赖关系
-- 上游：nanoid、`cards/types.ts`、`artifacts/types.ts`
-- 下游：`worker/agent/card-artifact-tools.ts`(创建)、`worker/routes/artifacts.ts`(列/取/删)
+## Dependencies
+- Upstream: nanoid, `cards/types.ts`, `artifacts/types.ts`
+- Downstream: `worker/agent/card-artifact-tools.ts` (create), `worker/routes/artifacts.ts` (list / get / delete)
 
-## 关键实现思路
-- deck 整体存 JSON,不拆分到 per-card 行(读取即整体渲染,卡片形状随 kind 变化,无跨 artifact 卡片查询)
-- 损坏 JSON 行在 list/get 时跳过并记日志
-- 镜像 research repo 的存储形态
+## Key implementation notes
+- The deck is stored as a single JSON blob, not split into per-card rows (reads are always whole-deck renders; card shape varies by kind; there are no cross-artifact card queries)
+- Rows with corrupted JSON are skipped with a log entry during list/get
+- Mirrors the storage pattern used by the research repo
 
-## 变更历史
+## Change history
 
-### 2026-06-13 — 创建
-- **出发点**：artifacts 页面需要列出/渲染聊天生成的卡片 deck
-- **目标**：最小 CRUD,owner 隔离
-- **关键决策**：单行 JSON blob 存储,denormalize card_count 供列表展示
+### 2026-06-13 — Created
+- **Motivation**: the artifacts page needed to list and render card decks generated through chat
+- **Goal**: minimal CRUD with owner isolation
+- **Key decisions**: single-row JSON blob storage; denormalize `card_count` for list display
 
-### 2026-06-15 — 增加收藏
-- **出发点**：artifacts 页面加了「你收藏的」tab,需要持久化收藏状态
-- **目标**：给 artifact 加 favorited 标记,提供读写
-- **关键决策**：在现有行加 boolean 列(同 owner 范围,无跨 owner 收藏),`setArtifactFavorited` 直接 UPDATE 指定值(幂等、无读改写竞态),靠 meta.changes 判断是否命中 owned 行;SELECT 列抽成 `SELECT_COLS` 常量保持各读取一致
+### 2026-06-15 — Added favorites
+- **Motivation**: the artifacts page gained a Your favorites tab requiring persisted favorited state
+- **Goal**: add a favorited flag to artifacts with read/write support
+- **Key decisions**: added a boolean column to the existing row (scoped to the same owner, no cross-owner favorites); `setArtifactFavorited` issues a direct UPDATE to the specified value (idempotent, no read-modify-write race); uses `meta.changes` to detect whether an owned row was matched; extracted readable columns into a `SELECT_COLS` constant to keep all reads consistent

@@ -1,19 +1,19 @@
 # artifacts/format.ts
 
-## 文件职责
-artifacts 的展示格式化集中地：card kind 标签与元信息行（「单词 · 10 张」）。供 card / row / table 渲染器与侧边栏列表统一引用，消除多处重复的 KIND_LABEL。
+## Responsibility
+Centralizes display formatting for artifacts: card kind labels and meta-info lines (e.g. "Words · 10 cards"). Shared by card, row, and table renderers as well as the sidebar list, eliminating duplicated KIND_LABEL definitions across multiple call sites.
 
-## 核心导出 / API
-- `kindLabel(kind)`：card kind → 中文标签（回退原值）
-- `artifactMeta(a)`：deck 标题旁的一行元信息，如「单词 · 10 张」
+## Core exports / API
+- `kindLabel(kind)`: maps a card kind to its display label (falls back to the raw value)
+- `artifactMeta(a)`: produces the one-line meta string shown next to a deck title, e.g. "Words · 10 cards"
 
-## 依赖关系
-- 上游：`artifacts/types.ts`(Artifact)
-- 下游：`components/artifacts/ArtifactCard`、`ArtifactRow`、`ArtifactGallery`（table）
+## Dependencies
+- Upstream: `artifacts/types.ts` (Artifact)
+- Downstream: `components/artifacts/ArtifactCard`, `ArtifactRow`, `ArtifactGallery` (table)
 
-## 变更历史
+## Change history
 
-### 2026-06-15 — 创建
-- **出发点**：artifacts 加列表/表格视图后，KIND_LABEL 在 card/row/table/侧边栏会四处重复
-- **目标**：抽出统一的 kind 标签与元信息格式化
-- **关键决策**：纯函数、平台无关，所有视图共用一处
+### 2026-06-15 — Created
+- **Motivation**: after adding list/table views to the artifacts page, KIND_LABEL was being duplicated across card, row, table, and sidebar renderers
+- **Goal**: extract a single canonical kind-label and meta-info formatter
+- **Key decisions**: pure functions, platform-agnostic, shared by all views from one place

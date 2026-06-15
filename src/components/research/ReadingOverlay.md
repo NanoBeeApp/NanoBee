@@ -21,8 +21,9 @@ backdrop.
 - Shows loading / failed / root-hint states. While the article streams, the
   body renders its partial content (any text → `<Markdown>`); the spinner only
   shows before the first token lands (`loading && !content`), and a blinking
-  `.rc-stream-cursor` "正在生成…" footer shows while `loading && content`.
-  Follow-up chips appear only after generation finishes (`!loading`).
+  `.rc-stream-cursor` `"正在生成…"` ("Generating…") footer shows while
+  `loading && content`. Follow-up chips appear only after generation finishes
+  (`!loading`).
 
 ## Change history
 
@@ -30,7 +31,8 @@ backdrop.
 - **Motivation**: only AI-preset follow-ups (which grow children) existed; the
   reader couldn't ask their own question and get an inline answer.
 - **Goal**: a custom-question input whose answer appends below the article as a
-  chat-style turn, following Curve's "你自己的追问会追加在本篇下方".
+  chat-style turn, following Curve's pattern of appending the reader's own
+  follow-up questions under the current article.
 - **Key decisions**: a `.rc-ask` form calls `askInReading(node.id, q)` (store
   streams the answer into `node.userQuestionTurns`); `<ReadingQnaTurns>` renders
   them; an auto-scroll effect keyed on a compact latest-turn signature follows a
@@ -60,9 +62,10 @@ backdrop.
     parent, so deep-diving a term is reversible without closing.
   - **Summary positioning**: track `openedAsLoading` (adjust-state-during-render
     keyed by node id). Revisit → summary as a top intro; first visit (watched it
-    generate) → summary as a bottom "本篇摘要" takeaway before the follow-ups.
+    generate) → summary as a bottom `"本篇摘要"` ("Article summary") takeaway
+    before the follow-ups.
   - **Awaiting-body pending state**: outline stub with no filled body shows a
-    "生成正文" prompt instead of silently blank.
+    `"生成正文"` ("Generate article") prompt instead of silently blank.
 
 ### 2026-06-14 — Restore Curve's streaming blank-area buffer
 - **Motivation**: the port dropped Curve's `streaming-bottom-spacer`. Without it,
@@ -80,7 +83,7 @@ backdrop.
 - **Motivation**: the row of tag chips at the top of the reading detail added
   visual noise above the title without carrying core reading value.
 - **Goal**: maximize the reading content area and cut distraction per the
-  "极简优先 · 禁止多余干扰元素" rule.
+  "minimal-first, no gratuitous decorative elements" rule.
 - **Key decision**: removed the `.rc-reading-tags` block (and its + `.rc-tag`
   CSS); `node.tags` data is kept on the model, only its display is dropped.
 

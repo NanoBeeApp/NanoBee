@@ -1,7 +1,7 @@
 # _app/today.tsx
 
 ## Responsibility
-Route `/today` — renders the 今日事项 reading surface (`TodayView`) into the
+Route `/today` — renders the Today reading surface (`TodayView`) into the
 `_app` layout outlet.
 
 ## Core exports

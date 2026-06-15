@@ -1,24 +1,24 @@
 # worker/agent/card-artifact-tools.ts
 
-## 文件职责
-`create_card_artifact` 这个 agent 工具——动态卡片功能的**聊天入口**。当聊天消息要求"看/学一组数据"(当前为英语单词)时,模型调用该工具:生成卡片 deck 并持久化为 artifact。工具价值在副作用(存下的 artifact 出现在 Artifacts 页),返回给模型的字符串只是确认。
+## Responsibility
+The `create_card_artifact` agent tool — the **chat entry point** for the dynamic cards feature. When a chat message requests viewing or studying a set of data (currently English vocabulary), the model calls this tool: it generates a card deck and persists it as an artifact. The tool's value lies in its side effect (the saved artifact appears on the Artifacts page); the string returned to the model is just a confirmation.
 
-## 核心导出 / API
-- `cardArtifactTools(ctx)`：当 ctx 携带 artifact 上下文时返回 `[create_card_artifact]`,否则 `[]`
+## Core exports / API
+- `cardArtifactTools(ctx)`: returns `[create_card_artifact]` when `ctx` carries an artifact context; otherwise returns `[]`
 
-## 依赖关系
-- 上游：`ai/settings.ts`(resolveAiConfig)、`cards/generate.ts`、`artifacts/repo.ts`、`cards/prompt.ts`、`agent/tools.ts`(AgentContext/AgentTool)
-- 下游：`agent/tools.ts`(collectAgentTools 收集)
+## Dependencies
+- Upstream: `ai/settings.ts` (resolveAiConfig), `cards/generate.ts`, `artifacts/repo.ts`, `cards/prompt.ts`, `agent/tools.ts` (AgentContext / AgentTool)
+- Downstream: `agent/tools.ts` (`collectAgentTools` collects this)
 
-## 关键实现思路
-- 复用请求的 per-user AI 配置(与聊天同一 provider)
-- 生成后 push ArtifactRef 到 `ctx.artifacts.created`,由 messages.ts 挂到 AI 回复(→ 聊天内可点击卡片)
-- 设 `timeoutMs: 90_000`,因生成是 LLM 调用,远超默认 20s 工具超时
-- 仅在请求提供 artifact 上下文时暴露,未登录/anon 流程仍可用
+## Key implementation notes
+- Reuses the per-user AI configuration from the current request (same provider as chat)
+- After generation, pushes an `ArtifactRef` onto `ctx.artifacts.created`; `messages.ts` attaches it to the AI reply so the card is clickable inside the chat
+- Sets `timeoutMs: 90_000` because generation involves an LLM call, far exceeding the default 20-second tool timeout
+- Only exposed when the request provides an artifact context; unauthenticated / anon flows are still supported
 
-## 变更历史
+## Change history
 
-### 2026-06-13 — 创建
-- **出发点**：用户要求卡片由聊天消息触发生成,而非独立输入页
-- **目标**：把卡片生成做成 agent 工具,自然融入对话
-- **关键决策**：工具以副作用持久化 artifact,经 AgentContext 把引用回传给请求处理器;自带长超时
+### 2026-06-13 — Created
+- **Motivation**: cards were required to be triggered by a chat message rather than a standalone input page
+- **Goal**: wrap card generation as an agent tool so it integrates naturally into conversation
+- **Key decisions**: tool persists the artifact as a side effect and passes the reference back to the request handler via `AgentContext`; ships with a long timeout built in

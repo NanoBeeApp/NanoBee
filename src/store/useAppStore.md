@@ -23,7 +23,7 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 ## Change history
 
 ### 2026-06-14 — page-aware "new" action (`newForView`, `newTask`, `newArtifact`, `composerSeed`)
-- **Motivation**: the single sidebar "新建对话" button (and ⌘N) did the same thing
+- **Motivation**: the single sidebar "新建对话" (New Chat) button (and ⌘N) did the same thing
   on every page, even though each page creates a different entity — tasks should
   start a task, Artifacts an artifact, the research canvas a research project.
 - **Goal**: one button whose label + action follow the current page, without
@@ -32,7 +32,7 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
   `newForView()` dispatch bound to both the sidebar button and ⌘N. Tasks and
   artifacts have no standalone form (they are produced by the chat agent's
   tools), so `newTask` / `newArtifact` reuse the new-chat reset but set a one-shot
-  `composerSeed` (`帮我盯着 ` / `帮我做一组卡片：`) that the chat `Composer`
+  `composerSeed` (`帮我盯着 ` (watch for me) / `帮我做一组卡片：` (make me a card deck:)) that the chat `Composer`
   consumes once (`clearComposerSeed`) — dropping the user into a fresh chat
   already primed. Research keeps its own welcome screen, so `newForView` calls
   `useResearchStore.getState().newResearch()` directly (this store now imports the
@@ -71,7 +71,7 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 ### 2026-06-13 — per-page sidebar nav: `openChat`, `focusItem`, `tasksFilter`
 - **Motivation**: the sidebar became context-aware (a different list per page),
   which needed three new store hooks.
-- **Goal**: support the "聊天" nav tile, sidebar-driven scroll-to-item on the
+- **Goal**: support the "聊天" (Chat) nav tile, sidebar-driven scroll-to-item on the
   Today/Tasks pages, and a sidebar-clearable tasks filter.
 - **Change**: added `openChat()` (return to the chat view keeping the active
   conversation, unlike `newChat`); a generic `focusItem(id)` that sets
@@ -92,7 +92,7 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ### 2026-06-13 — remove the read/unread feature
 - **Motivation**: user asked to drop read-state management entirely (unread
-  badges, mark-as-read flows, the "全部读完了" summary).
+  badges, mark-as-read flows, the "全部读完了" (all caught up) summary).
 - **Change**: deleted `markRead` / `markAllRead` and the `selectUnreadCount`
   selector; `openUpdateInChat` no longer marks anything read; `todayFilter`
   lost its 'unread' value ('all' | topic id).
@@ -101,7 +101,7 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 - **Motivation**: the prototype kept all state in one React component; a store keeps the same single source of truth while letting components subscribe granularly.
 
 ### 2026-06-12 — fix
-- **Motivation**: ⌘N from the Today page could leave a stale "正在看" context; newChat/selectChat now clear quickCtx.
+- **Motivation**: ⌘N from the Today page could leave a stale "正在看" (currently viewing) context; newChat/selectChat now clear quickCtx.
 
 ### 2026-06-12 — D1 persistence
 - **Motivation**: everything reset on reload — chats, tasks and read state were memory-only and replies were generated in the browser, so the product's core promise (the AI keeps watching for you) was an illusion.
@@ -175,7 +175,7 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 - The `UPDATE_TO_CHAT` import is removed; the only remaining data import is `nextId` from `data/ids`.
 
 ### 2026-06-15 — artifact favorites + gallery-first landing
-- **Motivation**: the Artifacts page gained top tabs (你创建的 / 你收藏的 /
+- **Motivation**: the Artifacts page gained top tabs (「你创建的 / 你收藏的」 — Created by you / Saved by you /
   categories); favorites need persistence and the page must land on the tabbed
   gallery, not auto-open a deck.
 - **Goal**: `toggleFavorite(id)` (optimistic, posts the target state to
