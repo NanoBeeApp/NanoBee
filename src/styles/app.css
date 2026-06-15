@@ -326,6 +326,22 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 /* ============ EMPTY STATE ============ */
 .nb-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 32px 120px; text-align: center; }
 .nb-empty h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.025em; margin: 0; color: var(--ink-2); }
+.nb-empty-sub { font-size: 14px; color: var(--ink-3); margin: 10px 0 22px; line-height: 1.5; }
+/* Starter chips row */
+.nb-empty-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 500px; }
+.nb-empty-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  background: var(--nb-amber-soft);
+  color: var(--nb-amber-ink);
+  border: 1px solid var(--nb-amber-line);
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.nb-empty-chip:hover { background: #f7e0b6; border-color: #e8c57a; transform: translateY(-1px); }
+.nb-empty-chip:active { transform: none; }
 
 /* ============ TASKS PAGE (full-page task center, opened from the sidebar) ============ */
 .nb-taskspage { flex: 1; overflow-y: auto; min-height: 0; background: var(--bg); }
@@ -434,7 +450,31 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-alldone { text-align: center; padding: 70px 20px; }
 .nb-alldone .big { width: 60px; height: 60px; border-radius: 18px; background: var(--success-soft); color: var(--success); display: grid; place-items: center; margin: 0 auto 16px; }
 .nb-alldone h3 { font-size: 18px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.01em; }
-.nb-alldone p { font-size: 13px; color: var(--ink-3); margin: 0; }
+.nb-alldone p { font-size: 13px; color: var(--ink-3); margin: 0; line-height: 1.7; }
+/* Today-specific empty state extensions */
+.nb-today-empty { padding: 80px 24px; max-width: 440px; margin: 0 auto; }
+.nb-today-empty .nb-today-empty-bee { background: var(--nb-amber-soft); color: var(--nb-honey); }
+.nb-today-empty-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+  padding: 9px 18px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: var(--r-3);
+  color: var(--ink-2);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+.nb-today-empty-cta:hover { background: var(--surface-2); border-color: var(--border-2); }
+.nb-today-empty-cta--primary {
+  background: var(--nb-honey);
+  color: #fff;
+  border-color: transparent;
+}
+.nb-today-empty-cta--primary:hover { background: #d0862e; border-color: transparent; }
 
 /* timeline (tweet) view — flat list, hairline dividers only (Twitter-style) */
 .nb-tl-card { display: flex; gap: 13px; padding: 14px 8px; border-bottom: 1px solid var(--border); }
@@ -751,6 +791,148 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
   .nb-push-state.state-loading .dot { animation: nbpulse 1s var(--ease-out) infinite !important; }
+}
+
+/* ============ INLINE TASK-SUGGESTION CARD ============
+   Shown below an AI reply when the NL→TriggerSpec compiler detects a
+   monitoring/scheduling intent. Amber accent (same family as proactive cards)
+   distinguishes it from plain reply text without competing with it.
+   The card is intentionally compact — title + trigger label + one CTA.
+   Advanced params (topic, spec detail) are collapsed; the user need only click
+   "创建监控任务" to activate the full cron loop.
+   ============================================================ */
+.nb-task-suggest {
+  margin-top: 14px;
+  border: 1px solid var(--nb-amber-line);
+  border-radius: 13px;
+  background: var(--nb-amber-soft);
+  overflow: hidden;
+}
+
+.nb-task-suggest-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border-bottom: 1px solid var(--nb-amber-line);
+}
+
+.nb-task-suggest-ico {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.nb-task-suggest-label {
+  flex: 1;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--nb-amber-ink);
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+.nb-task-suggest-dismiss {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: var(--nb-amber-ink);
+  opacity: 0.6;
+  transition: opacity var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+}
+.nb-task-suggest-dismiss:hover { opacity: 1; background: rgba(0,0,0,0.06); }
+
+.nb-task-suggest-body {
+  padding: 11px 13px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nb-task-suggest-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nb-task-suggest-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.nb-task-suggest-title {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.nb-task-suggest-trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--nb-amber-ink);
+  font-family: var(--font-mono);
+}
+
+.nb-task-suggest-trigger-ic {
+  display: inline-flex;
+  color: var(--nb-amber);
+  flex-shrink: 0;
+}
+
+.nb-task-suggest-msg {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+
+.nb-task-suggest-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 13px 11px;
+  border-top: 1px solid var(--nb-amber-line);
+}
+
+.nb-task-suggest-accept {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: var(--nb-amber);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background var(--dur-1) var(--ease-out);
+}
+.nb-task-suggest-accept:hover { background: var(--nb-amber-ink); }
+
+.nb-task-suggest-hint {
+  font-size: 11.5px;
+  color: var(--nb-amber-ink);
+  opacity: 0.7;
+}
+
+.nb-task-suggest-created {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--success);
 }
 
 /* Reduced motion: silence decorative entry/transition animations (panel peeks,

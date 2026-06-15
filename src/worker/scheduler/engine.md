@@ -106,3 +106,21 @@ Added `loadNotificationSettings`, `shouldSendPushNow`, `isInDnd`, and
 user's toggle, DND window, or digest-mode threshold blocks it. The two
 exported pure functions (`shouldSendPushNow`, `isInDnd`) are unit-testable
 without a D1 binding.
+
+### 2026-06-15 — Fix: narrow mergedParams type to match invokeDataSource signature
+
+`mergedParams` was typed as `Record<string, unknown>` but `invokeDataSource`
+expects `Record<string, string | number | boolean>`. Changed the type to match —
+`spec.params` is already `Record<string, string | number | boolean>` per
+`src/types.ts` and `env.TAVILY_API_KEY` is a `string`, so the narrower type is
+exact and correct.
+
+### 2026-06-15 — Websearch credential injection in evaluateConditionTask
+
+`evaluateConditionTask` now builds a `mergedParams` object before calling
+`invokeDataSource`. When `spec.sourceId === 'websearch'` and `env.TAVILY_API_KEY`
+is set, it injects `tavily_api_key` into the merged params. This mirrors how
+the chat pipeline (messages.ts) injects secrets via `agentCtx.secrets`, ensuring
+condition tasks that use the websearch source (e.g. `tpl_keyword_watch`) can
+actually reach the data-hub provider instead of receiving a "no credential"
+error and silently skipping every tick.

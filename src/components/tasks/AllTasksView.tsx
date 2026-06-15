@@ -3,6 +3,10 @@
 // table/board, batch detail — kept off the clean home screen. Stateful wrapper:
 // owns the search text, reads the view mode / filter from the URL, applies the
 // kind filter + text search, and renders the toolbar + the active view.
+//
+// Change history:
+//   2026-06-15  Passes onTemplate to TaskListView so the rich empty state can
+//               open the template picker directly.
 import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import type { TasksUrl } from './useTasksUrl';
@@ -30,6 +34,11 @@ export function AllTasksView({
     return true;
   });
 
+  // Forward to the template picker with the chosen category pre-selected.
+  const handleTemplate = (cat?: string) => {
+    url.openTemplate(cat ?? 'all');
+  };
+
   return (
     <div className="nb-tk-manager" data-testid="tasks-all">
       <div className="nb-tk-manager-inner">
@@ -44,7 +53,12 @@ export function AllTasksView({
           onSearch={setSearch}
         />
         {url.vm === 'list' && (
-          <TaskListView tasks={filtered} onOpenTask={onOpenTask} onToggle={toggleTask} />
+          <TaskListView
+            tasks={filtered}
+            onOpenTask={onOpenTask}
+            onToggle={toggleTask}
+            onTemplate={handleTemplate}
+          />
         )}
         {url.vm === 'table' && (
           <TaskTableView tasks={filtered} onOpenTask={onOpenTask} onToggle={toggleTask} />

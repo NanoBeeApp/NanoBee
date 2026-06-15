@@ -174,7 +174,15 @@ async function evaluateConditionTask(
 		return;
 	}
 
-	const result = await invokeDataSource(env, spec.sourceId, spec.params ?? {});
+	// Merge static spec params with system-level secrets the scheduler must
+	// inject. The websearch source requires a provider key — mirror what the
+	// chat pipeline does in messages.ts (injects secrets via agentCtx.secrets).
+	const mergedParams: Record<string, string | number | boolean> = { ...(spec.params ?? {}) };
+	if (spec.sourceId === "websearch" && env.TAVILY_API_KEY) {
+		mergedParams["tavily_api_key"] = env.TAVILY_API_KEY;
+	}
+
+	const result = await invokeDataSource(env, spec.sourceId, mergedParams);
 	if (!result) {
 		console.warn("[scheduler] data hub unreachable for source", spec.sourceId, "task", row.id);
 		// Back off: try again after one cooldown window.

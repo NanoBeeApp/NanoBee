@@ -75,6 +75,10 @@ plus the smoke-test `hello` endpoint.
 - Endpoints: `GET /api/notifications/settings`, `PUT /api/notifications/settings`.
 - Both require a signed-in session (401 when signed out).
 
+### 2026-06-15 — mount /onboarding routes
+- Added `onboardingRoutes` imported from `./onboarding`; mounted at `/onboarding`.
+- Endpoints: `GET /api/onboarding` → `{ done: boolean }`, `POST /api/onboarding/done` → marks flag.
+
 ### 2026-06-13 — mount /artifacts, drop /cards
 - **Motivation**: card generation moved to a chat agent tool; the standalone
   `/cards/generate` endpoint is superseded, and the Artifacts page needs

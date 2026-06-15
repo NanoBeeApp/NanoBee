@@ -22,6 +22,10 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ## Change history
 
+### 2026-06-15 — onboardingDone state + markOnboardingDone action (migration 0017)
+- **Motivation**: the first-run onboarding flow needs to persist "done" so it never reappears.
+- **Change**: added `onboardingDone: boolean` to `AppState` (defaults to `true` to avoid flash); `bootstrap()` now reads `data.onboardingDone` and sets it; added `markOnboardingDone()` which optimistically flips the flag then POSTs to `/api/onboarding/done`.
+
 ### 2026-06-15 — Added `deleteTask` action
 - **Motivation**: The task detail drawer in the redesigned Tasks page needs a real delete, not a half-measure.
 - **Goal**: Optimistically remove a task and persist it, rolling back on failure.

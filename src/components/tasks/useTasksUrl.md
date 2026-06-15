@@ -7,8 +7,8 @@ filter and upload-dialog flag, plus setters that navigate. The URL is the single
 source of truth, so refresh / deep link / back-forward all restore the same state.
 
 ## Core exports
-- `useTasksUrl() → TasksUrl` ({ surface, vm, taskId, filter, uploadOpen, openAll, openHome, setVm, openTask, closeTask, setFilter, openUpload, closeUpload })
-- `DEFAULT_TASKS_VM`, `DEFAULT_TASKS_FILTER`
+- `useTasksUrl() → TasksUrl` ({ surface, vm, taskId, filter, uploadOpen, tplCategory, openAll, openHome, setVm, openTask, closeTask, setFilter, openUpload, closeUpload, openTemplate, closeTemplate, setTplCategory })
+- `DEFAULT_TASKS_VM`, `DEFAULT_TASKS_FILTER`, `DEFAULT_TEMPLATE_CATEGORY`
 
 ## Dependencies
 - Upstream: `@tanstack/react-router` (`getRouteApi`, `useNavigate`), `routes/_app/tasks` (`TasksSearch`)
@@ -24,6 +24,10 @@ source of truth, so refresh / deep link / back-forward all restore the same stat
   it in quotes (`?upload=open`, not `?upload="1"`).
 
 ## Change history
+
+### 2026-06-15 — Added template picker URL state
+- **Motivation**: Task Template Library needs bookmarkable picker state (open + active category).
+- **Change**: Added `tpl` search param (`TasksSearch`), `tplCategory`, `openTemplate`, `closeTemplate`, `setTplCategory` to `TasksUrl`.
 
 ### 2026-06-15 — Created
 - **Motivation**: The redesign needs surface/view/drawer/filter/upload all bookmarkable per the "URL is state" rule.

@@ -6,7 +6,10 @@
 //    in below it and the user reads top-down — no jump to the bottom;
 //  - while the reply streams, the feed is left alone (no auto-follow);
 //  - opening an existing chat from history jumps to the latest message.
-import { useEffect, useMemo, useRef } from 'react';
+//
+// Change history:
+//   2026-06-15  Wired EmptyState starter chips → Composer via seedRef callback.
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { MessageView } from './MessageView';
 import { ThinkingIndicator } from './ThinkingIndicator';
@@ -21,6 +24,16 @@ export function ChatView() {
   const convos = useAppStore((s) => s.convos);
   const pending = useAppStore((s) => s.pending);
   const send = useAppStore((s) => s.send);
+
+  // Starter chip seed: when the user clicks a chip in the EmptyState we
+  // pass the prompt text down to the Composer via this state so the Composer
+  // can fill its textarea and focus it.  We use state (not a store field) so
+  // the Composer only picks up fresh seeds when it re-renders (not on mount).
+  const [composerSeed, setComposerSeed] = useState<string | null>(null);
+  const handleSeedComposer = useCallback((prompt: string) => {
+    setComposerSeed(prompt);
+  }, []);
+  const clearComposerSeed = useCallback(() => setComposerSeed(null), []);
 
   const messages = (activeChatId && convos[activeChatId]) || [];
   const feedRef = useRef<HTMLDivElement>(null);
@@ -62,8 +75,8 @@ export function ChatView() {
   if (!activeChatId || messages.length === 0) {
     return (
       <>
-        <EmptyState />
-        <Composer onSend={send} />
+        <EmptyState onSeedComposer={handleSeedComposer} />
+        <Composer onSend={send} chipSeed={composerSeed} onClearChipSeed={clearComposerSeed} />
       </>
     );
   }

@@ -142,6 +142,24 @@ insert and the final `final` SSE event is still emitted correctly.
   - Both call sites (POST / and POST /stream) pass `agentCtx.artifacts.owner` as the
     owner argument — the same value already resolved by `prepareRun` for artifact context.
 
+### 2026-06-15 — NL→TriggerSpec compiler wired into both send routes
+- **Motivation**: users should be able to type monitoring/scheduling intents in
+  natural language ("黄金跌超3%就提醒我") and have the system turn them into real
+  cron tasks without a separate form.
+- **Changes**:
+  - `compileTaskIntent` from `src/worker/agent/task-compiler.ts` runs after the
+    main agent reply in both `POST /` and `POST /stream`. The compiler re-uses the
+    same `aiConfig` so it respects the user's provider/key preferences.
+  - A pre-generated `nanoid`-based `taskId` is embedded so the subsequent
+    `POST /api/tasks` call is idempotent on retry.
+  - The resulting `InlineSuggestion` is spread into `persistTurn` → the AI
+    message payload, where `MessageView` renders a confirmation card.
+  - Non-fatal: any compiler failure (provider error, JSON parse failure,
+    non-task message) is caught and swallowed — chat continues normally.
+- **Key decision**: the compiler runs as a second LLM call (same config) rather
+  than modifying the main agent prompt, so the two concerns are cleanly separated
+  and the main reply is never altered.
+
 ### 2026-06-15 — remove ensureSeeded calls and db/seed dependency
 - **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `db/seed.ts` and the `SEED_DEMO_DATA` env flag were deleted entirely.
 - The `ensureSeeded(c.env)` calls that previously ran at the top of both `POST /` and `POST /stream` handlers are removed, along with the `db/seed` import.

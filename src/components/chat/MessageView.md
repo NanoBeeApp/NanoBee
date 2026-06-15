@@ -44,6 +44,14 @@ Renders one chat message: user bubble / AI reply (minimal "NanoBee" role row, ri
 - **Goal**: body now renders `<Markdown content={m.md ?? parasToMarkdown(m.paras)} />`.
   `InlineSegments` is no longer used by chat.
 
+### 2026-06-15 — inline task-suggestion card
+- **Motivation**: NL→TriggerSpec compiler now attaches a `taskSuggestion` field to
+  AI messages when a monitoring/scheduling intent is detected; the card lets the user
+  confirm the task with one click.
+- **Change**: when `(m as AiMessage).taskSuggestion` is set and streaming is complete,
+  render `<TaskSuggestionCard suggestion={taskSuggestion} />` below the body and
+  any artifact refs. The card is hidden while streaming to avoid layout jitter.
+
 ### 2026-06-14 — streaming prop + scroll anchor
 - **Motivation**: streamed replies need stable structure while typing, and the
   feed needs to locate the just-sent question to pin it to the top.

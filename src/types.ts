@@ -143,6 +143,25 @@ export interface TaskSuggestion extends Omit<Task, 'status'> {
   config: TaskConfigChip[];
 }
 
+/**
+ * An in-chat task suggestion card produced by the NL→TriggerSpec compiler.
+ * Attached to an AiMessage and rendered inline; the user confirms it with one
+ * click which calls POST /api/tasks with the embedded triggerSpec.
+ */
+export interface InlineSuggestion {
+  /** Unique id for the task that would be created (pre-generated client-side
+   *  so the create call is idempotent on retry). */
+  taskId: string;
+  title: string;
+  topic: string;
+  /** Human-readable description of when/how the task fires. */
+  triggerLabel: string;
+  /** Notification copy delivered when the trigger fires. */
+  message: string;
+  /** Structured cron/condition spec for the engine. */
+  triggerSpec: TriggerSpec;
+}
+
 export interface UserMessage {
   id: string;
   role: 'user';
@@ -165,6 +184,12 @@ export interface AiMessage {
   model?: string;
   /** Artifacts (card decks) the agent generated while producing this reply. */
   artifacts?: ArtifactRef[];
+  /**
+   * Inline task suggestion produced by the NL→TriggerSpec compiler. When
+   * present, MessageView renders a confirmation card below the reply text.
+   * The card lets the user accept (POST /api/tasks) or dismiss it.
+   */
+  taskSuggestion?: InlineSuggestion;
   /**
    * Client-only, transient: true while the reply is still streaming in token
    * by token. Drives the live typewriter (Markdown `streaming` prop). The

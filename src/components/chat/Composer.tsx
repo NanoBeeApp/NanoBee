@@ -1,5 +1,9 @@
 // Main chat composer: auto-growing textarea plus the slash ("/task") popover
 // that turns conversation into automated tasks.
+//
+// Change history:
+//   2026-06-15  Added chipSeed + onClearChipSeed props so EmptyState starter
+//               chips can pre-fill the textarea from the parent (ChatView).
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useAppStore } from '../../store/useAppStore';
@@ -17,11 +21,17 @@ const TEXTAREA_MAX_HEIGHT = 160;
 
 interface ComposerProps {
   onSend: (text: string) => void;
+  /** A prompt injected by an EmptyState starter chip click. When set, the
+   *  textarea is filled and focused; the caller clears it via onClearChipSeed
+   *  after the Composer consumes it. */
+  chipSeed?: string | null;
+  /** Called once the chipSeed has been consumed (textarea filled + focused). */
+  onClearChipSeed?: () => void;
 }
 
 type Popover = 'slash' | null;
 
-export function Composer({ onSend }: ComposerProps) {
+export function Composer({ onSend, chipSeed, onClearChipSeed }: ComposerProps) {
   // A page-specific "new" action (新建任务 / 新建 Artifact) seeds the composer
   // through the store *before* navigating here, so the seed is already present
   // when this composer mounts — read it once into the initial value (rather than
@@ -58,6 +68,20 @@ export function Composer({ onSend }: ComposerProps) {
     ta.style.height = 'auto';
     ta.style.height = `${Math.min(ta.scrollHeight, TEXTAREA_MAX_HEIGHT)}px`;
   }, [clearComposerSeed]);
+
+  // Chip seed from the EmptyState: fill the textarea with the starter prompt
+  // and focus it so the user can edit / send immediately.
+  useEffect(() => {
+    if (!chipSeed) return;
+    setVal(chipSeed);
+    onClearChipSeed?.();
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.focus();
+    ta.setSelectionRange(chipSeed.length, chipSeed.length);
+    ta.style.height = 'auto';
+    ta.style.height = `${Math.min(ta.scrollHeight, TEXTAREA_MAX_HEIGHT)}px`;
+  }, [chipSeed, onClearChipSeed]);
 
   const autoGrow = () => {
     const ta = taRef.current;

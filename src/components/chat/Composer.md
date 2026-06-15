@@ -51,6 +51,10 @@ Main chat composer: auto-growing textarea, slash (`/任务` /task · `/提醒` /
   so an un-seeded new chat behaves exactly as before. (Reading at mount, not via
   a `setState`-in-effect, also keeps `react-hooks/set-state-in-effect` happy.)
 
+### 2026-06-15 — add chipSeed / onClearChipSeed for EmptyState starter chips
+- **Motivation**: EmptyState starter chips need to pre-fill the Composer textarea from the parent without going through the store (to avoid conflicts with the store-based `composerSeed` mechanism).
+- **Change**: added optional `chipSeed` and `onClearChipSeed` props; a `useEffect` on `chipSeed` fills `val`, focuses the textarea and clears the seed in one tick.
+
 ### 2026-06-12 — created
 - **Motivation**: PRD requires full ChatGPT-style chat plus task creation entry points in the composer.
 

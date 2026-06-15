@@ -1,6 +1,8 @@
 // Text-selection float: selecting AI reply text (marked with data-ai-text)
-// surfaces "set as reminder / set as task" actions that create a task from
-// the selected snippet.
+// surfaces "set as reminder / set as task / keep watching" actions.
+// "Keep watching" sends the selected text as a new chat message so the
+// NL→TriggerSpec compiler on the server can extract a proper TriggerSpec and
+// surface a task-suggestion card in the reply.
 import { useEffect, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { topicById } from '../../data/topics';
@@ -21,6 +23,7 @@ export function SelectionFloat() {
   const [sel, setSel] = useState<SelectionState | null>(null);
   const activeTopicId = useAppStore((s) => s.activeTopicId);
   const createTask = useAppStore((s) => s.createTask);
+  const send = useAppStore((s) => s.send);
 
   useEffect(() => {
     const onMouseUp = () => {
@@ -44,6 +47,7 @@ export function SelectionFloat() {
 
   if (!sel) return null;
 
+  /** Create a simple one-off reminder task directly (no LLM round-trip). */
   const createFromSelection = () => {
     const topic = topicById(activeTopicId);
     const snippet = sel.text.length > SNIPPET_MAX_CHARS ? `${sel.text.slice(0, SNIPPET_MAX_CHARS)}…` : sel.text;
@@ -65,8 +69,24 @@ export function SelectionFloat() {
     setSel(null);
   };
 
+  /**
+   * "Keep watching": send the selected text as a new chat message so the
+   * NL→TriggerSpec compiler on the server extracts a proper structured
+   * TriggerSpec and attaches a task-suggestion card to the AI reply.
+   * The phrasing "帮我持续关注：…" signals monitoring intent to the compiler.
+   */
+  const watchThis = () => {
+    const snippet = sel.text.length > 80 ? `${sel.text.slice(0, 80)}…` : sel.text;
+    send(`帮我持续关注：${snippet}`);
+    window.getSelection()?.removeAllRanges();
+    setSel(null);
+  };
+
   return (
     <div className="nb-sel-float" style={{ left: sel.x, top: sel.y }} data-testid="selection-action-float">
+      <button onClick={watchThis} data-testid="watch-this-button">
+        <span className="ic"><Icons.bolt size={14} /></span> 持续关注
+      </button>
       <button onClick={createFromSelection} data-testid="set-selection-as-reminder">
         <span className="ic"><Icons.bell size={14} /></span> 设为提醒
       </button>

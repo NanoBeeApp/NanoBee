@@ -25,3 +25,8 @@ New-chat empty state: a single light headline ("聊点什么有趣的话题？" 
 
 ### 2026-06-12 — created
 - **Motivation**: guides first-time users straight into the "ask me to watch something" loop.
+
+### 2026-06-15 — richer empty state with starter chips
+- **Motivation**: the bare headline offered no path forward for users who didn't know what to type.
+- **Goal**: inspire and guide without overwhelming — four amber scenario chips pre-fill the composer with a task-creating prompt, letting the user edit then send.
+- **Key decision**: chips call `onSeedComposer(prompt)` passed from ChatView rather than auto-sending, preserving user control; the Composer fills its textarea and focuses so the user can refine before sending.

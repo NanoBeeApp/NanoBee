@@ -38,6 +38,10 @@ starts empty; returned state reflects only real user activity.
 - The `ensureSeeded(c.env)` call and the `db/seed` import are removed; the route now runs the four `Promise.all` D1 reads unconditionally with no seeding step.
 - The DB always starts empty; any content is the result of real user activity.
 
+### 2026-06-15 — include onboardingDone in bootstrap response (migration 0017)
+- **Motivation**: the onboarding flow needs the flag without a second round-trip.
+- **Change**: `resolveOwner` now returns both `owner` and `userId`; a separate D1 query reads `users.onboarding_done`; users with existing tasks are auto-completed to avoid showing the flow to active users after the migration is applied. The response now includes `onboardingDone: boolean`.
+
 ### 2026-06-15 — multi-tenant owner isolation + lazy anon seed
 - **Motivation**: migration 0012 adds `owner` columns to all four core tables. Each user
   must only see their own chats/messages/tasks/updates; the anon bucket needs demo content

@@ -8,10 +8,14 @@ dialog as overlays. Keeping the surface, view mode, open drawer and dialog in th
 URL makes every state bookmarkable and back-forward friendly.
 
 ## Dependencies
-- Upstream: `useTasksUrl`, `useAppStore` (`tasks`, `toast`), TasksHome, AllTasksView, TaskDetailDrawer, TaskUploadDialog, `styles/tasks.css`
+- Upstream: `useTasksUrl`, `useAppStore` (`tasks`), TasksHome, AllTasksView, TaskDetailDrawer, TaskUploadDialog, TaskTemplateModal, `styles/tasks.css`
 - Downstream: route `/_app/tasks` (`tasks.tsx`)
 
 ## Change history
+
+### 2026-06-15 — Wired TaskTemplateModal
+- **Motivation**: "从模板开始" button had a toast stub; replaced with a real URL-driven TaskTemplateModal overlay.
+- **Change**: Replaced `onTemplate` toast with `url.openTemplate()`; removed `toast` import from store deps; added `TaskTemplateModal` import and conditional render driven by `url.tplCategory !== null`.
 
 ### 2026-06-15 — Redesigned into a clean single-focus home + secondary manager
 - **Motivation**: User feedback — the first screen must be clean, single-purpose, with one visual focus, not a dashboard listing all complexity (view switch, filters, table/board, batch bar) at once.

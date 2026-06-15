@@ -39,6 +39,10 @@
   "还有 N 件未读" (N items unread) summary next to the title already communicates progress.
 - **Goal**: less chrome above the reading list.
 
+### 2026-06-15 — richer empty state via TodayEmptyState
+- **Motivation**: the old "这里暂时是空的" (temporarily empty) placeholder dead-ended users without explaining the feed purpose or offering a next step.
+- **Change**: extracted `TodayEmptyState` component with three context-sensitive variants (filtered-empty / waiting / new-user); swapped the inline `nb-alldone` block for `<TodayEmptyState hasFilter={filter !== 'all'} />`.
+
 ### 2026-06-12 — created
 - **Motivation**: PRD's second core surface — "see everything I need to care about today, mark read or auto-read".
 

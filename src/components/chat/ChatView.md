@@ -28,6 +28,10 @@ Center chat surface: auto-scrolling message feed, pending indicator, composer, a
 - **Motivation**: MessageView became text-only, so the createdTaskIds/createTask/onSuggest wiring had no consumer.
 - **Goal**: pass only the message to MessageView; remove the knownTaskIds memo.
 
+### 2026-06-15 — wire EmptyState starter chips to Composer
+- **Motivation**: EmptyState now has starter chips that need to fill and focus the Composer textarea.
+- **Key decision**: use local `composerSeed` state + `chipSeed` / `onClearChipSeed` props on Composer rather than the global store, to avoid a double-render race with the store-based seed mechanism.
+
 ### 2026-06-14 — scroll to the question, not the bottom
 - **Motivation**: with streamed replies, the old "pin to bottom on every
   message-count change" forced the view to the tail, so a long answer had to be

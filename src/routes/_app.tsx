@@ -7,6 +7,9 @@
 // The URL is the source of truth for "which view": this layout mirrors the
 // active pathname into the store's cached `view` and bridges the router's
 // navigate() into the store so navigation actions can change the URL.
+//
+// Change history:
+//   2026-06-15  Added first-run Onboarding overlay (migration 0017).
 import { useEffect, useLayoutEffect } from "react";
 import {
 	Outlet,
@@ -22,6 +25,8 @@ import { NotificationDropdown } from "@/components/notifications/NotificationDro
 import { QuickChat } from "@/components/quickchat/QuickChat";
 import { SelectionFloat } from "@/components/selection/SelectionFloat";
 import { ToastStack } from "@/components/feedback/ToastStack";
+import { Onboarding } from "@/components/onboarding/Onboarding";
+import "@/styles/onboarding.css";
 
 // Client-only: the shell is interactive state (zustand + window listeners) with
 // no SEO-relevant static content. ssr:false here covers the whole subtree.
@@ -42,6 +47,11 @@ function AppLayout() {
 	const bootstrap = useAppStore((s) => s.bootstrap);
 	const bindNavigate = useAppStore((s) => s.bindNavigate);
 	const syncView = useAppStore((s) => s.syncView);
+	const onboardingDone = useAppStore((s) => s.onboardingDone);
+	const tasks = useAppStore((s) => s.tasks);
+	// Show the onboarding overlay once bootstrap has run (onboardingDone is false
+	// initially set to true to avoid flash) and the user has no tasks yet.
+	const showOnboarding = !onboardingDone && tasks.length === 0;
 
 	// Bridge navigate() into the store (once — useNavigate is stable).
 	// `to` is a plain string here; cast past the router's typed-route union.
@@ -102,6 +112,7 @@ function AppLayout() {
 			<QuickChat />
 			<SelectionFloat />
 			<ToastStack />
+			{showOnboarding && <Onboarding />}
 		</div>
 	);
 }

@@ -1,15 +1,16 @@
 // Renders one chat message: user bubble, AI reply, or proactive amber card.
 // AI replies that carry an agent execution trace get a small debug entry
-// that opens AgentTraceModal. Otherwise kept intentionally minimal: just
-// the message text (no status pills, task cards, citation chips).
+// that opens AgentTraceModal. When the reply carries a taskSuggestion (from
+// the NL→TriggerSpec compiler), a confirmation card is rendered below the body.
 import { useState } from 'react';
-import type { ChatMessage } from '../../types';
+import type { AiMessage, ChatMessage } from '../../types';
 import type { TracedAiMessage } from '../../lib/agent-trace';
 import { Icon, Icons } from '../../icons/icons';
 import { AgentTraceModal } from './AgentTraceModal';
 import { Markdown } from '../common/Markdown';
 import { parasToMarkdown } from '../../lib/paras-to-markdown';
 import { ArtifactRefCard } from './ArtifactRefCard';
+import { TaskSuggestionCard } from './TaskSuggestionCard';
 
 interface MessageViewProps {
   m: ChatMessage;
@@ -60,6 +61,8 @@ export function MessageView({ m }: MessageViewProps) {
     );
   }
 
+  const taskSuggestion = (m as AiMessage).taskSuggestion;
+
   return (
     <div className="nb-msg" data-testid="chat-assistant-message">
       <div className="nb-role">
@@ -79,6 +82,9 @@ export function MessageView({ m }: MessageViewProps) {
       </div>
       {body}
       {m.artifacts && m.artifacts.length > 0 && <ArtifactRefCard refs={m.artifacts} />}
+      {taskSuggestion && !m.streaming && (
+        <TaskSuggestionCard suggestion={taskSuggestion} />
+      )}
       {trace && traceOpen && (
         <AgentTraceModal trace={trace} onClose={() => setTraceOpen(false)} />
       )}

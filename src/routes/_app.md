@@ -37,6 +37,10 @@ Replaces the former `App.tsx` shell.
 
 ## Change history
 
+### 2026-06-15 — first-run Onboarding overlay
+- **Motivation**: new signed-in users with no tasks should see a guided 3-step flow instead of a blank screen.
+- **Change**: imports `Onboarding` component and `onboarding.css`; reads `onboardingDone` and `tasks` from the store; renders `<Onboarding />` as a top-level overlay when `!onboardingDone && tasks.length === 0`.
+
 ### 2026-06-14 — ⌘N becomes page-aware
 - **Motivation**: ⌘N always started a new chat, but the sidebar "new" button now
   adapts to the page; the keyboard shortcut should match.

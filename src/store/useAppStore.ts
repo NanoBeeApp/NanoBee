@@ -96,6 +96,9 @@ interface BootstrapData {
   conversations: Record<string, ChatMessage[]>;
   tasks: Task[];
   updates: UpdateItem[];
+  /** Whether the signed-in user has already completed (or skipped) the
+   *  first-run onboarding flow. Always true for anon visitors. */
+  onboardingDone?: boolean;
 }
 
 interface AppState {
@@ -109,6 +112,9 @@ interface AppState {
   tasks: Task[];
   createdTaskIds: string[];
   updates: UpdateItem[];
+  /** True once the first-run onboarding flow has been completed or skipped.
+   *  Initialized from the bootstrap response; persisted via POST /api/onboarding/done. */
+  onboardingDone: boolean;
   /** Today-page filter: 'all' | a topic id. Shared by the sidebar nav and the reading surface. */
   todayFilter: string;
   /** Tasks-page topic filter: 'all' | a topic id. Lifted to the store so the
@@ -222,6 +228,10 @@ interface AppState {
   sendQuick: (text: string) => void;
   setQuickCtx: (ctx: ViewingContext | null) => void;
   openQuickInChat: () => void;
+
+  // onboarding
+  /** Mark the first-run onboarding as complete (persists to the server). */
+  markOnboardingDone: () => Promise<void>;
 
   // tasks
   createTask: (data: TaskSuggestion) => void;
@@ -455,6 +465,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   tasks: [],
   createdTaskIds: [],
   updates: [],
+  onboardingDone: true, // safe default: don't flash onboarding before bootstrap
   todayFilter: 'all',
   tasksFilter: 'all',
   focusItemId: null,
@@ -485,13 +496,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       const data = (await res.json()) as BootstrapData;
       console.log(
         '[bootstrap] loaded from D1:',
-        `${data.chats.length} chats, ${data.tasks.length} tasks, ${data.updates.length} updates`,
+        `${data.chats.length} chats, ${data.tasks.length} tasks, ${data.updates.length} updates, onboardingDone=${data.onboardingDone}`,
       );
       set({
         chats: data.chats,
         convos: data.conversations,
         tasks: data.tasks,
         updates: data.updates,
+        // Fall back to true (don't show onboarding) when the field is absent
+        // (e.g. before migration 0017 is applied to the deployed database).
+        onboardingDone: data.onboardingDone ?? true,
       });
     } catch (error) {
       // The store stays empty; the user can retry by reloading.
@@ -880,6 +894,20 @@ export const useAppStore = create<AppState>((set, get) => ({
       console.error('[deleteTask] persist failed:', String(error));
       set({ tasks: prevTasks });
       get().toast('删除失败，请重试');
+    }
+  },
+
+  markOnboardingDone: async () => {
+    // Optimistically flip the flag so the UI hides immediately.
+    set({ onboardingDone: true });
+    try {
+      // Hono RPC does not expose the onboarding route in the typed client yet;
+      // use a plain fetch so we don't need to restart the dev server.
+      await fetch('/api/onboarding/done', { method: 'POST', credentials: 'same-origin' });
+    } catch (error) {
+      // Non-critical: the flag will be restored to true from the server on the
+      // next bootstrap, so no rollback is needed — just log the failure.
+      console.error('[onboarding] persist failed:', String(error));
     }
   },
 

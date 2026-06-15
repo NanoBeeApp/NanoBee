@@ -16,3 +16,7 @@ search, and renders the toolbar + the active view.
 ### 2026-06-15 — Created
 - **Motivation**: All the dashboard-style complexity needs a home that is one click away from the clean first screen.
 - **Goal**: Orchestrate the toolbar + the active view with filter/search applied.
+
+### 2026-06-15 — pass onTemplate to TaskListView for rich empty state
+- **Motivation**: the rich TasksEmpty needs to open the template picker with a category pre-selected.
+- **Change**: added `handleTemplate` that calls `url.openTemplate(cat)` and passes it down to `TaskListView`.

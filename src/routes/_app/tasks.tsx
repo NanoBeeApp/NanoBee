@@ -9,6 +9,7 @@ import { TasksView } from "@/components/tasks/TasksView";
 //   f      — manager filter: 'all' (default) | a TaskKind | a topic id.
 //   upload — 'open' while the batch-upload dialog is open (a non-numeric token
 //            so the round-trip-safe search serializer keeps the URL clean).
+//   tpl    — template picker open: the active category id (or 'all'); absent → picker closed.
 // A refresh / deep link / back-forward restores the same surface, view mode,
 // open drawer, filter and dialog (see useTasksUrl).
 export type TasksViewMode = "list" | "table" | "board";
@@ -20,6 +21,8 @@ export interface TasksSearch {
 	task?: string;
 	f?: string;
 	upload?: "open";
+	/** Template picker: active category id (or 'all'). Absent when picker is closed. */
+	tpl?: string;
 }
 
 export const Route = createFileRoute("/_app/tasks")({
@@ -32,6 +35,7 @@ export const Route = createFileRoute("/_app/tasks")({
 		task: typeof search.task === "string" && search.task ? search.task : undefined,
 		f: typeof search.f === "string" && search.f ? search.f : undefined,
 		upload: search.upload === "open" ? "open" : undefined,
+		tpl: typeof search.tpl === "string" && search.tpl ? search.tpl : undefined,
 	}),
 	component: TasksView,
 });

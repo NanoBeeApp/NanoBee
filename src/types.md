@@ -16,6 +16,16 @@ All interfaces/types listed above plus `IconName`.
 
 ## Change history
 
+### 2026-06-15 — `InlineSuggestion` + `AiMessage.taskSuggestion`
+- **Motivation**: the NL→TriggerSpec compiler attaches a task suggestion to AI
+  replies when a monitoring/scheduling intent is detected; the chat UI renders a
+  confirmation card from this field.
+- **Changes**:
+  - Added `InlineSuggestion` interface: `taskId`, `title`, `topic`,
+    `triggerLabel`, `message`, `triggerSpec`.
+  - Added optional `taskSuggestion?: InlineSuggestion` to `AiMessage`.
+  - `MessageView` reads this field and renders `<TaskSuggestionCard>` when set.
+
 ### 2026-06-15 — Added optional `triggerSpec?: TriggerSpec` to `Task`
 - **Motivation**: The `TaskDetailDrawer` needs access to the structured trigger spec to show a human-readable summary (schedule hour/minute, condition source/op/threshold). The spec is now surfaced from the `trigger_spec` D1 column via `repo.rowToTask`.
 - **Change**: Added optional `triggerSpec?: TriggerSpec` field to the `Task` interface. Backward-compatible — tasks without a spec behave as before.

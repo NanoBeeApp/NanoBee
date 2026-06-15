@@ -13,6 +13,10 @@ outlet.
 
 ## Change history
 
+### 2026-06-15 — Added `tpl` search param for the template picker
+- **Motivation**: Task Template Library picker must be URL-addressable (bookmarkable open state + active category).
+- **Change**: Added `tpl?: string` to `TasksSearch` and its corresponding `validateSearch` clause.
+
 ### 2026-06-15 — Added `validateSearch` for the redesigned Tasks page
 - **Motivation**: The clean home / manager surfaces, view mode, open drawer, filter and upload dialog must all be bookmarkable per the "URL is state" rule.
 - **Goal**: Make the page state URL-addressable.

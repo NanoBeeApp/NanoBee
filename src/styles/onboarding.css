@@ -1,0 +1,323 @@
+/* ============================================================
+   First-run onboarding overlay.
+   Shown once to new signed-in users; dismissed via completion or skip.
+   White background, honey/amber CTA, Radix tokens, minimal borders.
+   ============================================================ */
+
+/* Overlay: full-viewport dark scrim with centered card. */
+.nb-ob-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(15, 17, 23, 0.36);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  animation: nb-ob-fade var(--dur-2) var(--ease-out);
+}
+@keyframes nb-ob-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Card */
+.nb-ob-card {
+  position: relative;
+  width: 460px;
+  max-width: 100%;
+  background: var(--surface);
+  border-radius: var(--r-4);
+  box-shadow: 0 20px 60px rgba(15, 17, 23, 0.22);
+  padding: 36px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  animation: nb-ob-in var(--dur-2) var(--ease-out);
+}
+@keyframes nb-ob-in {
+  from { transform: translateY(14px) scale(0.98); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* Skip link: top-right ghost */
+.nb-ob-skip {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 12.5px;
+  color: var(--ink-4);
+  padding: 4px 8px;
+  border-radius: var(--r-2);
+  transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+}
+.nb-ob-skip:hover { color: var(--ink-3); background: var(--surface-2); }
+
+/* Back link: top-left */
+.nb-ob-back {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  padding: 4px 8px;
+  border-radius: var(--r-2);
+  transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+}
+.nb-ob-back:hover { color: var(--ink); background: var(--surface-2); }
+
+/* Bee icon glyph */
+.nb-ob-bee {
+  color: var(--nb-honey);
+  margin-bottom: 12px;
+  margin-top: 4px;
+}
+
+/* Headline */
+.nb-ob-title {
+  font-size: 22px;
+  font-weight: 740;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 6px;
+  text-align: center;
+}
+.nb-ob-sub {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin: 0 0 20px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Step dots */
+.nb-ob-dots {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+.nb-ob-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  transition: background var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.nb-ob-dot.active {
+  background: var(--nb-honey);
+  transform: scale(1.25);
+}
+
+/* Scenario picker cards */
+.nb-ob-scenarios {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r-3);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.nb-ob-scenario {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  transition: background var(--dur-1) var(--ease-out);
+}
+.nb-ob-scenario:last-child { border-bottom: 0; }
+.nb-ob-scenario:hover { background: var(--surface-2); }
+
+.nb-ob-scenario-ic {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-3);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.nb-ob-scenario-body { flex: 1; min-width: 0; }
+.nb-ob-scenario-cat {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-4);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+.nb-ob-scenario-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.nb-ob-scenario-desc {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.nb-ob-more-hint {
+  font-size: 12px;
+  color: var(--ink-4);
+  text-align: center;
+  margin: 0;
+}
+
+/* Personalize step */
+.nb-ob-detail-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.nb-ob-detail-ic {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-3);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.nb-ob-detail-name { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.nb-ob-detail-sub { font-size: 13px; color: var(--ink-3); line-height: 1.5; }
+
+.nb-ob-personalize-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  width: 100%;
+  margin: 0 0 10px;
+}
+
+.nb-ob-params {
+  width: 100%;
+  background: var(--surface-2);
+  border-radius: var(--r-3);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.nb-ob-param-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.nb-ob-param-label { font-size: 12px; font-weight: 500; color: var(--ink-3); }
+.nb-ob-param-input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-2);
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+  transition: border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out);
+}
+.nb-ob-param-input:focus {
+  border-color: var(--brand-2);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.nb-ob-param-hint { font-size: 11.5px; color: var(--ink-4); }
+
+.nb-ob-trigger-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface-2);
+  border-radius: var(--r-2);
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  width: 100%;
+  margin-bottom: 20px;
+}
+.nb-ob-trigger-ic { color: var(--ink-3); display: inline-flex; flex: none; }
+
+/* Confirm step */
+.nb-ob-confirm-check {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--nb-amber-soft);
+  color: var(--nb-honey);
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  margin-top: 8px;
+}
+.nb-ob-confirm-title {
+  font-size: 20px;
+  font-weight: 740;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.nb-ob-confirm-sub {
+  font-size: 13.5px;
+  color: var(--ink-3);
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.nb-ob-confirm-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: var(--surface-2);
+  border-radius: var(--r-3);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+.nb-ob-confirm-info { flex: 1; min-width: 0; }
+.nb-ob-confirm-name { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.nb-ob-confirm-trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.nb-ob-confirm-hint {
+  font-size: 12px;
+  color: var(--ink-4);
+  text-align: center;
+  margin: 10px 0 0;
+}
+
+/* Primary CTA button — honey/amber */
+.nb-ob-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 13px 20px;
+  background: var(--nb-honey);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: var(--r-3);
+  transition: background var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.nb-ob-cta:hover { background: #d0862e; }
+.nb-ob-cta:active { transform: translateY(1px); }
+.nb-ob-cta:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.nb-ob-cta--go { background: var(--nb-honey); }
+.nb-ob-cta--go:hover { background: #d0862e; }
+
+@media (max-width: 520px) {
+  .nb-ob-card { padding: 28px 18px 24px; }
+  .nb-ob-title { font-size: 19px; }
+}

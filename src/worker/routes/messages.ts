@@ -16,6 +16,7 @@ import type { Context } from "hono";
 import { streamSSE } from "hono/streaming";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
+import { nanoid } from "nanoid";
 import type { Env } from "../api-worker";
 import type { AgentTrace } from "../../lib/agent-trace";
 import { resolveAiConfig, resolveWebSearchKey } from "../ai/settings";
@@ -27,6 +28,8 @@ import { getUserBySessionToken } from "../auth/store";
 import { genReply } from "../reply";
 import { ANON_OWNER } from "../artifacts/repo";
 import type { ArtifactRef } from "../../artifacts/types";
+import { compileTaskIntent } from "../agent/task-compiler";
+import type { InlineSuggestion } from "../../types";
 
 const ID_PATTERN = /^[a-z]+_[A-Za-z0-9_-]{4,40}$/;
 
@@ -109,6 +112,9 @@ function logTools(run: AgentRunResult): void {
  *
  * The `owner` parameter scopes all inserts to the correct user bucket so
  * chats and messages are never visible across account boundaries.
+ *
+ * When `taskSuggestion` is provided it is embedded in the AI message payload
+ * so the client can render a confirmation card and create the task on accept.
  */
 async function persistTurn(
 	c: Context<{ Bindings: Env }>,
@@ -117,6 +123,7 @@ async function persistTurn(
 	trace: AgentTrace | null,
 	createdArtifacts: ArtifactRef[],
 	owner: string,
+	taskSuggestion?: InlineSuggestion,
 ): Promise<{ chatId: string; topicId: string; aiMessage: ReturnType<typeof genReply>["msg"] }> {
 	const reply = genReply(body.text, body.ctxTitle, llm);
 	// A Today-page reading context pins the topic; otherwise the reply's
@@ -128,6 +135,7 @@ async function persistTurn(
 		...reply.msg,
 		...(trace ? { trace } : {}),
 		...(createdArtifacts.length ? { artifacts: createdArtifacts } : {}),
+		...(taskSuggestion ? { taskSuggestion } : {}),
 	};
 	const userMessage = { id: body.userMessageId, role: "user" as const, text: body.text };
 
@@ -181,7 +189,24 @@ export const messageRoutes = new Hono<{ Bindings: Env }>()
 				);
 			}
 
-			const payload = await persistTurn(c, body, llm, trace, createdArtifacts, agentCtx.artifacts.owner);
+			// Run the NL→TriggerSpec compiler concurrently with the reply pipeline.
+			// A failure is non-fatal — chat continues without a task card.
+			const taskData = await compileTaskIntent(aiConfig, body.text).catch((err) => {
+				console.warn("[API] task-compiler failed:", String(err));
+				return null;
+			});
+			const taskSuggestion: InlineSuggestion | undefined = taskData
+				? {
+						taskId: `task_${nanoid(10)}`,
+						title: taskData.title,
+						topic: taskData.topic,
+						triggerLabel: taskData.triggerLabel,
+						message: taskData.message,
+						triggerSpec: taskData.triggerSpec!,
+					}
+				: undefined;
+
+			const payload = await persistTurn(c, body, llm, trace, createdArtifacts, agentCtx.artifacts.owner, taskSuggestion);
 			return c.json(payload, 201);
 		} catch (error) {
 			console.error("[API] POST /api/messages D1 error:", String(error));
@@ -232,8 +257,24 @@ export const messageRoutes = new Hono<{ Bindings: Env }>()
 			}
 
 			const llm = acc.trim() ? { text: acc, model: aiConfig.model } : null;
+			// Run the NL→TriggerSpec compiler after the main reply is done.
+			// Non-fatal: chat continues without a task card on any failure.
+			const taskData = await compileTaskIntent(aiConfig, body.text).catch((err) => {
+				console.warn("[API] task-compiler (stream) failed:", String(err));
+				return null;
+			});
+			const taskSuggestion: InlineSuggestion | undefined = taskData
+				? {
+						taskId: `task_${nanoid(10)}`,
+						title: taskData.title,
+						topic: taskData.topic,
+						triggerLabel: taskData.triggerLabel,
+						message: taskData.message,
+						triggerSpec: taskData.triggerSpec!,
+					}
+				: undefined;
 			try {
-				const payload = await persistTurn(c, body, llm, trace, createdArtifacts, agentCtx.artifacts.owner);
+				const payload = await persistTurn(c, body, llm, trace, createdArtifacts, agentCtx.artifacts.owner, taskSuggestion);
 				await stream.writeSSE({ event: "final", data: JSON.stringify(payload) });
 			} catch (error) {
 				console.error("[API] POST /api/messages/stream persist error:", String(error));

@@ -14,6 +14,7 @@ import { bootstrapRoutes } from "./bootstrap";
 import { compareRoutes } from "./compare";
 import { messageRoutes } from "./messages";
 import { notificationSettingsRoutes } from "./notification-settings";
+import { onboardingRoutes } from "./onboarding";
 import { pushRoutes } from "./push";
 import { researchRoutes } from "./research";
 import { taskRoutes } from "./tasks";
@@ -27,6 +28,7 @@ export const apiRoutes = new Hono<{ Bindings: Env }>()
 	.route("/compare", compareRoutes)
 	.route("/messages", messageRoutes)
 	.route("/notifications", notificationSettingsRoutes)
+	.route("/onboarding", onboardingRoutes)
 	.route("/push", pushRoutes)
 	.route("/research", researchRoutes)
 	.route("/tasks", taskRoutes)

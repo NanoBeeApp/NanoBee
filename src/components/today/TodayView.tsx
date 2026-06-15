@@ -2,6 +2,10 @@
 // with expand-to-read. Filtering lives in the store (`todayFilter`) and is
 // driven by the in-page TodayFilterBar chips in the toolbar. Reports the item
 // currently in view so the global quick chat can be context-aware.
+//
+// Change history:
+//   2026-06-15  Richer empty state: explains the feed purpose + CTA to create
+//               a task so users aren't dead-ended on a blank screen.
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
@@ -9,6 +13,7 @@ import { TodayFilterBar } from './TodayFilterBar';
 import { TimelineCard } from './TimelineCard';
 import { ReadRow } from './ReadRow';
 import { ReadCard } from './ReadCard';
+import { TodayEmptyState } from './TodayEmptyState';
 
 type ViewMode = 'timeline' | 'list' | 'card';
 
@@ -119,11 +124,7 @@ export function TodayView() {
         </div>
 
         {filtered.length === 0 && (
-          <div className="nb-alldone" data-testid="today-all-done">
-            <div className="big"><Icons.check size={28} /></div>
-            <h3>这里暂时是空的</h3>
-            <p>有新的重要动态时，我会第一时间放到这里并通知你。</p>
-          </div>
+          <TodayEmptyState hasFilter={filter !== 'all'} />
         )}
 
         {GROUPS.map((g) => {
