@@ -4,8 +4,10 @@
 Normalises AI-emitted math delimiters before they reach `remark-math`. Converts
 TeX-style `\( … \)` (inline) and `\[ … \]` (block) into the dollar forms
 (`$ … $` / `$$ … $$`) that remark-math v6 actually parses, and promotes inline
-`$$ … $$` into standalone display blocks. Fenced code blocks and inline code are
-left untouched so example code is never corrupted.
+`$$ … $$` into standalone display blocks. It also escapes currency dollar signs
+(`$` immediately before a digit) to a literal `\$` so money amounts are not
+misread as inline math. Fenced code blocks and inline code are left untouched so
+example code is never corrupted.
 
 ## Core exports / API
 - `normalizeMathDelimiters(input: string): string` — pure string transform, safe
@@ -31,3 +33,17 @@ left untouched so example code is never corrupted.
 - **目标**：把 curve 的数学分隔符归一化逻辑带进 NanoBee，供公共 Markdown 组件复用。
 - **关键决策**：与 Markdown 组件同目录（`components/common/`）放置，而非新建
   `src/core/` 顶层目录，保持 markdown 渲染相关代码聚合在一处。
+
+### 2026-06-15 — escape currency `$` so money is not rendered as a formula
+- **Motivation**: production chat answers containing dollar amounts (e.g.
+  "$138.15 美元 …（…为 $4,296.94 美元）") rendered the text *between* the two `$`
+  as a KaTeX formula, turning the `**` bold markers into `∗∗`. With
+  `singleDollarTextMath: true`, remark-math pairs the two currency `$` into
+  inline math.
+- **Goal**: show currency literally while keeping real inline math working.
+- **Key decision**: a second pass escapes a `$` that sits immediately before a
+  digit (`$138`) to `\$`. Real formulas start with a non-digit (`$x^2$`) and are
+  untouched; `$$` display math, already-escaped `\$`, and inline code are
+  excluded via a lookbehind / code-skipping. Verified with a tsx harness over
+  five cases (currency pair, real formula, inline code, display math, TeX
+  delimiters).
