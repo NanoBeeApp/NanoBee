@@ -19,8 +19,12 @@ import {
   deleteArtifact,
   getArtifact,
   listArtifacts,
+  listDataViewItems,
   setArtifactFavorited,
+  setPipelineStatus,
+  updateDataViewMeta,
 } from "../artifacts/repo";
+import { runDataViewPipeline } from "../data-views/pipeline";
 
 /** Resolve the owner bucket: the signed-in user id, or the anon bucket. */
 async function ownerOf(c: Context<{ Bindings: Env }>): Promise<string> {
@@ -52,6 +56,62 @@ export const artifactRoutes = new Hono<{ Bindings: Env }>()
       return c.json({ error: "Database error" }, 500);
     }
   })
+  // Data-view item stream (newest first). Empty for word artifacts / unknown ids.
+  .get("/:id/items", async (c) => {
+    try {
+      const owner = await ownerOf(c);
+      const limitRaw = Number(c.req.query("limit"));
+      const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? limitRaw : undefined;
+      const items = await listDataViewItems(c.env.DB, owner, c.req.param("id"), limit);
+      return c.json({ items, hasMore: false, nextCursor: null });
+    } catch (error) {
+      console.error("[API] GET /api/artifacts/:id/items error:", String(error));
+      return c.json({ error: "Database error" }, 500);
+    }
+  })
+  // Manually re-run a data view's fetch pipeline (background; returns immediately).
+  .post("/:id/refresh", async (c) => {
+    try {
+      const owner = await ownerOf(c);
+      const id = c.req.param("id");
+      const artifact = await getArtifact(c.env.DB, owner, id);
+      if (!artifact || artifact.kind !== "data_view") {
+        return c.json({ error: "Not found" }, 404);
+      }
+      await setPipelineStatus(c.env.DB, id, "pending");
+      const run = runDataViewPipeline(c.env, id, owner, artifact.query).catch((e) =>
+        console.error("[API] refresh pipeline failed:", String(e)),
+      );
+      if (c.executionCtx?.waitUntil) c.executionCtx.waitUntil(run);
+      else await run;
+      return c.json({ ok: true, pipelineStatus: "pending" });
+    } catch (error) {
+      console.error("[API] POST /api/artifacts/:id/refresh error:", String(error));
+      return c.json({ error: "Database error" }, 500);
+    }
+  })
+  // Update a data view's editable meta (title / default view).
+  .patch(
+    "/:id",
+    zValidator(
+      "json",
+      z.object({
+        title: z.string().min(1).max(60).optional(),
+        defaultView: z.enum(["list", "card", "table", "timeline"]).optional(),
+      }),
+    ),
+    async (c) => {
+      try {
+        const owner = await ownerOf(c);
+        const ok = await updateDataViewMeta(c.env.DB, owner, c.req.param("id"), c.req.valid("json"));
+        if (!ok) return c.json({ error: "Not found" }, 404);
+        return c.json({ ok: true });
+      } catch (error) {
+        console.error("[API] PATCH /api/artifacts/:id error:", String(error));
+        return c.json({ error: "Database error" }, 500);
+      }
+    },
+  )
   .post(
     "/:id/favorite",
     // The client sends the desired state so the toggle is idempotent and free of

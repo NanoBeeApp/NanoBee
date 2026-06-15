@@ -3,7 +3,7 @@
 // tint, not a box. Clicking the row opens the deck; the trailing buttons
 // favorite or delete without opening. Pure render.
 import type { Artifact } from '../../artifacts/types';
-import { artifactMeta } from '../../artifacts/format';
+import { artifactMeta, pipelineStatusLabel } from '../../artifacts/format';
 import { Icons } from '../../icons/icons';
 
 interface Props {
@@ -30,6 +30,11 @@ export function ArtifactRow({ artifact, onOpen, onToggleFavorite, onDelete }: Pr
       <span className="nb-arti-row-ic"><Icons.grid size={16} /></span>
       <span className="nb-arti-row-title">{artifact.title}</span>
       <span className="nb-arti-row-meta">{artifactMeta(artifact)}</span>
+      {artifact.kind === 'data_view' && artifact.pipelineStatus !== 'ready' && (
+        <span className={`nb-dv-pill nb-dv-pill-${artifact.pipelineStatus}`}>
+          {pipelineStatusLabel(artifact.pipelineStatus)}
+        </span>
+      )}
       <div className="nb-arti-row-actions">
         <button
           className={`nb-arti-card-fav${artifact.favorited ? ' on' : ''}`}

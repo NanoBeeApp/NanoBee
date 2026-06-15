@@ -26,3 +26,8 @@ Shared domain types for Artifacts. An Artifact is a piece of data dynamically ge
 - **Motivation**: the Artifacts page gained a Your favorites tab, requiring the favorited state to be carried on `Artifact`
 - **Goal**: add `favorited: boolean` to `Artifact`
 - **Key decisions**: stored as an envelope field rather than a separate reference type so that list responses include favorited state and the frontend can filter directly on it
+
+### 2026-06-15 — 纠偏为「数据视图」判别联合（P1）
+- **Motivation**: Artifacts 实际产品是「聊天生成数据视图」，不是背单词卡组
+- **Goal**: `Artifact` 改为判别联合 `DataViewArtifact | WordDeckArtifact`；新增 `DataViewArtifact`（source/query/pipelineStatus/itemCount/defaultView/topicId/lastFetchedAt/errorText）、`DataViewItem`、`PipelineStatus`；`ArtifactRef` 改为按 `kind` 双分支
+- **Key decisions**: word 分支仅保留兼容旧数据渲染，不再新建；FeedQuery 类型抽到 `feed-query.ts`。权威契约见 `private/docs/artifacts-data-views-design.md`

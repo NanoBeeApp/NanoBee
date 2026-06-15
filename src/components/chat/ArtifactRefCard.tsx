@@ -5,11 +5,19 @@
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
 import type { ArtifactRef } from '../../artifacts/types';
-
-const KIND_LABEL: Record<string, string> = { word: '单词卡片' };
+import { pipelineStatusLabel } from '../../artifacts/format';
 
 interface Props {
   refs: ArtifactRef[];
+}
+
+/** The meta line under a ref title, by kind. */
+function refMeta(r: ArtifactRef): string {
+  if (r.kind === 'data_view') {
+    const status = r.pipelineStatus === 'ready' ? `${r.itemCount} 条` : pipelineStatusLabel(r.pipelineStatus);
+    return `数据视图 · ${status} · 点击查看`;
+  }
+  return `单词卡片 · ${r.cardCount} 张 · 点击查看`;
 }
 
 export function ArtifactRefCard({ refs }: Props) {
@@ -23,12 +31,10 @@ export function ArtifactRefCard({ refs }: Props) {
           className="nb-artiref"
           onClick={() => openArtifacts(r.id)}
           data-testid={`message-artifact-ref-${r.id}`}>
-          <span className="nb-artiref-icon"><Icons.grid size={16} /></span>
+          <span className="nb-artiref-icon"><Icons.feed size={16} /></span>
           <span className="nb-artiref-main">
             <span className="nb-artiref-title">{r.title}</span>
-            <span className="nb-artiref-meta">
-              {KIND_LABEL[r.kind] ?? r.kind} · {r.cardCount} 张 · 点击查看
-            </span>
+            <span className="nb-artiref-meta">{refMeta(r)}</span>
           </span>
           <Icons.arrowRight size={15} />
         </button>

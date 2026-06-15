@@ -573,3 +573,167 @@
   .nb-arti-grid { grid-template-columns: 1fr; }
   .nb-deck-grid { grid-template-columns: 1fr; }
 }
+
+/* ===================================================================
+   Data views (kind = 'data_view') — gallery pills + detail surface.
+   Honey accent = --brand-2; everything else neutral (Radix grays).
+   =================================================================== */
+
+/* Pipeline status pill in the gallery row / card. */
+.nb-dv-pill {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 560;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.nb-dv-pill-fetching,
+.nb-dv-pill-pending,
+.nb-dv-pill-filtering,
+.nb-dv-pill-extracting,
+.nb-dv-pill-templating { background: var(--brand-soft); color: var(--brand-2); }
+.nb-dv-pill-error { background: var(--danger-soft); color: var(--danger); }
+.nb-arti-card-meta .nb-dv-pill { margin-left: 6px; }
+
+/* Detail header. */
+.nb-dv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.nb-dv-title { margin: 0; font-size: 19px; font-weight: 680; color: var(--ink); }
+.nb-dv-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border: none; border-radius: 7px;
+  background: transparent; color: var(--ink-3); cursor: pointer;
+  transition: background var(--ease-out, 0.15s), color var(--ease-out, 0.15s);
+}
+.nb-dv-icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+
+/* Source / filter sub-header. */
+.nb-dv-subhead {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 14px;
+}
+.nb-dv-source-badge {
+  font-size: 11px; font-weight: 540; color: var(--ink-2);
+  background: var(--surface-2); border-radius: 5px; padding: 1px 7px;
+}
+.nb-dv-chip {
+  font-size: 11px; color: var(--ink-2);
+  background: var(--surface-2); border-radius: 999px; padding: 1px 9px;
+}
+.nb-dv-meta { font-size: 12px; color: var(--ink-3); }
+.nb-dv-dot { color: var(--ink-4); }
+
+/* Non-blocking pipeline status strip. */
+.nb-dv-status { margin: 0 0 14px; }
+.nb-dv-status-text {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 540; color: var(--ink-2); margin-top: 6px;
+}
+.nb-dv-status-text > svg { color: var(--brand-2); }
+.nb-dv-progress {
+  width: 100%; height: 2px; border-radius: 2px; overflow: hidden;
+  background: var(--surface-2);
+}
+.nb-dv-progress-fill {
+  width: 35%; height: 100%; background: var(--brand-2);
+  animation: nb-dv-slide 1.6s infinite linear;
+}
+@keyframes nb-dv-slide {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(320%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nb-dv-progress-fill { animation: none; width: 100%; opacity: 0.5; }
+}
+.nb-dv-status-error {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: var(--danger);
+  background: var(--danger-soft); border-radius: 8px; padding: 8px 12px;
+}
+
+/* View switch (segmented). */
+.nb-dv-switch {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: var(--surface-2); border-radius: 8px; margin-bottom: 16px;
+}
+.nb-dv-switch-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 540; color: var(--ink-3);
+  border: none; background: transparent; border-radius: 6px;
+  padding: 4px 11px; cursor: pointer;
+  transition: background var(--ease-out, 0.15s), color var(--ease-out, 0.15s);
+}
+.nb-dv-switch-btn:hover { color: var(--ink); }
+.nb-dv-switch-btn.active { background: var(--bg); color: var(--brand-2); font-weight: 600; }
+
+/* List pane — flat feed rows, hairline separated, no card boxes. */
+.nb-dv-list { display: flex; flex-direction: column; }
+.nb-dv-row { padding: 12px 6px; border-bottom: 1px solid var(--border); }
+.nb-dv-row:hover { background: var(--surface-2); }
+.nb-dv-row-title {
+  display: block; font-size: 14.5px; font-weight: 580; color: var(--ink);
+  text-decoration: none; margin-bottom: 4px; line-height: 1.35;
+}
+a.nb-dv-row-title:hover { color: var(--brand-2); }
+.nb-dv-card-title-plain { cursor: default; }
+.nb-dv-row-summary {
+  margin: 0 0 6px; font-size: 12.5px; color: var(--ink-3); line-height: 1.5;
+}
+.nb-dv-row-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  font-size: 11.5px; color: var(--ink-4);
+}
+.nb-dv-row-meta svg { vertical-align: -1px; }
+
+/* Card pane — built-in default card (field-driven). */
+.nb-dv-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+}
+.nb-dv-card {
+  display: flex; flex-direction: column; justify-content: space-between;
+  gap: 10px; min-height: 150px; padding: 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  transition: border-color var(--ease-out, 0.15s), background var(--ease-out, 0.15s);
+}
+.nb-dv-card:hover { background: var(--surface-2); border-color: var(--border-2); }
+.nb-dv-card-author { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.nb-dv-avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 680; background: var(--brand-soft); color: var(--brand-2);
+}
+.nb-dv-card-author-name { font-size: 11.5px; font-weight: 560; color: var(--ink-2); }
+.nb-dv-card-title {
+  display: block; font-size: 13.5px; font-weight: 600; color: var(--ink);
+  text-decoration: none; line-height: 1.4;
+}
+a.nb-dv-card-title:hover { color: var(--brand-2); }
+.nb-dv-card-summary {
+  margin: 6px 0 0; font-size: 12px; color: var(--ink-3); line-height: 1.45;
+}
+.nb-dv-card-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; border-top: 1px solid var(--border); padding-top: 8px;
+}
+.nb-dv-metrics { display: flex; align-items: center; gap: 10px; }
+.nb-dv-metric {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; color: var(--ink-4);
+}
+.nb-dv-card-link {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11.5px; font-weight: 580; color: var(--brand-2); text-decoration: none;
+}
+.nb-dv-card-link:hover { color: var(--brand); }
+
+@media (max-width: 720px) {
+  .nb-dv-grid { grid-template-columns: 1fr; }
+}

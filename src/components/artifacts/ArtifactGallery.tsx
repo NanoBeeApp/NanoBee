@@ -19,7 +19,7 @@ import {
   templatesForCategory,
   type RecommendedTemplate,
 } from '../../artifacts/recommended';
-import { kindLabel } from '../../artifacts/format';
+import { kindLabel, artifactCount } from '../../artifacts/format';
 import { ArtifactCard } from './ArtifactCard';
 import { ArtifactRow } from './ArtifactRow';
 import { RecommendedCard } from './RecommendedCard';
@@ -64,7 +64,7 @@ export function ArtifactGallery({ tab, viewMode, onViewModeChange }: Props) {
       return (
         <table className="nb-arti-table" data-testid="owned-table">
           <thead>
-            <tr><th>名称</th><th>类型</th><th>卡片</th><th className="nb-arti-th-r">操作</th></tr>
+            <tr><th>名称</th><th>类型</th><th>数量</th><th className="nb-arti-th-r">操作</th></tr>
           </thead>
           <tbody>
             {list.map((a) => (
@@ -76,7 +76,7 @@ export function ArtifactGallery({ tab, viewMode, onViewModeChange }: Props) {
                   </span>
                 </td>
                 <td className="nb-arti-td-dim">{kindLabel(a.kind)}</td>
-                <td className="nb-arti-td-dim">{a.cardCount}</td>
+                <td className="nb-arti-td-dim">{artifactCount(a)}</td>
                 <td className="nb-arti-th-r">
                   <div className="nb-arti-row-actions">
                     <button className={`nb-arti-card-fav${a.favorited ? ' on' : ''}`}
@@ -188,8 +188,8 @@ export function ArtifactGallery({ tab, viewMode, onViewModeChange }: Props) {
         <>
           <div className="nb-arti-empty-block" data-testid="favorites-empty">
             <Icons.star size={28} />
-            <p>还没有收藏的卡片</p>
-            <p className="nb-arti-empty-sub">在「你创建的」里点 ☆ 收藏喜欢的卡片</p>
+            <p>还没有收藏的数据视图</p>
+            <p className="nb-arti-empty-sub">在「你创建的」里点 ☆ 收藏喜欢的数据视图</p>
           </div>
           {recommendedStrip}
         </>
@@ -199,9 +199,9 @@ export function ArtifactGallery({ tab, viewMode, onViewModeChange }: Props) {
         <>
           <div className="nb-arti-empty-block" data-testid="mine-empty">
             <Icons.grid size={28} />
-            <p>还没有你创建的卡片</p>
+            <p>还没有你创建的数据视图</p>
             <p className="nb-arti-empty-sub">
-              在对话里对 AI 说「每天教我 10 个单词」，或从下面的推荐一键生成
+              从下方推荐模板一键生成，或在聊天里描述你想持续关注什么
             </p>
           </div>
           {recommendedStrip}
@@ -215,7 +215,7 @@ export function ArtifactGallery({ tab, viewMode, onViewModeChange }: Props) {
       {generating && (
         <div className="nb-arti-generating" data-testid="artifact-generating">
           <Icons.spark size={16} />
-          <span>AI 正在生成卡片…</span>
+          <span>AI 正在创建数据视图…</span>
         </div>
       )}
       {showSwitch && (

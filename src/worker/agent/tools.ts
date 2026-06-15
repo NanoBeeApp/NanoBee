@@ -16,7 +16,7 @@
 import type { AiToolDef } from "../ai/client";
 import type { Env } from "../api-worker";
 import type { ArtifactRef } from "../../artifacts/types";
-import { cardArtifactTools } from "./card-artifact-tools";
+import { dataViewTools } from "./data-view-tools";
 import { datahubTools } from "./datahub-tools";
 import { mcpTools } from "./mcp";
 import { skillTools } from "./skills";
@@ -41,15 +41,21 @@ export interface AgentContext {
 	secrets: Record<string, string>;
 	/**
 	 * Artifact-creation context. When present, the agent gains a
-	 * `create_card_artifact` tool that generates a card deck and persists it as
-	 * an artifact; each created artifact's reference is pushed onto `created` so
-	 * the request handler can attach it to the AI reply after the run.
+	 * `create_data_view` tool that persists a chat-generated data view and pushes
+	 * each created view's reference onto `created` so the request handler can
+	 * attach it to the AI reply after the run.
 	 */
 	artifacts?: {
 		owner: string;
 		chatId?: string;
 		created: ArtifactRef[];
 	};
+	/**
+	 * The request's execution context, when available. Lets a tool schedule
+	 * background work (e.g. the data-view fetch pipeline) via `waitUntil` so the
+	 * chat reply returns immediately while the work finishes after the response.
+	 */
+	executionCtx?: { waitUntil(promise: Promise<unknown>): void };
 }
 
 export const EMPTY_AGENT_CONTEXT: AgentContext = { secrets: {} };
@@ -77,7 +83,10 @@ export async function collectAgentTools(
 	]);
 
 	// Built-in artifact tools (only when the request supplies artifact context).
-	const artifacts = cardArtifactTools(ctx);
+	const artifacts = await dataViewTools(env, ctx).catch((e) => {
+		console.warn("[Agent] data-view tools unavailable:", String(e));
+		return [] as AgentTool[];
+	});
 
 	// First provider wins on a name collision so a remote server cannot
 	// shadow a built-in skill or hub source.

@@ -2,7 +2,7 @@
 // body opens the deck detail; the corner buttons favorite or delete it without
 // opening. Pure render — all actions are passed in from the gallery.
 import type { Artifact } from '../../artifacts/types';
-import { artifactMeta } from '../../artifacts/format';
+import { artifactMeta, pipelineStatusLabel } from '../../artifacts/format';
 import { Icons } from '../../icons/icons';
 
 interface Props {
@@ -30,7 +30,14 @@ export function ArtifactCard({ artifact, onOpen, onToggleFavorite, onDelete }: P
       <span className="nb-arti-card-ic"><Icons.grid size={18} /></span>
       <div className="nb-arti-card-main">
         <div className="nb-arti-card-title">{artifact.title}</div>
-        <div className="nb-arti-card-meta">{meta}</div>
+        <div className="nb-arti-card-meta">
+          {meta}
+          {artifact.kind === 'data_view' && artifact.pipelineStatus !== 'ready' && (
+            <span className={`nb-dv-pill nb-dv-pill-${artifact.pipelineStatus}`}>
+              {pipelineStatusLabel(artifact.pipelineStatus)}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="nb-arti-card-actions">

@@ -51,6 +51,7 @@ interface PreparedRun {
 	agentCtx: {
 		secrets: Record<string, string>;
 		artifacts: { owner: string; chatId: string; created: ArtifactRef[] };
+		executionCtx?: { waitUntil(promise: Promise<unknown>): void };
 	};
 	/** Same array reference the agent fills in; read after the run completes. */
 	createdArtifacts: ArtifactRef[];
@@ -91,6 +92,9 @@ async function prepareRun(c: Context<{ Bindings: Env }>, body: SendBody): Promis
 	const agentCtx = {
 		secrets,
 		artifacts: { owner: user?.id ?? ANON_OWNER, chatId: body.chatId, created: createdArtifacts },
+		// Lets the create_data_view tool fetch in the background (chat replies
+		// immediately; the data view loads after the response is sent).
+		executionCtx: c.executionCtx,
 	};
 	return { aiConfig, agentCtx, createdArtifacts };
 }
