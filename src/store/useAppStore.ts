@@ -172,8 +172,12 @@ interface AppState {
   // artifacts
   openArtifacts: (id?: string) => void;
   loadArtifacts: () => Promise<void>;
-  selectArtifact: (id: string) => void;
+  /** Select an artifact (open its detail), or pass null to clear (back to the
+   *  gallery). The Artifacts page mirrors this to the URL `artifact` param. */
+  selectArtifact: (id: string | null) => void;
   deleteArtifact: (id: string) => void;
+  /** Toggle the favorited flag on one artifact (the "你收藏的" tab). */
+  toggleFavorite: (id: string) => void;
   /** Run a canned prompt to generate a deck, staying on the Artifacts page. */
   runArtifactShortcut: (prompt: string) => Promise<void>;
   setTodayFilter: (f: string) => void;
@@ -502,13 +506,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   focusItem: (id) => set((s) => ({ focusItemId: id, focusItemTick: s.focusItemTick + 1 })),
 
-  // Open the Artifacts page; optionally focus a specific artifact. Always
-  // refreshes the list so a just-created artifact shows up.
+  // Open the Artifacts page. With an id (e.g. a chat artifact-ref click), focus
+  // that artifact's detail; without one (the sidebar nav tile), land on the
+  // gallery by clearing any prior selection. Always refreshes the list so a
+  // just-created artifact shows up.
   openArtifacts: (id) => {
-    set((s) => ({
-      notifOpen: false,
-      selectedArtifactId: id ?? s.selectedArtifactId,
-    }));
+    set({ notifOpen: false, selectedArtifactId: id ?? null });
     get()._navigate?.(VIEW_PATH.artifacts);
     void get().loadArtifacts();
   },
@@ -523,11 +526,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       set((s) => ({
         artifacts: data.artifacts,
         artifactsLoading: false,
-        // Default the selection to the newest artifact when none is chosen.
+        // Keep an existing selection only if it still exists; otherwise stay on
+        // the gallery (no auto-open of a detail — the page lands on the tabs).
         selectedArtifactId:
           s.selectedArtifactId && data.artifacts.some((a) => a.id === s.selectedArtifactId)
             ? s.selectedArtifactId
-            : (data.artifacts[0]?.id ?? null),
+            : null,
       }));
     } catch (error) {
       console.error('[artifacts] load failed:', String(error));
@@ -553,6 +557,29 @@ export const useAppStore = create<AppState>((set, get) => ({
       console.error('[artifacts] delete failed:', String(error));
       set({ artifacts: prev });
       get().toast('删除失败，请重试');
+    }
+  },
+
+  // Optimistically flip the favorite flag, then persist the desired value (the
+  // endpoint is idempotent, so we send the target state, not a toggle command).
+  toggleFavorite: async (id) => {
+    const prev = get().artifacts;
+    const target = prev.find((a) => a.id === id);
+    if (!target) return;
+    const next = !target.favorited;
+    set((s) => ({
+      artifacts: s.artifacts.map((a) => (a.id === id ? { ...a, favorited: next } : a)),
+    }));
+    try {
+      const res = await apiClient.artifacts[':id'].favorite.$post({
+        param: { id },
+        json: { favorited: next },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (error) {
+      console.error('[artifacts] favorite failed:', String(error));
+      set({ artifacts: prev });
+      get().toast('操作失败，请重试');
     }
   },
 

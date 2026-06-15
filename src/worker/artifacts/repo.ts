@@ -20,8 +20,13 @@ interface ArtifactRow {
   deck_json: string;
   card_count: number;
   chat_id: string | null;
+  favorited: number;
   created_at: number;
 }
+
+/** Columns every read selects — kept in one place so the shape stays in sync. */
+const SELECT_COLS =
+  "id, kind, title, deck_json, card_count, chat_id, favorited, created_at";
 
 function rowToArtifact(row: ArtifactRow): Artifact | null {
   try {
@@ -32,6 +37,7 @@ function rowToArtifact(row: ArtifactRow): Artifact | null {
       cardCount: row.card_count,
       deck: JSON.parse(row.deck_json) as CardDeck,
       chatId: row.chat_id ?? undefined,
+      favorited: row.favorited === 1,
       createdAt: new Date(row.created_at * 1000).toISOString(),
     };
   } catch (error) {
@@ -63,6 +69,7 @@ export async function createArtifact(
     cardCount,
     deck,
     chatId,
+    favorited: false,
     createdAt: new Date().toISOString(),
   };
 }
@@ -74,7 +81,7 @@ export async function listArtifacts(
 ): Promise<Artifact[]> {
   const { results } = await db
     .prepare(
-      "SELECT id, kind, title, deck_json, card_count, chat_id, created_at FROM artifacts WHERE owner = ? ORDER BY created_at DESC LIMIT ?",
+      `SELECT ${SELECT_COLS} FROM artifacts WHERE owner = ? ORDER BY created_at DESC LIMIT ?`,
     )
     .bind(owner, LIST_LIMIT)
     .all<ArtifactRow>();
@@ -91,11 +98,33 @@ export async function getArtifact(
 ): Promise<Artifact | null> {
   const row = await db
     .prepare(
-      "SELECT id, kind, title, deck_json, card_count, chat_id, created_at FROM artifacts WHERE id = ? AND owner = ?",
+      `SELECT ${SELECT_COLS} FROM artifacts WHERE id = ? AND owner = ?`,
     )
     .bind(id, owner)
     .first<ArtifactRow>();
   return row ? rowToArtifact(row) : null;
+}
+
+/**
+ * Set the favorited flag on one owned artifact and return the new value, or null
+ * if the artifact does not exist / is not owned. Idempotent: writing the same
+ * value is a no-op from the caller's perspective.
+ */
+export async function setArtifactFavorited(
+  db: D1Database,
+  owner: string,
+  id: string,
+  favorited: boolean,
+): Promise<boolean | null> {
+  const res = await db
+    .prepare(
+      "UPDATE artifacts SET favorited = ? WHERE id = ? AND owner = ?",
+    )
+    .bind(favorited ? 1 : 0, id, owner)
+    .run();
+  // D1 reports affected rows under meta.changes; 0 ⇒ no such owned row.
+  const changed = res.meta?.changes ?? 0;
+  return changed > 0 ? favorited : null;
 }
 
 /** Delete one artifact. */

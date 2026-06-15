@@ -168,3 +168,16 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 - **Key decision**: rAF-coalesce token updates (markdown reflow is costly); on
   any stream failure remove the placeholder so a failed turn leaves no empty
   bubble; share a small `patchConvo` helper for immutable per-chat updates.
+
+### 2026-06-15 — artifact favorites + gallery-first landing
+- **Motivation**: the Artifacts page gained top tabs (你创建的 / 你收藏的 /
+  categories); favorites need persistence and the page must land on the tabbed
+  gallery, not auto-open a deck.
+- **Goal**: `toggleFavorite(id)` (optimistic, posts the target state to
+  `/api/artifacts/:id/favorite`); `selectArtifact` now accepts `string | null`
+  (null clears → back to gallery).
+- **Key decision**: `loadArtifacts` no longer auto-selects the newest deck, and
+  `openArtifacts()` with no id clears the selection — both so the page lands on
+  the gallery. The open deck + active tab live in the URL (see
+  `useArtifactsUrlSync`); `selectedArtifactId` is the store mirror the sidebar
+  highlights from.

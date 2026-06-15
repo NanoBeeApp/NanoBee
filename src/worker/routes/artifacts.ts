@@ -9,6 +9,8 @@
 
 import { Hono } from "hono";
 import type { Context } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 import type { Env } from "../api-worker";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
@@ -17,6 +19,7 @@ import {
   deleteArtifact,
   getArtifact,
   listArtifacts,
+  setArtifactFavorited,
 } from "../artifacts/repo";
 
 /** Resolve the owner bucket: the signed-in user id, or the anon bucket. */
@@ -49,6 +52,29 @@ export const artifactRoutes = new Hono<{ Bindings: Env }>()
       return c.json({ error: "Database error" }, 500);
     }
   })
+  .post(
+    "/:id/favorite",
+    // The client sends the desired state so the toggle is idempotent and free of
+    // read-modify-write races.
+    zValidator("json", z.object({ favorited: z.boolean() })),
+    async (c) => {
+      try {
+        const owner = await ownerOf(c);
+        const { favorited } = c.req.valid("json");
+        const result = await setArtifactFavorited(
+          c.env.DB,
+          owner,
+          c.req.param("id"),
+          favorited,
+        );
+        if (result === null) return c.json({ error: "Not found" }, 404);
+        return c.json({ favorited: result });
+      } catch (error) {
+        console.error("[API] POST /api/artifacts/:id/favorite error:", String(error));
+        return c.json({ error: "Database error" }, 500);
+      }
+    },
+  )
   .delete("/:id", async (c) => {
     try {
       const owner = await ownerOf(c);

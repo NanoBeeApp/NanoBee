@@ -21,6 +21,8 @@ export interface Artifact {
   deck: CardDeck;
   /** The chat this artifact was generated from, if any. */
   chatId?: string;
+  /** Whether the owner has favorited this artifact (the "你收藏的" tab). */
+  favorited: boolean;
   /** ISO creation timestamp. */
   createdAt: string;
 }
