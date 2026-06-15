@@ -1,19 +1,32 @@
 # TaskUploadDialog.tsx
 
 ## Responsibility
-Batch-upload dialog (`role=dialog`): pick a file, map the primary input column +
-the per-row action, choose a run mode, preview, then "开始批量执行". The dialog caps
-its height and scrolls its body so the preview + footer buttons stay visible.
+Batch-upload dialog (`role=dialog`): real file picker (.csv/.tsv/.txt; .xlsx
+shown as coming-soon/disabled). On file select, reads text client-side and
+POSTs to `/api/tasks/batch/preview`; shows parsed row count + first-N-row
+table preview + AI-detected input column + editable action description.
+Confirms via `POST /api/tasks/batch`, then closes and invokes `onBatchCreated`
+so the caller can navigate to the new batch.
 
 ## Dependencies
-- Upstream: `useAppStore` (`toast`), `Icons`
-- Downstream: TasksView
+- Upstream: `useAppStore` (`toast`), `Icons`, `TOPICS`
+- Downstream: `TasksView` (mounts this dialog when `url.uploadOpen === true`)
+- API: `POST /api/tasks/batch/preview`, `POST /api/tasks/batch`
 
 ## Key implementation notes
-- Confirming surfaces a toast — the real per-row execution pipeline (parsing, scheduling, concurrency, retries) is a later backend concern.
+- `.xlsx` files are rejected client-side with a clear message (consistent with
+  the server-side `rejectXlsx()` guard); the drop zone shows ".xlsx 即将支持".
+- File text is read via the browser's `File.text()` API (no heavy npm deps).
+- The preview request is aborted on new file selection or component unmount via
+  `AbortController`.
+- Column header highlighted in the preview table when it's the selected input column.
+- `onBatchCreated(batchId)` prop allows the parent (`TasksView`) to navigate
+  to the new batch immediately.
 
 ## Change history
 
-### 2026-06-15 — Created
-- **Motivation**: Users need to spawn many tasks at once by uploading a CSV/Excel/doc with a per-row action.
-- **Goal**: The field-mapping + preview UI for batch creation, behind the low-weight "上传文件批量" entry.
+### 2026-06-15 — Full rewrite: hardcoded preview → real API
+- **Motivation**: Wired to real `/api/tasks/batch/preview` and `/api/tasks/batch`
+  endpoints instead of the hardcoded placeholder (companies.xlsx / 3 rows).
+- **Changes**: File picker, drag-and-drop, preview fetch, field-mapping card,
+  topic selector, run-mode toggle, CSV export note, and actual batch creation.

@@ -1,15 +1,24 @@
 // Right-side detail drawer (role=dialog) for one task: header (title + status +
 // kind + topic), the trigger/action config rows, the schedule/run-time meta row
-// (last run · next run), the run-history timeline, the latest output, and the
-// action bar (run once / pause-resume / edit / delete).
+// (last run · next run), the live run-history timeline, the latest output, and
+// the action bar (run once / pause-resume / edit / delete).
+// For batch tasks, the drawer also shows the real-time subtask progress panel
+// (BatchSubtasks) so the user can watch progress inline.
 // Opened via the URL ?task=id so it survives refresh and deep links. "Run once"
 // and "edit" are stubbed to toasts — those backends are a later concern; pause
 // and delete are wired to the real store actions.
+//
+// Change history:
+//   2026-06-15  Added BatchSubtasks panel for batch tasks (polls /api/tasks/batch/:id).
+//   2026-06-15  Added live run-history section: lazy-fetches /api/tasks/:id/runs
+//               when the drawer opens; shows status dot, time, summary / error.
 import { useEffect, type ReactNode } from 'react';
 import type { Task, TriggerSpec } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { TaskTypeBadge } from './TaskTypeBadge';
-import { statusLabel, statusTone } from './taskMeta';
+import { BatchSubtasks } from './BatchSubtasks';
+import { TaskRunHistory } from './TaskRunHistory';
+import { statusLabel, statusTone, taskKind } from './taskMeta';
 import { TOPICS } from '../../data/topics';
 import { Icons } from '../../icons/icons';
 
@@ -54,6 +63,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
 
   const topic = TOPICS.find((t) => t.id === task.topicId);
   const paused = task.status === 'paused';
+  const isBatch = taskKind(task) === 'batch';
   const onDelete = () => {
     deleteTask(task.id);
     onClose();
@@ -136,31 +146,25 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
             </div>
           )}
 
-          {/* Run history timeline */}
-          {task.history && task.history.length > 0 && (
-            <div className="nb-tk-drawer-section">
-              <div className="nb-tk-drawer-h">运行历史</div>
-              <ul className="nb-tk-timeline" data-testid="task-detail-history">
-                {task.history.map((r, i) => (
-                  <li
-                    key={i}
-                    className={`nb-tk-trun tone-${r.status === 'success' ? 'active' : 'failed'}`}
-                    data-testid={`task-history-row-${i}`}
-                  >
-                    <span className="nb-tk-trun-dot" aria-hidden />
-                    <span className="nb-tk-trun-time">{r.time}</span>
-                    <span className="nb-tk-trun-sum">{r.summary}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {/* Live run history — lazy-fetched from /api/tasks/:id/runs */}
+          <div className="nb-tk-drawer-section">
+            <div className="nb-tk-drawer-h">运行历史</div>
+            <TaskRunHistory taskId={task.id} />
+          </div>
 
-          {/* Latest output */}
-          {task.result && (
+          {/* Latest output (non-batch tasks only) */}
+          {task.result && !isBatch && (
             <div className="nb-tk-drawer-section">
               <div className="nb-tk-drawer-h">最近产出</div>
               <div className="nb-tk-drawer-output" data-testid="task-detail-result">{task.result}</div>
+            </div>
+          )}
+
+          {/* Batch subtask progress panel */}
+          {isBatch && (
+            <div className="nb-tk-drawer-section">
+              <div className="nb-tk-drawer-h">子任务进度</div>
+              <BatchSubtasks task={task} />
             </div>
           )}
         </div>

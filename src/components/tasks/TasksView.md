@@ -13,6 +13,12 @@ URL makes every state bookmarkable and back-forward friendly.
 
 ## Change history
 
+### 2026-06-15 — Pass onBatchCreated to TaskUploadDialog
+- **Motivation**: After batch creation the user had no navigation to the new batch.
+- **Changes**: Added `handleBatchCreated` callback that calls `bootstrap()` to refresh
+  the task list from the server, then navigates to all-tasks with the new batch
+  drawer open via `url.openTask(batchId)`. Passed as `onBatchCreated` prop to `TaskUploadDialog`.
+
 ### 2026-06-15 — Wired TaskTemplateModal
 - **Motivation**: "从模板开始" button had a toast stub; replaced with a real URL-driven TaskTemplateModal overlay.
 - **Change**: Replaced `onTemplate` toast with `url.openTemplate()`; removed `toast` import from store deps; added `TaskTemplateModal` import and conditional render driven by `url.tplCategory !== null`.

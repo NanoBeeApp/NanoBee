@@ -15,6 +15,21 @@ Opened via the URL `?task=id` so it survives refresh and deep links.
 
 ## Change history
 
+### 2026-06-15 — Live run history section
+- **Motivation**: The static `task.history` array was empty for most real tasks;
+  run history is now sourced from the `task_runs` D1 table.
+- **Changes**: Replaced the static `{task.history.map(...)}` block with
+  `<TaskRunHistory taskId={task.id} />`. The new component lazy-fetches
+  `GET /api/tasks/:id/runs` when the drawer opens, shows status dots
+  (ok/failed/skipped), relative timestamps, and plain-language error text.
+  Import: `TaskRunHistory` from `./TaskRunHistory`.
+
+### 2026-06-15 — Added BatchSubtasks panel for batch tasks
+- **Motivation**: Batch tasks in the drawer had no way to see per-row progress or retry.
+- **Changes**: Import `BatchSubtasks` and `taskKind`; added `isBatch` derived flag;
+  show a "子任务进度" section with `<BatchSubtasks task={task} />` for batch tasks;
+  hide "最近产出" for batch tasks (they use the subtask panel instead).
+
 ### 2026-06-15 — Wire: show last/next run times, triggerSpec, and add missing data-testid attributes
 - **Motivation**: The drawer was missing key scheduling context (last run, next run, triggerSpec summary) and several interactive elements lacked `data-testid` attributes needed for testing.
 - **Changes**:

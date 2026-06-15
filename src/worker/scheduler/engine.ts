@@ -11,6 +11,12 @@
  * - nanoid() / Date.now() / new Date() MUST only be called inside function
  *   scope, never at module/global level (Workers deploy validation rule).
  * - One task failure must not crash the whole cron tick.
+ * - Records a task_runs row on every execution (success / failure / skipped).
+ * - Retries data-hub / source calls with bounded exponential backoff
+ *   (up to MAX_RETRIES quick retries within the same cron tick).
+ *
+ * Change history:
+ *   2026-06-15  Added task_runs recording + retry/backoff + failure explainer.
  */
 
 import { nanoid } from "nanoid";
@@ -29,7 +35,23 @@ import {
 	updateTaskSchedulerState,
 	type SchedulerTaskRow,
 } from "../db/repo";
+import { createTaskRun } from "../task-runs/repo";
+import { formatErrorText } from "../task-runs/failure-explainer";
 import type { UserNotificationSettings } from "../routes/notification-settings";
+
+// ---------------------------------------------------------------------------
+// Retry constants
+// ---------------------------------------------------------------------------
+
+/**
+ * Maximum number of retries for a data-hub / source call within one cron tick.
+ * Bounded to stay inside the cron deadline (a Workers scheduled handler has up
+ * to 30 s CPU time). With 3 retries + base 1 s delays the worst case is < 8 s.
+ */
+const MAX_RETRIES = 2;
+
+/** Base delay in milliseconds for exponential backoff between retries. */
+const RETRY_BASE_MS = 1_000;
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -91,8 +113,17 @@ async function processTask(env: Env, row: SchedulerTaskRow, now: number): Promis
 	let spec: TriggerSpec;
 	try {
 		spec = JSON.parse(row.trigger_spec) as TriggerSpec;
-	} catch {
+	} catch (parseErr) {
 		console.error("[scheduler] invalid trigger_spec JSON for task", row.id);
+		await createTaskRun(env.DB, {
+			owner: row.owner,
+			taskId: row.id,
+			startedAt: now,
+			finishedAt: now,
+			status: "failed",
+			summaryText: "Invalid task configuration — trigger spec could not be parsed.",
+			errorText: formatErrorText(parseErr, { taskKind: "unknown" }),
+		}).catch((e) => console.warn("[scheduler] failed to record task run:", String(e)));
 		return;
 	}
 
@@ -135,6 +166,17 @@ async function evaluateScheduleTask(
 
 	console.log("[scheduler] schedule task", row.id, "fired; next at", nextRunAt);
 
+	// Record a successful run.
+	await createTaskRun(env.DB, {
+		owner: row.owner,
+		taskId: row.id,
+		startedAt: now,
+		finishedAt: now,
+		status: "ok",
+		summaryText: feedMessage.slice(0, 280),
+		detailJson: { nextRunAt, specKind: "schedule" },
+	}).catch((e) => console.warn("[scheduler] failed to record task run:", String(e)));
+
 	// Attempt Web Push (Phase 1b) — non-blocking, errors logged only.
 	await attemptPushForOwner(env, row.owner, {
 		title: row.title,
@@ -163,6 +205,17 @@ async function evaluateConditionTask(
 		// Still in cooldown; update next_run_at to the cooldown expiry.
 		const nextRunAt = row.last_run_at + spec.cooldownSeconds;
 		await updateTaskSchedulerState(env.DB, row.id, row.last_run_at, nextRunAt, row.scheduler_state);
+
+		// Record a skipped run (once per cooldown — only if we weren't already logged recently).
+		await createTaskRun(env.DB, {
+			owner: row.owner,
+			taskId: row.id,
+			startedAt: now,
+			finishedAt: now,
+			status: "skipped",
+			summaryText: "Skipped — task is in cooldown.",
+			detailJson: { cooldownRemaining: (row.last_run_at + spec.cooldownSeconds) - now },
+		}).catch((e) => console.warn("[scheduler] failed to record skipped run:", String(e)));
 		return;
 	}
 
@@ -171,6 +224,19 @@ async function evaluateConditionTask(
 		// Set next_run_at to now + cooldown so we don't hammer on every tick.
 		const nextRunAt = now + spec.cooldownSeconds;
 		await updateTaskSchedulerState(env.DB, row.id, row.last_run_at ?? now, nextRunAt, row.scheduler_state);
+
+		await createTaskRun(env.DB, {
+			owner: row.owner,
+			taskId: row.id,
+			startedAt: now,
+			finishedAt: now,
+			status: "skipped",
+			summaryText: "Skipped — data hub is not configured.",
+			errorText: formatErrorText("DATA_HUB_URL not configured", {
+				taskKind: "condition",
+				sourceId: spec.sourceId,
+			}),
+		}).catch((e) => console.warn("[scheduler] failed to record skipped run:", String(e)));
 		return;
 	}
 
@@ -182,12 +248,55 @@ async function evaluateConditionTask(
 		mergedParams["tavily_api_key"] = env.TAVILY_API_KEY;
 	}
 
-	const result = await invokeDataSource(env, spec.sourceId, mergedParams);
+	// -------------------------------------------------------------------------
+	// Invoke data source with bounded exponential backoff retry.
+	// Max retries: MAX_RETRIES (2). Delays: 1 s, 2 s — totals < 8 s worst case.
+	// -------------------------------------------------------------------------
+	let result: DataSourceResult | null = null;
+	let lastInvokeError: unknown = null;
+	let retryCount = 0;
+
+	for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+		if (attempt > 0) {
+			const delayMs = RETRY_BASE_MS * Math.pow(2, attempt - 1);
+			console.log(
+				`[scheduler] retry ${attempt}/${MAX_RETRIES} for source`,
+				spec.sourceId,
+				"task", row.id,
+				`(delay ${delayMs}ms)`,
+			);
+			await sleep(delayMs);
+			retryCount = attempt;
+		}
+		try {
+			result = await invokeDataSource(env, spec.sourceId, mergedParams);
+			if (result) break; // success
+		} catch (err) {
+			lastInvokeError = err;
+			console.warn(
+				`[scheduler] invoke error attempt ${attempt + 1}/${MAX_RETRIES + 1}:`,
+				String(err),
+			);
+		}
+	}
+
 	if (!result) {
-		console.warn("[scheduler] data hub unreachable for source", spec.sourceId, "task", row.id);
+		console.warn("[scheduler] data hub unreachable for source", spec.sourceId, "task", row.id, "after", retryCount, "retries");
 		// Back off: try again after one cooldown window.
 		const nextRunAt = now + spec.cooldownSeconds;
 		await updateTaskSchedulerState(env.DB, row.id, row.last_run_at ?? now, nextRunAt, row.scheduler_state);
+
+		const errCtx = { taskKind: "condition", sourceId: spec.sourceId, metric: spec.metric, retryCount };
+		await createTaskRun(env.DB, {
+			owner: row.owner,
+			taskId: row.id,
+			startedAt: now,
+			finishedAt: Math.floor(Date.now() / 1000),
+			status: "failed",
+			summaryText: `Data source "${spec.sourceId}" was unreachable after ${retryCount} retries.`,
+			errorText: formatErrorText(lastInvokeError ?? "source unreachable", errCtx),
+			detailJson: { sourceId: spec.sourceId, retryCount, nextRunAt },
+		}).catch((e) => console.warn("[scheduler] failed to record failed run:", String(e)));
 		return;
 	}
 
@@ -196,6 +305,21 @@ async function evaluateConditionTask(
 		console.warn("[scheduler] could not extract metric", spec.metric, "from source", spec.sourceId);
 		const nextRunAt = now + spec.cooldownSeconds;
 		await updateTaskSchedulerState(env.DB, row.id, row.last_run_at ?? now, nextRunAt, row.scheduler_state);
+
+		await createTaskRun(env.DB, {
+			owner: row.owner,
+			taskId: row.id,
+			startedAt: now,
+			finishedAt: Math.floor(Date.now() / 1000),
+			status: "failed",
+			summaryText: `Metric "${spec.metric}" was not found in the data from "${spec.sourceId}".`,
+			errorText: formatErrorText(`could not extract metric path: ${spec.metric}`, {
+				taskKind: "condition",
+				sourceId: spec.sourceId,
+				metric: spec.metric,
+			}),
+			detailJson: { sourceId: spec.sourceId, metric: spec.metric, nextRunAt },
+		}).catch((e) => console.warn("[scheduler] failed to record failed run:", String(e)));
 		return;
 	}
 
@@ -225,6 +349,16 @@ async function evaluateConditionTask(
 			nextRunAt,
 			JSON.stringify(nextState),
 		);
+		// Record a successful check (condition not met = all good, nothing triggered).
+		await createTaskRun(env.DB, {
+			owner: row.owner,
+			taskId: row.id,
+			startedAt: now,
+			finishedAt: Math.floor(Date.now() / 1000),
+			status: "ok",
+			summaryText: `Checked ${spec.sourceId} · ${spec.metric} = ${value} — condition not met, no alert.`,
+			detailJson: { value, previousValue, op: spec.op, threshold: spec.threshold, sourceId: spec.sourceId },
+		}).catch((e) => console.warn("[scheduler] failed to record ok run:", String(e)));
 		return;
 	}
 
@@ -256,11 +390,31 @@ async function evaluateConditionTask(
 
 	console.log("[scheduler] condition task", row.id, "fired; value=", value, "op=", spec.op);
 
+	// Record a successful triggered run.
+	await createTaskRun(env.DB, {
+		owner: row.owner,
+		taskId: row.id,
+		startedAt: now,
+		finishedAt: Math.floor(Date.now() / 1000),
+		status: "ok",
+		summaryText: feedMessage.slice(0, 280),
+		detailJson: { value, previousValue, op: spec.op, threshold: spec.threshold, sourceId: spec.sourceId },
+	}).catch((e) => console.warn("[scheduler] failed to record ok run:", String(e)));
+
 	// Attempt Web Push (Phase 1b).
 	await attemptPushForOwner(env, row.owner, {
 		title: row.title,
 		body: feedMessage,
 	}).catch((e) => console.warn("[scheduler] push failed for owner", row.owner, String(e)));
+}
+
+// ---------------------------------------------------------------------------
+// Internal utilities
+// ---------------------------------------------------------------------------
+
+/** Promise-based sleep. Safe to use inside Cloudflare Workers handlers. */
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // ---------------------------------------------------------------------------

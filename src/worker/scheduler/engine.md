@@ -90,6 +90,22 @@ the importance is below their threshold, the push is silently skipped.
 
 ## Change history & rationale
 
+### 2026-06-15 — Task reliability: run recording + retry/backoff
+
+Added `task_runs` table recording to every execution path:
+- **schedule tasks**: always write `status='ok'` after the feed row is created.
+- **condition tasks**: write `ok` (condition not met = successful check), `ok`
+  (triggered), `failed` (data-hub unreachable after retries / metric not found),
+  or `skipped` (in cooldown / data-hub not configured).
+- **config errors**: write `failed` when `trigger_spec` JSON cannot be parsed.
+
+Added bounded exponential backoff retry for `invokeDataSource()` calls:
+`MAX_RETRIES = 2`, base delay 1 s. Worst-case latency within the cron tick is
+< 8 s (1 s + 2 s delays). Uses a local `sleep()` helper (Promise + setTimeout).
+
+Added `formatErrorText()` (from `task-runs/failure-explainer.ts`) to convert
+raw errors to human-readable `error_text` stored in `task_runs`.
+
 ### 2026-06-15 — Initial creation
 
 Implements the MVP task scheduling engine: schedule-kind (daily UTC fire)

@@ -79,6 +79,19 @@ plus the smoke-test `hello` endpoint.
 - Added `onboardingRoutes` imported from `./onboarding`; mounted at `/onboarding`.
 - Endpoints: `GET /api/onboarding` → `{ done: boolean }`, `POST /api/onboarding/done` → marks flag.
 
+### 2026-06-15 — mount /tasks (task-run-history) routes
+- Added `taskRunRoutes` imported from `./task-runs`; mounted at `/tasks` (before
+  the main `taskRoutes`) so `GET /api/tasks/:id/runs` resolves correctly.
+- Endpoint: `GET /api/tasks/:id/runs?limit=&offset=` → paginated run history.
+
+### 2026-06-15 — mount /tasks/batch routes
+- Added `batchRoutes` imported from `./batch`; mounted at `/tasks/batch`.
+- Mounted BEFORE `/tasks` so `/tasks/batch/*` paths resolve to the batch handler
+  rather than the generic task handler.
+- Endpoints: `POST /api/tasks/batch/preview`, `POST /api/tasks/batch`,
+  `GET /api/tasks/batch/:id`, `POST /api/tasks/batch/:id/run`,
+  `POST /api/tasks/batch/:id/retry-failed`.
+
 ### 2026-06-13 — mount /artifacts, drop /cards
 - **Motivation**: card generation moved to a chat agent tool; the standalone
   `/cards/generate` endpoint is superseded, and the Artifacts page needs

@@ -96,7 +96,7 @@ export function TaskRow({
         )}
       </div>
 
-      {isBatch && task.batch && expanded && <BatchSubtasks batch={task.batch} />}
+      {isBatch && expanded && <BatchSubtasks task={task} />}
     </div>
   );
 }

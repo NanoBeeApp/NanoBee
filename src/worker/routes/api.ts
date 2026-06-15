@@ -10,6 +10,7 @@ import type { Env } from "../api-worker";
 import { aiSettingsRoutes } from "./ai-settings";
 import { artifactRoutes } from "./artifacts";
 import { authRoutes } from "./auth";
+import { batchRoutes } from "./batch";
 import { bootstrapRoutes } from "./bootstrap";
 import { compareRoutes } from "./compare";
 import { messageRoutes } from "./messages";
@@ -18,12 +19,17 @@ import { onboardingRoutes } from "./onboarding";
 import { pushRoutes } from "./push";
 import { researchRoutes } from "./research";
 import { taskRoutes } from "./tasks";
+import { taskRunRoutes } from "./task-runs";
 
 export const apiRoutes = new Hono<{ Bindings: Env }>()
 	// NanoBee app endpoints (chained for typed RPC inference)
 	.route("/ai", aiSettingsRoutes)
 	.route("/artifacts", artifactRoutes)
 	.route("/auth", authRoutes)
+	// Batch routes are mounted before /tasks so /tasks/batch/* resolves first.
+	.route("/tasks/batch", batchRoutes)
+	// Task run history: mounted before /tasks so /:id/runs resolves correctly.
+	.route("/tasks", taskRunRoutes)
 	.route("/bootstrap", bootstrapRoutes)
 	.route("/compare", compareRoutes)
 	.route("/messages", messageRoutes)

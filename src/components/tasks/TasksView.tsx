@@ -9,6 +9,9 @@
 // Change history:
 //   2026-06-15  Wired TaskTemplateModal: replaced the toast stub with a real
 //               URL-driven modal opened via url.openTemplate().
+//   2026-06-15  Pass onBatchCreated to TaskUploadDialog: on success, navigate
+//               to the all-tasks list with the new batch task's drawer open.
+import { useCallback } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useTasksUrl } from './useTasksUrl';
 import '../../styles/tasks.css';
@@ -21,6 +24,18 @@ import { TaskTemplateModal } from './TaskTemplateModal';
 export function TasksView() {
   const url = useTasksUrl();
   const tasks = useAppStore((s) => s.tasks);
+  const bootstrap = useAppStore((s) => s.bootstrap);
+
+  // After a batch is created: close the upload dialog, refresh task list from
+  // the server, navigate to the all-tasks manager and open the new batch's
+  // detail drawer so the user can see progress immediately.
+  const handleBatchCreated = useCallback(async (batchId: string) => {
+    url.closeUpload();
+    // Refresh the task list so the newly created batch row appears
+    await bootstrap();
+    // Navigate to all-tasks with the new batch task open
+    url.openTask(batchId);
+  }, [url, bootstrap]);
 
   return (
     <div className="nb-tk-page" data-testid="tasks-page">
@@ -41,7 +56,12 @@ export function TasksView() {
           onClose={url.closeTask}
         />
       )}
-      {url.uploadOpen && <TaskUploadDialog onClose={url.closeUpload} />}
+      {url.uploadOpen && (
+        <TaskUploadDialog
+          onClose={url.closeUpload}
+          onBatchCreated={(id) => void handleBatchCreated(id)}
+        />
+      )}
       {url.tplCategory !== null && (
         <TaskTemplateModal
           activeCategoryId={url.tplCategory}

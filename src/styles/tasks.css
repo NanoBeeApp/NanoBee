@@ -312,24 +312,52 @@
 .nb-tk-row-expand svg { transition: transform var(--dur-1) var(--ease-out); }
 .nb-tk-row-expand.is-open svg { transform: rotate(180deg); }
 
-/* batch subtasks */
+/* batch subtasks — detail block */
+.nb-tk-batch-detail {
+  margin: 0 8px 8px 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nb-tk-batch-progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border-radius: var(--r-3);
+}
+.nb-tk-batch-progress-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.nb-tk-batch-stat { font-size: 12px; color: var(--ink-3); }
+.nb-tk-batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+}
 .nb-tk-subtasks {
   list-style: none;
-  margin: 0 8px 8px 34px;
+  margin: 0;
   padding: 4px 10px;
   background: var(--surface-2);
   border-radius: var(--r-3);
 }
 .nb-tk-subtask { display: flex; align-items: center; gap: 10px; padding: 8px 4px; font-size: 13px; border-bottom: 1px solid var(--border); }
 .nb-tk-subtask:last-child { border-bottom: 0; }
-.nb-tk-subtask-input { font-weight: 500; color: var(--ink); min-width: 110px; }
-.nb-tk-subtask-status { font-size: 12px; min-width: 36px; }
+.nb-tk-subtask-input { font-weight: 500; color: var(--ink); min-width: 110px; flex: none; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-tk-subtask-status { font-size: 12px; min-width: 44px; flex: none; }
 .nb-tk-subtask-status.tone-active { color: var(--success); }
 .nb-tk-subtask-status.tone-failed { color: var(--danger); }
 .nb-tk-subtask-status.tone-running { color: var(--warning); }
 .nb-tk-subtask-status.tone-paused { color: var(--ink-3); }
 .nb-tk-subtask-result { color: var(--ink-3); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nb-tk-subtask-retry { font-size: 12px; color: var(--brand-2); padding: 2px 8px; border: 1px solid var(--border); border-radius: var(--r-2); }
+.nb-tk-subtask-retry { font-size: 12px; color: var(--brand-2); padding: 2px 8px; border: 1px solid var(--border); border-radius: var(--r-2); flex: none; }
+.nb-tk-upload-loading { padding: 10px 14px; font-size: 13px; color: var(--ink-3); background: var(--surface-2); border-radius: var(--r-2); }
 
 .nb-tk-empty { text-align: center; color: var(--ink-3); font-size: 14px; line-height: 1.9; padding: 64px 16px; }
 
