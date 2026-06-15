@@ -26,14 +26,11 @@
   background: linear-gradient(150deg, var(--nb-honey), #d98b2b);
   color: #fff;
   box-shadow: 0 8px 22px rgba(217, 139, 43, 0.34), 0 2px 6px rgba(15, 17, 23, 0.12);
-  transition: transform var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out),
-    background var(--dur-2) var(--ease-out);
+  transition: box-shadow var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out);
 }
 .nb-qc-bubble:hover {
-  transform: translateY(-2px);
   box-shadow: 0 12px 28px rgba(217, 139, 43, 0.4), 0 3px 8px rgba(15, 17, 23, 0.14);
 }
-.nb-qc-bubble:active { transform: translateY(0); }
 /* Open state: quieter neutral chip so the "×" reads as a close affordance. */
 .nb-qc-bubble.is-open {
   background: var(--surface);
