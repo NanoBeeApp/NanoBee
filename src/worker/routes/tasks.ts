@@ -8,7 +8,6 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { Env } from "../api-worker";
-import { ensureSeeded } from "../db/seed";
 import { getTask } from "../db/repo";
 
 const taskSchema = z.object({
@@ -34,7 +33,6 @@ export const taskRoutes = new Hono<{ Bindings: Env }>()
 		const data = c.req.valid("json");
 		console.log("[API] POST /api/tasks, id:", data.id);
 		try {
-			await ensureSeeded(c.env);
 			const { id, topicId, title, ...rest } = data;
 			await c.env.DB.prepare(
 				"INSERT OR IGNORE INTO tasks (id, topic_id, title, status, payload) VALUES (?, ?, ?, 'active', ?)",
@@ -54,7 +52,6 @@ export const taskRoutes = new Hono<{ Bindings: Env }>()
 		const id = c.req.param("id");
 		console.log("[API] POST /api/tasks/:id/toggle, id:", id);
 		try {
-			await ensureSeeded(c.env);
 			const task = await getTask(c.env.DB, id);
 			if (!task) return c.json({ error: "Task not found" }, 404);
 

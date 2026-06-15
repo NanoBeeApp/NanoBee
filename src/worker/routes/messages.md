@@ -11,7 +11,7 @@ it and returns it.
     → `201 { chatId, topicId, aiMessage }` | `400` invalid | `500`
 
 ## Dependencies
-- Upstream: `db/seed`, `../reply` (genReply), `../agent/loop`, zod,
+- Upstream: `../reply` (genReply), `../agent/loop`, zod,
   `../api-worker` (Env type)
 - Downstream: mounted by `routes/api.ts`; called by the store's send/sendQuick
 
@@ -103,6 +103,11 @@ it and returns it.
 - **Change**: the per-request web-search key is now injected under
   `<provider>_api_key` (from `resolveWebSearchKey`'s `{provider,key}`), not
   hardcoded `tavily_api_key`, so Brave/Serper/Exa keys reach the data-hub source.
+
+### 2026-06-15 — remove ensureSeeded calls and db/seed dependency
+- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `db/seed.ts` and the `SEED_DEMO_DATA` env flag were deleted entirely.
+- The `ensureSeeded(c.env)` calls that previously ran at the top of both `POST /` and `POST /stream` handlers are removed, along with the `db/seed` import.
+- No behavior change for real use; the DB simply starts empty and fills through user messages.
 
 ### 2026-06-14 — streaming sibling `POST /stream` (SSE)
 - **Motivation**: chat replies arrived all at once after a long wait (no

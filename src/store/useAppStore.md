@@ -9,7 +9,7 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
   by the `_app` layout to keep `view` in sync with the router.
 
 ## Dependencies
-- Upstream: zustand, lib/api-client (Hono RPC), data layer (UPDATE_TO_CHAT mapping + nextId)
+- Upstream: zustand, lib/api-client (Hono RPC), data/ids (nextId)
 - Downstream: every stateful component
 
 ## Key notes
@@ -168,6 +168,11 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 - **Key decision**: rAF-coalesce token updates (markdown reflow is costly); on
   any stream failure remove the placeholder so a failed turn leaves no empty
   bubble; share a small `patchConvo` helper for immutable per-chat updates.
+
+### 2026-06-15 — remove UPDATE_TO_CHAT mapping; openUpdateInChat is data-driven
+- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `data/updates.ts` (which contained the `UPDATE_TO_CHAT` constant mapping demo update ids to demo chat ids) was deleted.
+- `openUpdateInChat` no longer relies on a fixed id lookup (`c_gold_today` fallback); it now finds the most recent chat whose `topicId` matches the update's `topicId`, or falls back to `newChat()` if none exists — a correct behavior for real data.
+- The `UPDATE_TO_CHAT` import is removed; the only remaining data import is `nextId` from `data/ids`.
 
 ### 2026-06-15 — artifact favorites + gallery-first landing
 - **Motivation**: the Artifacts page gained top tabs (你创建的 / 你收藏的 /

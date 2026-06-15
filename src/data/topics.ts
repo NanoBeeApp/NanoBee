@@ -1,4 +1,6 @@
-// Demo topics ("话题") — the grouping concept behind the sidebar's topic view.
+// Topic taxonomy ("话题") — the categories the agent auto-classifies chats and
+// tasks into (see worker/reply.ts `detectTopic`), and the grouping concept
+// behind the sidebar's topic view. This is app configuration, not demo data.
 import type { Topic } from '../types';
 
 export const TOPICS: Topic[] = [

@@ -1,8 +1,11 @@
 // ChatGPT-style flat chat history, time-grouped, with session ("刚刚") chats
 // created during this visit shown on top. Chats come from the store
-// (server-loaded via bootstrap), not from the static demo module.
+// (server-loaded via bootstrap).
 import type { ChatMeta, SessionMeta } from '../../types';
-import { CHAT_HISTORY_GROUPS } from '../../data/chats';
+
+// Time buckets a chat's `grp` can fall into, rendered top-to-bottom. New chats
+// are written with grp "今天" by the server (see worker/routes/messages.ts).
+const CHAT_HISTORY_GROUPS = ['今天', '昨天', '近 7 天'];
 
 interface ChatHistoryListProps {
   activeChatId: string | null;

@@ -10,7 +10,7 @@ float) and pause/resume it.
   - `POST /:id/toggle` → `200 { task }` (status + next flipped) | `404` | `500`
 
 ## Dependencies
-- Upstream: `db/seed`, `db/repo` (getTask), zod, `../api-worker` (Env type)
+- Upstream: `db/repo` (getTask), zod, `../api-worker` (Env type)
 - Downstream: mounted by `routes/api.ts`; called by the store's createTask/toggleTask
 
 ## Notes
@@ -24,3 +24,8 @@ float) and pause/resume it.
 ### 2026-06-12 — created
 - **Motivation**: "create a task from chat" is the PRD's headline flow but
   tasks lived only in memory; pause/resume also has to survive reloads.
+
+### 2026-06-15 — remove ensureSeeded calls and db/seed dependency
+- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `db/seed.ts` and the `SEED_DEMO_DATA` env flag were deleted entirely.
+- The `ensureSeeded(c.env)` call previously at the top of `POST /` is removed, along with the `db/seed` import.
+- Tasks now only exist because a user created them through a chat; the DB starts empty.

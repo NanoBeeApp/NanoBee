@@ -1,17 +1,23 @@
 # src/components/chat/Composer.tsx
 
 ## Responsibility
-Main chat composer: auto-growing textarea, slash (/任务 /提醒 /盯盘 /早报) and mention (@) popovers, toolbar (attach / slash / voice / model) and send button.
+Main chat composer: auto-growing textarea, slash (/任务 /提醒 /盯盘 /早报) popover, toolbar (attach / slash / voice / model) and send button. The `@` mention popover was removed along with the hardcoded watchlist.
 
 ## Dependencies
 - Upstream: icons, `lib/useImeComposition`
 - Downstream: ChatView
 
 ## Key notes
-- Popover triggers mirror the prototype: exact "/" opens slash, trailing "@" opens mentions, Escape closes.
+- Popover triggers: exact "/" opens slash; Escape closes. The `@` mention trigger was removed (see 2026-06-15 entry).
 - Enter sends, Shift+Enter adds a newline — but Enter while an IME composition is active confirms the candidate (it does not send), via the shared `useImeComposition` guard.
 
 ## Change history
+
+### 2026-06-15 — remove hardcoded @ mention popover (MENTION_ITEMS watchlist)
+- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `MENTION_ITEMS` was a hardcoded watchlist (`黄金 XAU/USD · 已关注` etc.) posing as real user data.
+- Deleted the `MENTION_ITEMS` const, the `@` trigger logic in `onChange`, the mention popover JSX, and the `'mention'` branch from the `Popover` type (now `'slash' | null`).
+- The placeholder text no longer mentions "@ 引用关注" since that feature is gone.
+- Only the `/` slash-command popover remains; the overall composer interface is unchanged.
 
 ### 2026-06-15 — remove the quick-suggestion chip row entirely
 - **Motivation**: user asked to drop the chip block ("设一个提醒" / "帮我盯着这个" / "每天给我摘要" in a topic, and the welcome-state variant). The chips duplicated actions already reachable via slash commands and added visual noise above the composer.

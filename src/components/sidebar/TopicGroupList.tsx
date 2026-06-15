@@ -16,10 +16,20 @@ interface TopicGroupListProps {
 }
 
 export function TopicGroupList({ activeChatId, isChatView, openTopics, chats: allChats, tasks, onSelectChat, onToggleTopic }: TopicGroupListProps) {
+  // Only surface topics the user actually has chats or tasks in — an untouched
+  // account shows an empty hint rather than a row of empty demo categories.
+  const activeTopics = TOPICS.filter(
+    (t) => allChats.some((c) => c.topicId === t.id) || tasks.some((k) => k.topicId === t.id),
+  );
   return (
     <div style={{ paddingTop: 6 }}>
       <div className="nb-grp">话题 · NanoBee 自动归类</div>
-      {TOPICS.map((t) => {
+      {activeTopics.length === 0 && (
+        <div className="nb-topic-empty" data-testid="topic-groups-empty-state">
+          还没有话题，开始对话后会自动归类
+        </div>
+      )}
+      {activeTopics.map((t) => {
         const open = openTopics.includes(t.id);
         const chats = allChats.filter((c) => c.topicId === t.id);
         const topicTasks = tasks.filter((k) => k.topicId === t.id);

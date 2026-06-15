@@ -38,9 +38,6 @@ export type Env = {
 	EMAIL_FROM?: string;
 	// "1" logs verification codes to the console (local dev only)
 	LOG_EMAIL_CODES?: string;
-	// "1" seeds demo data into an empty database (local dev only);
-	// deployed environments leave it unset so new databases start empty
-	SEED_DEMO_DATA?: string;
 
 	// --- External data gateway (NanoBee-data-hub) ---
 	// Base URL of the data hub, e.g. "http://localhost:3344" (dev) or

@@ -2,16 +2,14 @@
 
 ## Responsibility
 `GET /api/bootstrap` — returns the app's full initial state (sidebar chats,
-conversations, tasks, Today updates) in one round-trip. On an empty local-dev
-database it seeds the demo data first (`ensureSeeded` is a no-op unless
-`SEED_DEMO_DATA="1"`); deployed environments return the real, possibly empty,
-state.
+conversations, tasks, Today updates) in one round-trip. The database always
+starts empty; returned state reflects only real user activity.
 
 ## Core exports / API
 - `bootstrapRoutes` — Hono sub-app: `GET /` → `{ chats, conversations, tasks, updates }` | `500`
 
 ## Dependencies
-- Upstream: `db/seed`, `db/repo`, `../api-worker` (Env type)
+- Upstream: `db/repo`, `../api-worker` (Env type)
 - Downstream: mounted by `routes/api.ts`; consumed by the store's `bootstrap()`
 
 ## Notes
@@ -29,5 +27,10 @@ state.
   demo chats/tasks/updates; clearing the database didn't help because the
   next request re-seeded it.
 - **Goal**: deployed environments boot into a clean new-user state.
-- **Key decision**: the env gate lives inside `ensureSeeded` (now takes
-  `c.env`), so this route just calls it unconditionally.
+- **Key decision**: the env gate lived inside `ensureSeeded` (gated on
+  `SEED_DEMO_DATA="1"`), so this route called it unconditionally.
+
+### 2026-06-15 — remove ensureSeeded call and db/seed dependency
+- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `db/seed.ts` and the `SEED_DEMO_DATA` env flag were deleted entirely.
+- The `ensureSeeded(c.env)` call and the `db/seed` import are removed; the route now runs the four `Promise.all` D1 reads unconditionally with no seeding step.
+- The DB always starts empty; any content is the result of real user activity.

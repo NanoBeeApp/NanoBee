@@ -213,6 +213,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-outline-text { flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Topic group card */
+.nb-topic-empty { padding: 18px 11px; font-size: 12px; color: var(--ink-4); line-height: 1.5; }
 .nb-topic { border-radius: 11px; margin-bottom: 6px; overflow: hidden; border: 1px solid transparent; transition: border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out); }
 .nb-topic.open { background: var(--surface); border-color: var(--border); box-shadow: var(--sh-1); }
 .nb-topic-head { display: flex; align-items: center; gap: 10px; padding: 10px 11px; cursor: pointer; }
@@ -330,17 +331,10 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-taskspage-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: 6px; }
 .nb-taskspage-head h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.025em; margin: 0; }
 .nb-taskspage-head .sum { font-size: 13px; color: var(--ink-3); white-space: nowrap; }
-.nb-taskspage .nb-monitor { margin-bottom: 14px; }
 .nb-tasks-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-items: start; }
 .nb-tasks-empty { text-align: center; color: var(--ink-3); font-size: 13px; padding: 56px 12px; line-height: 1.6; }
 .nb-tasks-empty .glyph { width: 44px; height: 44px; border-radius: 13px; background: var(--surface-3); display: grid; place-items: center; margin: 0 auto 12px; color: var(--ink-4); }
 .nb-tasks-empty b { color: var(--ink-2); }
-
-.nb-monitor { background: var(--ink); color: var(--ink-on-dark); border-radius: 14px; padding: 16px; position: relative; overflow: hidden; }
-.nb-monitor .ml { font-size: 11px; font-family: var(--font-mono); color: rgba(245,244,239,0.6); text-transform: uppercase; letter-spacing: 0.06em; }
-.nb-monitor .mv { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 5px; }
-.nb-monitor .md { font-family: var(--font-mono); font-size: 12px; font-weight: 600; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; }
-.nb-monitor .md.up { color: #6fd99a; } .nb-monitor .md.down { color: #ff9a8f; }
 
 .nb-tcard { background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 14px; box-shadow: var(--sh-1); transition: border-color var(--dur-2) var(--ease-out); }
 .nb-tcard.paused { opacity: 0.62; }
@@ -372,6 +366,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-notif-head { padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
 .nb-notif-head .nh { font-size: 13.5px; font-weight: 700; }
 .nb-notif-list { max-height: 380px; overflow-y: auto; }
+.nb-notif-empty { padding: 28px 16px; text-align: center; font-size: 12.5px; color: var(--ink-4); }
 .nb-notif-item { display: flex; gap: 11px; padding: 13px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background var(--dur-1) var(--ease-out); }
 .nb-notif-item:hover { background: var(--surface-2); }
 .nb-notif-item:last-child { border-bottom: 0; }

@@ -23,3 +23,8 @@ Filter chips for the Today page toolbar: an "全部" chip plus one chip per topi
 - **Key decision**: chips in the existing toolbar row (reusing `.nb-fchip`)
   instead of an in-page left column — four topics fit one line and the
   reading area stays maximized.
+
+### 2026-06-15 — only show topic chips for topics that have updates
+- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; previously all four taxonomy topics were always rendered as chips regardless of whether any updates existed for them.
+- `TOPICS` is now filtered by `updates.some(u => u.topicId === t.id)` before mapping to chips.
+- An empty Today page (zero updates) shows only the "全部" chip — no phantom topic chips for content that doesn't exist yet.

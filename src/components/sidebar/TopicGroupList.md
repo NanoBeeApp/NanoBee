@@ -18,3 +18,9 @@ Topic-group sidebar view: collapsible topic cards listing conversations and task
 ### 2026-06-12 — removed all leading icons
 - **Motivation**: user asked to strip the icons on the left of topic groups; matches the minimalist title-only direction already applied to the chat history list.
 - **Decision**: dropped the colored topic icon box and the per-row chat/task icons (text + count + chevron remain); related CSS rules (`.nb-topic-ico`, `.nb-sub-item .ic`) removed.
+
+### 2026-06-15 — only render topics that have chats or tasks; add empty-state hint
+- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; previously all four taxonomy topics were always rendered as topic group cards even when the user had zero content, showing four empty rows on a fresh account.
+- `TOPICS` is now filtered to `activeTopics` — only topics where the user has at least one chat or task.
+- When `activeTopics` is empty, a single `.nb-topic-empty` hint is shown: "还没有话题，开始对话后会自动归类".
+- No behavior change once the user has real content.

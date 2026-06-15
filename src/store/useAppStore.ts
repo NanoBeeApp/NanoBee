@@ -8,7 +8,7 @@
 //
 // Design defaults locked in from the prototype's tweak exploration:
 // sidebar opens on "聊天记录", proactive messages render as emphasized amber
-// cards, the live monitor card is shown for the gold topic.
+// cards.
 import { create } from 'zustand';
 import type {
   AiMessage, ChatMessage, ChatMeta, SessionMeta, Task, TaskSuggestion, Toast,
@@ -16,7 +16,6 @@ import type {
 } from '../types';
 import type { Artifact, ArtifactRef } from '../artifacts/types';
 import { apiClient } from '../lib/api-client';
-import { UPDATE_TO_CHAT } from '../data/updates';
 import { nextId } from '../data/ids';
 import { useResearchStore } from './useResearchStore';
 
@@ -627,9 +626,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Leaving the Today page clears the "viewing" context.
   backToChat: () => { set({ quickCtx: null }); get()._navigate?.(VIEW_PATH.chat); },
 
+  // Open the conversation behind a Today/notification update: jump to the most
+  // recent chat on the same topic, or start a fresh chat if none exists yet.
   openUpdateInChat: (u) => {
     set({ notifOpen: false, quickCtx: null });
-    get().selectChat(UPDATE_TO_CHAT[u.topicId] ?? 'c_gold_today');
+    const chat = get().chats.find((c) => c.topicId === u.topicId);
+    if (chat) get().selectChat(chat.id);
+    else get().newChat();
   },
 
   send: async (text) => {

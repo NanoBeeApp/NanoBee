@@ -24,7 +24,6 @@ import { runAgentLoop, type AgentRunResult } from "../agent/loop";
 import type { AgentChatMessage } from "../ai/client";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
-import { ensureSeeded } from "../db/seed";
 import { genReply } from "../reply";
 import { ANON_OWNER } from "../artifacts/repo";
 import type { ArtifactRef } from "../../artifacts/types";
@@ -142,7 +141,6 @@ export const messageRoutes = new Hono<{ Bindings: Env }>()
 		const body = c.req.valid("json");
 		console.log("[API] POST /api/messages, chat:", body.chatId);
 		try {
-			await ensureSeeded(c.env);
 			const { aiConfig, agentCtx, createdArtifacts } = await prepareRun(c, body);
 
 			// Ask the configured model to write the reply; on any failure fall
@@ -184,7 +182,6 @@ export const messageRoutes = new Hono<{ Bindings: Env }>()
 	.post("/stream", zValidator("json", sendSchema), async (c) => {
 		const body = c.req.valid("json");
 		console.log("[API] POST /api/messages/stream, chat:", body.chatId);
-		await ensureSeeded(c.env);
 		const { aiConfig, agentCtx, createdArtifacts } = await prepareRun(c, body);
 
 		return streamSSE(c, async (stream) => {

@@ -1,5 +1,5 @@
-// Main chat composer: auto-growing textarea plus the slash ("/task") and
-// mention ("@watchlist") popovers that turn conversation into automated tasks.
+// Main chat composer: auto-growing textarea plus the slash ("/task") popover
+// that turns conversation into automated tasks.
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useImeComposition } from '../../lib/useImeComposition';
@@ -12,19 +12,13 @@ const SLASH_COMMANDS = [
   { ic: 'news', name: '/早报', desc: '每天定时给我一份摘要' },
 ] as const;
 
-const MENTION_ITEMS = [
-  { ic: 'coins', name: '黄金 XAU/USD', desc: '实时行情 · 已关注' },
-  { ic: 'book', name: '孩子 · 三年级', desc: '校历 · 作业 · 成绩' },
-  { ic: 'doc', name: '我的关注清单', desc: '12 项 · 上次更新今天' },
-] as const;
-
 const TEXTAREA_MAX_HEIGHT = 160;
 
 interface ComposerProps {
   onSend: (text: string) => void;
 }
 
-type Popover = 'slash' | 'mention' | null;
+type Popover = 'slash' | null;
 
 export function Composer({ onSend }: ComposerProps) {
   // A page-specific "new" action (新建任务 / 新建 Artifact) seeds the composer
@@ -70,11 +64,9 @@ export function Composer({ onSend }: ComposerProps) {
     const v = e.target.value;
     setVal(v);
     if (v === '/') setPop('slash');
-    else if (v.endsWith('@')) setPop('mention');
     // Keep the slash popover only while the text still looks like a command
     // being typed ("/盯盘"), not when "/" merely appears mid-sentence.
     else if (pop === 'slash' && !(v.startsWith('/') && !v.includes(' '))) setPop(null);
-    else if (pop === 'mention' && !v.endsWith('@')) setPop(null);
     autoGrow();
   };
 
@@ -122,22 +114,9 @@ export function Composer({ onSend }: ComposerProps) {
               ))}
             </div>
           )}
-          {pop === 'mention' && (
-            <div className="nb-pop" data-testid="mention-popover">
-              <div className="nb-pop-head">
-                <span className="nb-mono" style={{ color: 'var(--ink)', fontWeight: 700 }}>@</span> 引用一个你关注的东西
-              </div>
-              {MENTION_ITEMS.map((s, i) => (
-                <div className={`nb-pop-item${i === 0 ? ' active' : ''}`} key={i} onClick={() => pick(`@${s.name}`)}>
-                  <div className="ic"><Icon name={s.ic} size={15} /></div>
-                  <div className="meta"><div className="name">{s.name}</div><div className="desc">{s.desc}</div></div>
-                </div>
-              ))}
-            </div>
-          )}
           <textarea ref={taRef} rows={1} value={val} onChange={onChange} onKeyDown={onKeyDown}
             {...compositionProps}
-            placeholder="问点什么，或者让 NanoBee 帮你盯着一件事…   输入 / 创建任务，@ 引用关注"
+            placeholder="问点什么，或者让 NanoBee 帮你盯着一件事…   输入 / 创建任务"
             data-testid="chat-message-input" />
           <div className="nb-composer-bar">
             <button className="cbtn" title="附件" data-testid="attach-file"><Icons.attach size={16} /></button>

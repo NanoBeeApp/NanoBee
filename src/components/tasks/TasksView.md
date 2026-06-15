@@ -1,7 +1,7 @@
 # src/components/tasks/TasksView.tsx
 
 ## Responsibility
-Full-page task center rendered in the center column (replaces the old right rail). Header with active/paused summary, topic filter chips (only topics that have tasks), the gold live-monitor card when the gold filter is selected, task cards in a two-column grid, and an empty-state nudge. Creating a task is the sidebar header's page-aware "新建任务" button (which seeds a chat), so this page no longer carries its own new-task button.
+Full-page task center rendered in the center column (replaces the old right rail). Header with active/paused summary, topic filter chips (only topics that actually have tasks), task cards in a two-column grid, and an empty-state nudge. Fully data-driven: no hardcoded cards. Creating a task is the sidebar header's page-aware "新建任务" button (which seeds a chat), so this page no longer carries its own new-task button.
 
 ## Dependencies
 - Upstream: store, topics, TaskCard, icons
@@ -14,6 +14,11 @@ Full-page task center rendered in the center column (replaces the old right rail
 - Sidebar jump: a `focusItemId`/`focusItemTick` effect scrolls the matching `[data-cid]` task card into view; each task wrapper carries `data-cid={k.id}` and the page is the scroll container (`scrollRef`).
 
 ## Change history
+
+### 2026-06-15 — remove hardcoded "gold live monitor" card and MONITOR_TOPIC_ID logic
+- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; the fake gold-monitor card (`$2,412.50` / `+2.8%` / static sparkline SVG) was placeholder demo content, not real data.
+- Deleted the `MONITOR_TOPIC_ID` constant, the conditional that rendered the monitor card above the task grid when the gold filter was selected, and the `Sparkline` import.
+- The page is now purely data-driven: filter chips, task grid, empty state — no extra hardcoded cards injected for any topic.
 
 ### 2026-06-14 — remove the dead in-page "新建任务" button
 - **Motivation**: the toolbar's "新建任务" button never had an onClick (dead UI),

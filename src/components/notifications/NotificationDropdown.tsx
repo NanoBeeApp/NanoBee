@@ -21,6 +21,11 @@ export function NotificationDropdown() {
           <button className="btn btn-ghost btn-sm" onClick={openToday} data-testid="see-all-notifications">查看全部</button>
         </div>
         <div className="nb-notif-list">
+          {updates.length === 0 && (
+            <div className="nb-notif-empty" data-testid="notifications-empty-state">
+              暂时没有新动态
+            </div>
+          )}
           {updates.slice(0, MAX_ITEMS).map((u) => (
             <div key={u.id} className="nb-notif-item" onClick={() => openUpdateInChat(u)}
               data-testid={`notification-item-${u.id}`}>

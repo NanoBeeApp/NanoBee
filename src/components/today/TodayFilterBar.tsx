@@ -1,6 +1,7 @@
-// Filter chips for the Today page: "all" plus one chip per topic, each with
-// an item count. Lives inside the page (not the sidebar) so the sidebar can
-// keep showing the chat lists on every view.
+// Filter chips for the Today page: "all" plus one chip per topic that actually
+// has updates, each with an item count. Lives inside the page (not the sidebar)
+// so the sidebar can keep showing the chat lists on every view. Topics with no
+// updates are omitted, so an empty Today page shows only the "全部" chip.
 import { useAppStore } from '../../store/useAppStore';
 import { TOPICS, topicShortName } from '../../data/topics';
 
@@ -16,7 +17,7 @@ export function TodayFilterBar() {
         全部
         <span className="cnt">{updates.length}</span>
       </button>
-      {TOPICS.map((t) => {
+      {TOPICS.filter((t) => updates.some((u) => u.topicId === t.id)).map((t) => {
         const total = updates.filter((u) => u.topicId === t.id).length;
         return (
           <button key={t.id} className={`nb-fchip${filter === t.id ? ' active' : ''}`}

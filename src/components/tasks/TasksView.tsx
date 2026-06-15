@@ -1,14 +1,11 @@
 // Full-page task center — replaces the old right rail. Opened from the
-// sidebar "任务" entry: topic filter chips, the gold live-monitor card,
-// task cards in a two-column grid, and an empty-state nudge.
+// sidebar "任务" entry: topic filter chips, task cards in a two-column grid,
+// and an empty-state nudge.
 import { useEffect, useRef } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { TOPICS, topicShortName } from '../../data/topics';
 import { Icons } from '../../icons/icons';
 import { TaskCard } from './TaskCard';
-
-/** The gold topic shows a live monitor card (design default: enabled). */
-const MONITOR_TOPIC_ID = 'gold';
 
 export function TasksView() {
   const tasks = useAppStore((s) => s.tasks);
@@ -35,7 +32,6 @@ export function TasksView() {
   }, [focusItemId, focusItemTick]);
   const activeCount = tasks.filter((t) => t.status === 'active').length;
   const pausedCount = tasks.length - activeCount;
-  const showMonitor = filter === MONITOR_TOPIC_ID;
 
   // Only offer chips for topics that actually have tasks.
   const chips = [
@@ -65,21 +61,6 @@ export function TasksView() {
             </button>
           ))}
         </div>
-
-        {showMonitor && (
-          <div className="nb-monitor" data-testid="gold-live-monitor">
-            <div className="ml">现货黄金 · XAU/USD · 实时</div>
-            <div className="mv">$2,412.50</div>
-            <div className="md up"><Icons.trend size={13} /> +2.8% · +$65.80 今日</div>
-            <svg viewBox="0 0 320 56" style={{ width: '100%', height: 50, marginTop: 12, display: 'block' }} preserveAspectRatio="none">
-              <path d="M0,42 L40,40 L80,44 L120,38 L160,40 L200,32 L240,30 L280,18 L320,8 L320,56 L0,56 Z" fill="#6fd99a" opacity="0.16" />
-              <path d="M0,42 L40,40 L80,44 L120,38 L160,40 L200,32 L240,30 L280,18 L320,8" stroke="#6fd99a" strokeWidth="2" fill="none" strokeLinejoin="round" />
-            </svg>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,244,239,0.5)', marginTop: 4 }}>
-              <span>09:30</span><span>现在</span>
-            </div>
-          </div>
-        )}
 
         {list.length === 0 && (
           <div className="nb-tasks-empty" data-testid="tasks-empty-state">

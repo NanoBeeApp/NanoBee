@@ -9,8 +9,8 @@ exports `AppType` for the typed RPC client.
 - `default` — the Hono app (consumed by `server-entry.ts` / `ssr.tsx`)
 - `Env` — Cloudflare bindings type: `DB: D1Database` plus auth secrets
   (`AUTH_SECRET`, `RESEND_API_KEY`, `GOOGLE_/GITHUB_CLIENT_ID/SECRET`),
-  auth vars (`EMAIL_FROM`, `LOG_EMAIL_CODES`) and the local-dev-only
-  `SEED_DEMO_DATA` demo-seeding switch
+  auth vars (`EMAIL_FROM`, `LOG_EMAIL_CODES`), AI keys (`OPENROUTER_API_KEY`,
+  `TAVILY_API_KEY`) and data-hub config (`DATA_HUB_URL`, `MCP_SERVERS`)
 - `AppType` — type of the mounted API routes, used by `src/lib/api-client.ts`
 - Routes: `/api/*` (see `routes/api.ts`), `GET /health`
 
@@ -41,11 +41,16 @@ exports `AppType` for the typed RPC client.
   `wrangler.json` vars, and routes degrade gracefully when missing
   (e.g. 501 `provider_not_configured`).
 
-### 2026-06-12 — SEED_DEMO_DATA var added
+### 2026-06-12 — SEED_DEMO_DATA var added (superseded — see 2026-06-15)
 - **Motivation**: demo seeding had to become opt-in so deployed databases can
   stay empty for real accounts; the switch needs a typed home in `Env`.
 - **Key decision**: optional string set only in `.dev.vars` — absent in
   `wrangler.json` vars so no deployed environment can accidentally seed.
+
+### 2026-06-15 — remove SEED_DEMO_DATA from Env; demo seeding mechanism deleted
+- **Motivation**: remove all demo/seed data and hardcoded fixed data so the app starts empty; `db/seed.ts` was deleted entirely.
+- `SEED_DEMO_DATA?: string` is removed from the `Env` type — no deployed or local environment can reference it.
+- The seeding mechanism (`ensureSeeded`) no longer exists; the DB always starts empty and grows through real use.
 
 ### 2026-06-12 — OPENROUTER_API_KEY
 - **Motivation**: the backend default AI provider (DeepSeek V4 Flash via
