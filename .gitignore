@@ -31,6 +31,9 @@ build
 # Local Claude Code settings (machine-specific, not part of the public repo)
 .claude/settings.local.json
 
+# Local editor settings (machine-specific search config to reach private/, not part of the public repo)
+.vscode/settings.json
+
 # Private content (independent private repo NanoBee_Private — never commit to the public main repo)
 /private/
 
