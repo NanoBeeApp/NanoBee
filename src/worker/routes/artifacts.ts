@@ -82,7 +82,11 @@ export const artifactRoutes = new Hono<{ Bindings: Env }>()
       const run = runDataViewPipeline(c.env, id, owner, artifact.query).catch((e) =>
         console.error("[API] refresh pipeline failed:", String(e)),
       );
-      if (c.executionCtx?.waitUntil) c.executionCtx.waitUntil(run);
+      // `c.executionCtx` is a throwing getter when unavailable, so guard it;
+      // without one, run the fetch inline before responding.
+      let ec: { waitUntil(p: Promise<unknown>): void } | undefined;
+      try { ec = c.executionCtx; } catch { ec = undefined; }
+      if (ec?.waitUntil) ec.waitUntil(run);
       else await run;
       return c.json({ ok: true, pipelineStatus: "pending" });
     } catch (error) {

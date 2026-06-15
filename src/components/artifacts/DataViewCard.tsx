@@ -47,24 +47,19 @@ export function DataViewCard({ item }: Props) {
         {item.summary && <p className="nb-dv-card-summary">{item.summary}</p>}
       </div>
 
-      {(hasMetrics || item.url) && (
+      {/* Footer is metrics only — the title is already the link to the source,
+          so a separate "阅读原文" CTA would be a redundant affordance. */}
+      {hasMetrics && (
         <div className="nb-dv-card-foot">
-          {hasMetrics && (
-            <div className="nb-dv-metrics">
-              {item.points != null && (
-                <span className="nb-dv-metric"><Icons.trend size={12} /> {item.points}</span>
-              )}
-              {item.comments != null && (
-                <span className="nb-dv-metric"><Icons.chat size={12} /> {item.comments}</span>
-              )}
-              {time && <span className="nb-dv-metric"><Icons.clock size={12} /> {time}</span>}
-            </div>
-          )}
-          {item.url && (
-            <a className="nb-dv-card-link" href={item.url} target="_blank" rel="noreferrer">
-              阅读原文 <Icons.arrowRight size={11} />
-            </a>
-          )}
+          <div className="nb-dv-metrics">
+            {item.points != null && (
+              <span className="nb-dv-metric"><Icons.trend size={12} /> {item.points}</span>
+            )}
+            {item.comments != null && (
+              <span className="nb-dv-metric"><Icons.chat size={12} /> {item.comments}</span>
+            )}
+            {time && <span className="nb-dv-metric"><Icons.clock size={12} /> {time}</span>}
+          </div>
         </div>
       )}
     </div>

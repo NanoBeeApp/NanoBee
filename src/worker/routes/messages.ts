@@ -33,6 +33,19 @@ import type { InlineSuggestion } from "../../types";
 
 const ID_PATTERN = /^[a-z]+_[A-Za-z0-9_-]{4,40}$/;
 
+/** Safely read the request's ExecutionContext. Hono's `c.executionCtx` getter
+ *  throws when no execution context was provided (some test adapters), so we
+ *  guard it — callers fall back to running background work inline. */
+function safeExecutionCtx(
+	c: Context<{ Bindings: Env }>,
+): { waitUntil(promise: Promise<unknown>): void } | undefined {
+	try {
+		return c.executionCtx;
+	} catch {
+		return undefined;
+	}
+}
+
 const sendSchema = z.object({
 	chatId: z.string().regex(ID_PATTERN, "Invalid chat id"),
 	userMessageId: z.string().regex(ID_PATTERN, "Invalid message id"),
@@ -94,7 +107,7 @@ async function prepareRun(c: Context<{ Bindings: Env }>, body: SendBody): Promis
 		artifacts: { owner: user?.id ?? ANON_OWNER, chatId: body.chatId, created: createdArtifacts },
 		// Lets the create_data_view tool fetch in the background (chat replies
 		// immediately; the data view loads after the response is sent).
-		executionCtx: c.executionCtx,
+		executionCtx: safeExecutionCtx(c),
 	};
 	return { aiConfig, agentCtx, createdArtifacts };
 }
