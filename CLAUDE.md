@@ -1,89 +1,34 @@
-# NanoBee
+# NanoBee · index
 
 This project is a **public open-source repository**. **The public repo must only contain public code and public documentation** — every other file produced during development does not belong here.
 
-## 📁 Repository root is locked down (important)
+> **This file is an index only.** The full detail of each rule (steps, examples, rationale, edge cases) lives in categorized files under `claude-rules/`.
+> Each entry below keeps a one-line headline that is binding on its own; when a rule is relevant, **read the linked `claude-rules/*.md` file in full before acting**.
+> Everything in this repo outside `private/` (including this file and everything in `claude-rules/`) is written in **English**.
 
-- **Never add any new file or directory directly under the repository root without confirming with the user first.** This applies to everything — config files, docs, scripts, dotfiles, folders. Before creating anything at the root, stop and ask the user; only proceed after explicit approval in the current conversation.
-- New files should live in an existing appropriate subdirectory (or `private/` for non-public artifacts). Only truly root-level necessities (e.g. a tool that hard-requires a root config) justify asking for a root addition.
+## Governance & safety (read these first)
 
-## 🌐 Language rules (important)
+- **Repository governance (public/private repo hygiene)** → [claude-rules/repository-governance.md](./claude-rules/repository-governance.md)
+  - **📁 Root is locked down**: never add any new file/dir directly under the repo root without confirming with the user first.
+  - **🌐 Language**: everything in the public repo (outside `private/`) must be in **English**; everything inside `private/` is Chinese; conversation with the user stays Chinese.
+  - **🔒 private/**: a nested independent private repo (`WooodHead/NanoBee_Private`); put **all** non-public dev artifacts there; never commit `private/` to the main repo; never reference concrete `private/` paths in public docs; reinstall the pre-commit hook after cloning.
+  - **🔐 Pre-commit secret scan**: commits here are public forever — before every `git add`/`commit`, scan the actual staged diff for secrets/keys/PII; if found, STOP, warn the user by name, and do not commit.
 
-- **Everything in the public repo (outside `private/`) must be written in English**: code comments, docs, README files, script messages, etc. This is a public-facing repository.
-- **Everything inside `private/` is written in Chinese** (chat history, planning, PRDs, logs, notes).
-- This project rule overrides the global "write comments/docs in Chinese" preference. Conversation with the user stays in Chinese.
+## Deployment
 
-## 🔒 private/ directory (important)
+- **🚀 Domains & deployment** → [claude-rules/deployment.md](./claude-rules/deployment.md)
+  - Domain `nanobee.app` (prod worker `nanobee`, dev `nanobee-dev` → `dev.nanobee.app`). **Default deploy is dev only (`pnpm deploy:dev`); never deploy prod unless the user explicitly asks this turn.**
 
-- `private/` is an **independent private git repository** (remote: `WooodHead/NanoBee_Private`) nested inside this repo and ignored by the main repo's `.gitignore`.
-- **AI can and should read** the contents of `private/` (chat history, project planning, etc.) as context.
-- **All non-public files created during development must be written under `private/`** — never into the public directories of the main repo. This includes, but is not limited to:
-  - Chat logs / chat-history screenshots with AI → `private/chat-history/`
-  - Requirements documents (PRD) → `private/docs/` (e.g. `private/docs/requirements.md`)
-  - Logs → `private/logs/`
-  - Project planning, ideas, unpublished roadmaps → `private/planning/`
-  - Design drafts, screenshots, prompts, debugging/explanatory artifacts → `private/design/`, `private/screenshots/`, `private/prompts/`, `private/explain/`
-- **Rule of thumb**: if a file is not "code or documentation intended for external users", it goes into `private/`; when in doubt, default to `private/`.
-- **🚫 Never reference concrete `private/` file paths in public docs (including this CLAUDE.md)**: `private/` is not committed to the public repo, so such links are dangling and confusing for anyone who clones it. Public docs must be self-contained — if background from a private document matters, summarize the conclusion inline instead of linking to it. (Describing the `private/` *convention* itself, as this section does, is fine.)
-- **Version-control rules**:
-  - Changed files under `private/` → `git add / commit / push` separately inside the `private/` directory (pushed to the private remote).
-  - Changed files in the main repo → commit normally at the repo root; `private/` is ignored automatically.
-  - 🚫 Never commit files under `private/` to the main repo under any circumstances (`.gitignore` + pre-commit hook provide double protection — do not bypass them).
-- After cloning this repo, reinstall the protection hook: `cp scripts/git-hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`
+## UI
 
-## 🔐 Pre-commit secret scan (important)
+- **🎨 UI rules** → [claude-rules/ui-rules.md](./claude-rules/ui-rules.md)
+  - Every page has a **white background** (`var(--bg)` = `#ffffff`); gray surface tokens are for small inset elements only. **Always maximize the main content area** — keep framing chrome (headers/footers/toolbars/nested cards) minimal.
 
-**This is a public open-source repository: anything committed here is public forever — even a later force-push or delete cannot un-leak it (it stays in history, forks, mirrors, and crawler caches).** Treat every commit to the main repo as an irreversible publish.
+## Architecture & runtime principles
 
-- **Before every `git add` / `git commit` to the main (public) repo, scan the staged changes for sensitive or private information.** Look at the actual diff (`git diff --staged`), not just the file list. Flag anything that must not be public, including but not limited to:
-  - Credentials & keys: passwords, API tokens / keys, secret keys, OAuth tokens, session tokens, JWTs, private keys (`-----BEGIN ... PRIVATE KEY-----`), `.pem` / `.p12` / keystore material, SSH keys, signing certs.
-  - Provider secrets: Cloudflare account IDs / API tokens, AWS / GCP / Azure keys, Stripe / Resend / Finnhub / Twelve Data / OpenAI / Anthropic keys, database connection strings with passwords, webhook secrets.
-  - Personal / private data: real email addresses, phone numbers, names, home addresses, internal-only hostnames / IPs / URLs, user data, chat logs.
-  - Config files that commonly hold the above: `.env`, `.dev.vars`, `wrangler.json` with inlined secrets, `*.local.*`, exported credentials JSON.
-- **If anything sensitive is detected, STOP — do not commit.** Surface a clear warning to the user that names each finding (file + line + what it is), and wait for the user to decide. Do not silently strip it and proceed, and do not bypass the hook.
-- **Resolution paths** (pick with the user): move the file/content into `private/` (ignored by the main repo); replace the literal with an environment variable / Cloudflare secret / `.dev.vars` reference; redact or use a placeholder; or, if the secret was already exposed, rotate it.
-- **Defense in depth, not a replacement for the hook**: the `.gitignore` + pre-commit hook still guard `private/` paths, but they do not catch a secret hard-coded inside an otherwise-public source file — that is exactly what this manual scan is for.
-
-## 🚀 Domains & deployment
-
-- **Domain**: `nanobee.app` (Cloudflare zone in this account).
-  - Production worker `nanobee` → `nanobee.app`
-  - Dev worker `nanobee-dev` → `dev.nanobee.app`
-  - Both are Workers Custom Domains declared in `wrangler.json` (`routes` with `custom_domain: true`); wrangler manages DNS + certificates on deploy.
-- **Default deploy target is the dev environment only** (`pnpm deploy:dev`). **Never deploy to production unless the user explicitly asks for it in the current request** (`pnpm deploy:prod`). This project rule overrides the global "always deploy dev and prod together" preference.
-
-## 🏗️ Architecture design principles (important)
-
-- **Every architecture decision must work for both deployment targets**: (1) Cloudflare (Workers / D1 / KV / R2 / DO) and (2) self-hosted deployment (Docker, plain Node.js + SQLite/Postgres). When designing any feature, state explicitly how it runs in both environments; do not adopt a design that only works on Cloudflare without flagging it to the user first.
-- **Keep platform-specific services behind adapter layers**: business logic must depend on narrow interfaces (storage, cache, queue, object store), with Cloudflare bindings and self-hosted backends as interchangeable implementations.
-- **Stay lightweight — do not pull in heavy dependencies**: prefer the standard library, platform built-ins, and small focused packages over large frameworks/ORMs/SDKs. Before adding any new dependency, justify it: what it solves, why a lighter alternative (or ~50 lines of our own code) isn't enough, and its size/transitive-dependency cost. When in doubt, don't add it.
-
-## 🎨 UI rules
-
-- **Every page must have a white background** (`var(--bg)` = `#ffffff`). Page-level containers (reading surfaces, task center, auth pages, chat, etc.) must never use gray fills like `var(--surface-2)` / `var(--surface-3)` as their background — those tokens are reserved for small inset elements (hover states, chips, code/spark blocks), not whole pages.
-- **Always maximize the main content area — never let chrome crowd it out**. For every surface (page, dialog, modal, panel, drawer), the primary content is what the user came for; framing chrome (header bars, footer bars, toolbars, breadcrumbs, oversized titles/subtitles, nested cards) must stay minimal and must not eat vertical/horizontal space the content needs. Concretely: do not stack a full-width header bar *and* a full-width footer bar around a modal body — drop redundant titles (the dialog already has an `aria-label`/context), float the close affordance instead of giving it its own bar, and fold commit actions (Save/Cancel) into an existing column or a slim inline strip rather than a dedicated footer band. When a form/body is being clipped or scrolls awkwardly, first reclaim space from chrome before shrinking the content. This reinforces the global "主体内容可视区域最大化铁律".
-
-## 🗄️ Storage architecture principles (D1 vs Durable Objects)
-
-D1 and Durable Objects are **complementary, not competing**: D1 is the "one central SQL database" model; a Durable Object is a globally unique, single-threaded compute unit with its own SQLite store, where "fetch object by key" *is* the sharding. Apply these rules to all future storage/feature design:
-
-- **Current stage**: NanoBee's scale fits a single D1 database — keep using it as the central store. Do not introduce Durable Objects prematurely.
-- **Use D1 for**: global metadata / config / dictionary tables; cross-entity SQL queries (admin, reporting, "all users matching X"); read-heavy data (global read replicas via Sessions API); any dataset with low write QPS that fits well under the 10 GB per-database cap.
-- **Use Durable Objects for**: data naturally partitioned by an entity (user / session / room) that needs high write throughput or strong in-entity consistency — real-time collaboration, chat rooms, WebSocket sessions, per-user inboxes, serialized state machines (counters, inventory, rate limiters, locks).
-- **Migration trigger**: when one data class approaches D1's single-writer throughput (sustained hundreds of writes/s) or the 10 GB cap, move *that class* to one-DO-per-user; D1 retreats to global metadata and queries. Do not hand-roll hash-sharded D1 databases — DO-per-entity is the platform-native answer.
-- **Hot counters never live in D1**: no `UPDATE ... SET count = count + 1` on high-frequency paths; use a Durable Object (or KV snapshot) and periodically flush to D1.
-- **Cross-object analytics**: DOs cannot be queried globally. Any reporting over DO-held data must go through an export pipeline (DO → Queues → R2 / analytics store), designed up front.
-- **Self-hosting caveat**: DOs are not portable off Cloudflare. As long as Docker self-deployment remains a product goal, keep storage access behind an adapter layer so the same business code can run on SQLite/Postgres outside Cloudflare.
-
-## 🤖 Agent runtime principles (important)
-
-**The agent runs in the browser. Treat the browser — not Node — as the primary runtime, and never assume a filesystem or a shell.** The agent core must stay runtime-agnostic so the exact same code runs in the browser (primary), Cloudflare Workers, and self-hosted Node. This is why Claude Code's filesystem/shell-centric design cannot be copied verbatim — every such capability needs a browser-native replacement.
-
-- **Runtime-agnostic core behind a `RuntimeAdapter`**: agent-core (loop, tools, compaction, permissions, sub-agents) depends only on Web-standard APIs (`fetch`, `ReadableStream`, `AbortController`, `WebCrypto`, IndexedDB/OPFS) plus a narrow `RuntimeAdapter` interface — **zero `node:*`, zero DOM, zero Cloudflare bindings, zero React**. Each runtime supplies its own adapter; never thread `Env` / `fs` straight into loop or tool code.
-- **No filesystem → use browser storage**: never assume `fs` / `path` / `child_process`. Persistence and large-tool-result spillover use **OPFS / IndexedDB** in the browser (R2 + D1 on Workers, SQLite + fs on Node). Large tool results spill to blob storage and the model receives a **handle, not the full text**, in the prompt.
-- **No shell/Bash in the browser**: there is no `child_process` equivalent, and **arbitrary model-generated code must never be `eval`'d**. Use sandboxed compute (Web Worker / WASM) for pure computation, and whitelisted tools (data-hub, backend APIs) for any real-world action.
-- **Sub-agents**: spawn a **Web Worker** in the browser (isolated context, off the UI thread) or recurse in Worker/Node — never a process spawn. Keep a depth limit and exclude the spawn tool from the child tool pool to prevent runaway recursion.
-- **Keys never reach the client in plaintext**: BYOK keys are encrypted in IndexedDB (WebCrypto) and only placed in the `Authorization` header; the browser talks to providers directly (e.g. Anthropic `anthropic-dangerous-direct-browser-access`), with a stateless Worker proxy only for CORS-blocked providers. Keys must never appear in prompts or logs.
-- **Loop exit signal**: end a turn based on "did this turn emit a tool call", and **never trust the API `stop_reason`** (it is unreliable while streaming).
-
-This complements the Architecture design principles and Storage architecture principles above.
+- **🏗️ Architecture design principles** → [claude-rules/architecture-design.md](./claude-rules/architecture-design.md)
+  - Every decision must work on **both** Cloudflare and self-hosted (Docker/Node + SQLite/Postgres); keep platform services behind adapter layers; stay lightweight (justify every new dependency).
+- **🗄️ Storage architecture (D1 vs Durable Objects)** → [claude-rules/storage-architecture.md](./claude-rules/storage-architecture.md)
+  - D1 and DOs are complementary: single D1 fits the current scale (don't add DOs prematurely); D1 for global metadata/cross-entity queries/read-heavy data, DOs for per-entity high-write/strong-consistency; hot counters never in D1; keep storage behind an adapter for self-hosting.
+- **🤖 Agent runtime principles** → [claude-rules/agent-runtime.md](./claude-rules/agent-runtime.md)
+  - The agent runs in the **browser** (primary runtime) — runtime-agnostic core behind a `RuntimeAdapter`, no fs/shell, browser storage (OPFS/IndexedDB), Web Worker sub-agents, BYOK keys encrypted client-side and never in prompts/logs, and never trust the API `stop_reason`.
