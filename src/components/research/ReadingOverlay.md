@@ -27,6 +27,16 @@ backdrop.
 
 ## Change history
 
+### 2026-06-15 — Quieter close button
+- **Motivation**: the top-right close (X) button drew too much attention — it
+  was a filled `--surface-2` chip with a 32px box and an 18px icon.
+- **Goal**: make it recede so the article, not the chrome, holds focus.
+- **Key decisions**: shrank the box to 26px and the icon to 15px, dropped the
+  resting background (now transparent), and softened the icon to `--ink-4`
+  (hover only lifts to `--ink-3`, no background). CSS lives in
+  `src/styles/research.css` (`.rc-reading-close`); this file only changed the
+  `<Icons.x>` size prop.
+
 ### 2026-06-14 — Custom follow-up + in-place Q&A turns (Phase C)
 - **Motivation**: only AI-preset follow-ups (which grow children) existed; the
   reader couldn't ask their own question and get an inline answer.

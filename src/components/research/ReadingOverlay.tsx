@@ -135,7 +135,7 @@ export function ReadingOverlay() {
           onClick={closeReading}
           title="关闭"
           data-testid="research-reading-close">
-          <Icons.x size={18} />
+          <Icons.x size={15} />
         </button>
 
         <div className="rc-reading-scroll" ref={scrollRef}>

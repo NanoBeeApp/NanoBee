@@ -398,17 +398,17 @@
   position: absolute;
   top: 14px;
   right: 16px;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  color: var(--ink-3);
-  background: var(--surface-2);
+  border-radius: 6px;
+  color: var(--ink-4);
+  background: transparent;
   z-index: 2;
 }
-.rc-reading-close:hover { background: var(--surface-3); color: var(--ink); }
+.rc-reading-close:hover { color: var(--ink-3); }
 .rc-reading-scroll {
   flex: 1;
   min-height: 0;
@@ -525,6 +525,12 @@
 .rc-autoterm:hover {
   color: var(--brand-2);
   background: var(--brand-soft);
+}
+/* Bold text reads as plain emphasis, not a link: even though it doubles as a
+   deep-dive anchor, keep it fully quiet on hover — no color shift, no wash. */
+.rc-article strong .rc-autoterm:hover {
+  color: inherit;
+  background: transparent;
 }
 /* Saved reader highlights. Soft brand wash, no border. */
 .rc-highlight {
