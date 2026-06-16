@@ -26,6 +26,22 @@ password-visibility and active-pane toggles; all data + callbacks come from
 
 ## Change history
 
+### 2026-06-16 — model picker → single editable combobox
+- **Motivation**: the model field rendered two stacked controls — a native
+  `<select>` of fetched ids *and* a separate free-text `<input>` — both bound to
+  the same value. Users couldn't tell which was authoritative and it wasted
+  vertical space (reported as a confusing interaction).
+- **Changes**: removed the `<select>` + `<input>` pair (and the now-unused
+  `selectValue` helper); added a `ModelCombobox` sub-component — one text field
+  the user can type a custom id into, plus a chevron that opens a filterable
+  popover of the fetched ids. The text field doubles as the type-ahead filter, so
+  there is a single source of truth for the value. Keyboard nav (↑/↓/Enter/Esc),
+  selected-row check mark, auto-scroll-into-view, outside-click close, and
+  empty/loading/no-match popover states are handled locally; the chevron + popover
+  only render when `info.canListModels`. Styles live in `app.css` as `.nb-modelcb-*`
+  (reusing the `CompareModelSelect` visual language). Added `useEffect`/`useRef`
+  imports.
+
 ### 2026-06-13 — created (adapted from onboarding/AiProviderSetupForm)
 - **Motivation**: settings became a page; the form needed to render inline
   rather than inside a modal.

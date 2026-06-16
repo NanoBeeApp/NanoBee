@@ -631,6 +631,42 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-ai-subhint { margin: 2px 0 0; font-size: 12px; color: var(--ink-3); line-height: 1.5; }
 .nb-ai-subhint-err { color: var(--danger); }
 
+/* Model picker: a single editable combobox (type-ahead / custom id) with a
+   chevron that opens a filterable popover of fetched ids. Replaces the old
+   redundant <select> + free-text <input> pair. */
+.nb-modelcb { position: relative; }
+.nb-modelcb-input { padding-right: 38px; }
+.nb-modelcb-toggle {
+	position: absolute; right: 5px; top: 5px;
+	width: 28px; height: 28px; border-radius: var(--r-2);
+	display: grid; place-items: center; color: var(--ink-4);
+	transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.nb-modelcb-toggle:hover { background: var(--surface-3); color: var(--ink-2); }
+.nb-modelcb-toggle svg { transition: transform var(--dur-2) var(--ease-out); }
+.nb-modelcb-toggle.open svg { transform: rotate(180deg); }
+.nb-modelcb-panel {
+	position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 40;
+	background: var(--bg); border: 1px solid var(--border-2);
+	border-radius: var(--r-3); box-shadow: var(--sh-3);
+	overflow: hidden; display: flex; flex-direction: column;
+}
+.nb-modelcb-head {
+	padding: 7px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+	text-transform: uppercase; color: var(--ink-4);
+	background: var(--surface-2); border-bottom: 1px solid var(--border);
+}
+.nb-modelcb-list { max-height: 248px; overflow-y: auto; padding: 4px; }
+.nb-modelcb-item {
+	display: flex; align-items: center; gap: 8px; width: 100%;
+	height: 32px; padding: 0 10px; border-radius: var(--r-2);
+	font-size: 13px; color: var(--ink-2); text-align: left; cursor: pointer;
+}
+.nb-modelcb-item-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-modelcb-item.active { background: var(--surface-2); color: var(--ink); }
+.nb-modelcb-item.selected { background: var(--brand-soft); color: var(--brand-2); font-weight: 600; }
+.nb-modelcb-state { padding: 16px; text-align: center; font-size: 12.5px; color: var(--ink-4); line-height: 1.5; }
+
 /* Connection test: button + inline status (no card-in-card) */
 .nb-ai-test { display: flex; align-items: center; gap: 12px; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
 .nb-ai-test-btn { flex-shrink: 0; gap: 6px; }
