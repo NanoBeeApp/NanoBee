@@ -654,7 +654,8 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-modelcb-head {
 	padding: 7px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
 	text-transform: uppercase; color: var(--ink-4);
-	background: var(--surface-2); border-bottom: 1px solid var(--border);
+	/* Distinguished by its surface-2 fill alone — no divider (bg over border). */
+	background: var(--surface-2);
 }
 .nb-modelcb-list { max-height: 248px; overflow-y: auto; padding: 4px; }
 .nb-modelcb-item {
