@@ -26,6 +26,20 @@ reply against the contract, and retries once with a repair instruction.
 
 ## Change history
 
+### 2026-06-16 — Fix /generate 502 (raise the token budget)
+- **Motivation**: `POST /api/research/generate` returned 502 for outline mode.
+  The failure trace showed both the first reply and the repair retry truncated
+  mid-string → invalid JSON (`did not return JSON content`, then a `SyntaxError`
+  on the unterminated array).
+- **Root cause**: outline mode emits the largest payload NanoBee asks for — an
+  `outline` title tree plus a full mirrored `outlineBriefs` tree (every title
+  duplicated, ≤120-char brief per node), ~8–11k output tokens, and on the
+  default Gemini 3.5 Flash that budget is shared with ~1000–1300 mandatory
+  reasoning tokens. The old `maxTokens: 4000` cap truncated the JSON.
+- **Fix**: raise `CALL_OPTS` to `maxTokens: 16_000` (ceiling, not target — the
+  model stops when the JSON closes) with `timeoutMs: 120_000` headroom. No
+  contract or prompt change. Streaming path shares `CALL_OPTS`, so it benefits too.
+
 ### 2026-06-15 — Build a generation trace (incl. on failure)
 - **Motivation**: the user wants to inspect, from the research canvas, exactly
   how the outline and each article were generated (every execution step), for

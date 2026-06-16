@@ -103,9 +103,82 @@ function sanitizePayload(value: unknown): unknown {
 }
 
 /**
- * Parse the model's raw text into a validated payload. Accepts a bare JSON
- * object or one embedded in surrounding prose (first `{...}` match). Throws if
- * no JSON is found or the contract (incl. exactly three questions) is violated.
+ * Scan `text` for every balanced, top-level `{...}` JSON object and return the
+ * ones that parse. String-aware (braces inside string values don't miscount)
+ * and prose-tolerant (text outside objects is skipped), so it recovers JSON
+ * from replies wrapped in commentary or split across several objects.
+ */
+function extractJsonObjects(text: string): Record<string, unknown>[] {
+  const objects: Record<string, unknown>[] = [];
+  let depth = 0;
+  let start = -1;
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === "{") {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (ch === "}" && depth > 0) {
+      depth--;
+      if (depth === 0 && start >= 0) {
+        try {
+          const parsed = JSON.parse(text.slice(start, i + 1));
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            objects.push(parsed as Record<string, unknown>);
+          }
+        } catch {
+          // A balanced but non-JSON `{...}` run (e.g. prose braces) — skip it.
+        }
+        start = -1;
+      }
+    }
+  }
+  return objects;
+}
+
+/** The "richest" value among a key's fragments: the longest array, else the
+ *  first non-empty string (falling back to ""), else the first defined value. */
+function pickValue(values: unknown[]): unknown {
+  const arrays = values.filter(Array.isArray) as unknown[][];
+  if (arrays.length) return arrays.reduce((a, b) => (b.length > a.length ? b : a));
+  const strings = values.filter((v) => typeof v === "string") as string[];
+  if (strings.length) return strings.find((s) => s.trim() !== "") ?? strings[0];
+  return values.find((v) => v !== undefined && v !== null) ?? values[0];
+}
+
+/**
+ * Merge several JSON fragments into one payload by taking the richest value per
+ * key. Some models (notably mandatory-reasoning ones like Gemini 3.5 Flash)
+ * split one logical reply across concatenated top-level objects — e.g. the main
+ * `{outline,...,questions}` followed by a separate `{"tags":[...]}`, or
+ * `questions`/`tags` peeled off into a trailing object. Picking the richest
+ * value per key reassembles them regardless of how the split fell.
+ */
+function mergeJsonObjects(objects: Record<string, unknown>[]): Record<string, unknown> {
+  const keys = new Set<string>();
+  for (const obj of objects) for (const key of Object.keys(obj)) keys.add(key);
+  const merged: Record<string, unknown> = {};
+  for (const key of keys) {
+    merged[key] = pickValue(objects.filter((o) => key in o).map((o) => o[key]));
+  }
+  return merged;
+}
+
+/**
+ * Parse the model's raw text into a validated payload. Fast path: a single bare
+ * JSON object. Otherwise it extracts every balanced top-level object (skipping
+ * surrounding prose) and merges them, so a prose-wrapped reply OR one split
+ * across several concatenated objects still yields one complete payload. Throws
+ * if no JSON is found or the contract (incl. exactly three questions) is violated.
  */
 export function parseModelPayload(rawContent: string): ModelPayload {
   const trimmed = rawContent.trim();
@@ -113,9 +186,9 @@ export function parseModelPayload(rawContent: string): ModelPayload {
   try {
     parsed = JSON.parse(trimmed);
   } catch {
-    const match = trimmed.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("AI provider did not return JSON content");
-    parsed = JSON.parse(match[0]);
+    const objects = extractJsonObjects(trimmed);
+    if (objects.length === 0) throw new Error("AI provider did not return JSON content");
+    parsed = objects.length === 1 ? objects[0] : mergeJsonObjects(objects);
   }
   return modelPayloadSchema.parse(sanitizePayload(parsed));
 }
