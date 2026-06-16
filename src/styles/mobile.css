@@ -1,0 +1,456 @@
+/* ============================================================
+   NanoBee — Mobile-responsive overrides
+   Breakpoint: <= 768px (phones + small tablets in portrait)
+   Design intent: sidebar becomes an off-canvas drawer toggled by a
+   hamburger in the top-left header bar; the content area fills the
+   full viewport; drawers / panels (task detail, compare, today nav)
+   become full-width bottom sheets or full-screen overlays.
+   All sizing uses existing Radix/NanoBee tokens — no new hex values.
+   ============================================================ */
+
+/* ---- Error boundary (all viewports, shown only on error) ---- */
+.nb-error-boundary {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--bg);
+}
+.nb-error-card {
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.nb-error-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(150deg, #e9a13b, #d98b2b);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+}
+.nb-error-wordmark {
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.nb-error-wordmark b {
+  font-weight: 800;
+}
+.nb-error-heading {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 4px 0 0;
+}
+.nb-error-sub {
+  font-size: 14px;
+  color: var(--ink-3);
+  line-height: 1.6;
+  max-width: 340px;
+  margin: 0;
+}
+.nb-error-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+.nb-error-detail {
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  text-align: left;
+}
+.nb-error-detail-toggle {
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--ink-3);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+}
+.nb-error-detail-toggle::-webkit-details-marker { display: none; }
+.nb-error-detail-toggle::before {
+  content: "▶";
+  font-size: 9px;
+  color: var(--ink-4);
+  transition: transform 0.15s ease;
+}
+details[open] .nb-error-detail-toggle::before { transform: rotate(90deg); }
+.nb-error-stack {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--surface);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* ---- Mobile hamburger header ---- */
+/* Shown only on mobile (display:flex below in the breakpoint); hidden by default */
+.nb-mobile-header {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.nb-mobile-hamburger {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+  flex-shrink: 0;
+  /* Generous tap target */
+  min-width: 44px;
+  min-height: 44px;
+}
+.nb-mobile-hamburger:hover,
+.nb-mobile-hamburger:focus-visible {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.nb-mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.nb-mobile-brand .glyph {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(150deg, #e9a13b, #d98b2b);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.nb-mobile-brand b { color: #8c5a12; }
+/* Right slot in the mobile header (account avatar etc.) */
+.nb-mobile-header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- Mobile drawer overlay scrim ---- */
+.nb-drawer-scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: rgba(15, 17, 23, 0.38);
+  animation: nb-scrim-in 0.22s ease;
+}
+@keyframes nb-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ============================================================
+   @media <= 768 px — mobile shell overrides
+   ============================================================ */
+@media (max-width: 768px) {
+  /* ---------- 1. App grid: collapse to a single column + flex-column shell ---- */
+  .nb-app,
+  .nb-app.with-rightchat,
+  .nb-app.with-rightchat.right-collapsed,
+  .nb-app.research-canvas,
+  .nb-app.research-canvas.with-rightchat,
+  .nb-app.research-canvas.with-rightchat.right-collapsed {
+    /* Override desktop grid with a plain flex-column — the sidebar
+       is now off-canvas and the content area fills the screen. */
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ---------- 2. Sidebar: off-canvas drawer ---- */
+  .nb-side {
+    /* Take the sidebar fully out of normal flow; it slides in from the
+       left as an overlay. Always hidden (translated) by default — the
+       mobile-open state below slides it into view. */
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: min(300px, 88vw);
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.26s ease;
+    box-shadow: none;
+    /* Override any display:none from side-collapsed */
+    display: flex !important;
+    background: var(--bg);
+  }
+
+  /* Open state — `.mobile-nav-open` class is applied to `.nb-app` by the store / _app.tsx */
+  .nb-app.mobile-nav-open .nb-side {
+    transform: translateX(0);
+    box-shadow: var(--sh-4);
+  }
+
+  /* Scrim: shown when the drawer is open */
+  .nb-app.mobile-nav-open .nb-drawer-scrim {
+    display: block;
+  }
+
+  /* Hide the desktop left-edge reveal on mobile — replaced by the hamburger */
+  .nb-edge-reveal { display: none; }
+
+  /* Desktop floating top-left controls are not needed on mobile
+     (the hamburger replaces them). The top-right account control is
+     moved into the mobile header instead. */
+  .nb-float.tl { display: none; }
+
+  /* The top-right floating bar would overlap the mobile header; hide it
+     because the mobile header already carries the account avatar. */
+  .nb-float.tr { display: none; }
+
+  /* ---------- 3. Show the mobile header ---- */
+  .nb-mobile-header {
+    display: flex;
+  }
+
+  /* ---------- 4. Content area: full width ---- */
+  .nb-chat {
+    /* Reset the grid-column assignment and let the flex child fill the
+       remaining space below the mobile header. */
+    grid-column: unset;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    /* The content area IS the page; it must be scrollable itself */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- 5. Drawer scrim ---- */
+  .nb-drawer-scrim {
+    /* The element is always in the DOM; show it when the app class says open */
+  }
+
+  /* ---------- 6. Chat / message area ---- */
+  .nb-msg {
+    padding: 0 16px;
+    max-width: 100%;
+  }
+  .nb-proactive {
+    padding: 0 16px;
+    max-width: 100%;
+  }
+  .nb-feed {
+    padding: 16px 0 160px;
+    gap: 16px;
+  }
+
+  /* ---------- 7. Composer ---- */
+  .nb-composer-wrap {
+    padding: 0 12px 16px;
+  }
+  /* Prevent iOS safe-area from cutting off the composer */
+  .nb-composer-wrap {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  /* ---------- 8. Today page ---- */
+  .nb-today-inner {
+    padding: 16px 16px 140px;
+    max-width: 100%;
+  }
+  .nb-read-grid {
+    grid-template-columns: 1fr;
+  }
+  .nb-read-card.expanded {
+    grid-column: 1;
+  }
+
+  /* ---------- 9. Tasks page ---- */
+  .nb-tasks-grid {
+    grid-template-columns: 1fr;
+  }
+  .nb-taskspage-inner {
+    padding: 16px 16px 100px;
+    max-width: 100%;
+  }
+  .nb-tk-home {
+    padding: 8vh 16px 80px;
+  }
+
+  /* Task detail drawer → full-width bottom sheet */
+  .nb-tk-drawer {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-height: 90vh;
+    border-radius: 18px 18px 0 0;
+    overflow-y: auto;
+    z-index: 60;
+    animation: nb-sheet-up 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--sh-4);
+  }
+  @keyframes nb-sheet-up {
+    from { transform: translateY(100%); opacity: 0.6; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  /* Task detail scrim: already uses position:absolute in tasks.css;
+     the bottom-sheet animation on mobile is handled by .nb-tk-drawer overrides above */
+
+  /* ---------- 10. Settings page (AI split) ---- */
+  /* Already has its own 560px breakpoint; reinforce for 768 */
+  .nb-ai-split {
+    grid-template-columns: 1fr;
+  }
+  .nb-settings-head {
+    padding: 16px 16px 12px;
+  }
+  .nb-ai-detail {
+    padding: 16px 16px 20px;
+  }
+  .nb-ai-master {
+    padding: 8px 8px 10px;
+  }
+
+  /* ---------- 11. Compare view ---- */
+  /* Columns scroll horizontally; enforce a sensible min-width per column */
+  .nb-cmp-grid {
+    /* Allow horizontal scroll on mobile rather than squashing columns */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nb-cmp-col {
+    min-width: min(280px, 80vw) !important;
+  }
+
+  /* ---------- 12. Notification dropdown ---- */
+  .nb-notif-pop {
+    /* Full-width on mobile */
+    left: 8px;
+    right: 8px;
+    width: auto;
+    top: auto;
+    bottom: 0;
+    border-radius: 18px 18px 0 0;
+  }
+
+  /* ---------- 13. Modals ---- */
+  .nb-modal-scrim {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .nb-modal {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  /* ---------- 14. Sidebar collapse button ---- */
+  /* On mobile the collapse button in the sidebar header becomes a "close drawer" */
+  .nb-brand button[data-testid="collapse-sidebar"] {
+    /* Keep it visible and large enough to tap */
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* ---------- 15. Quick-chat widget ---- */
+  /* Give more breathing room from the bottom edge on phones */
+  .nb-qc-launcher {
+    bottom: max(20px, env(safe-area-inset-bottom, 16px));
+    right: 14px;
+  }
+  .nb-qc-popup {
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: 100%;
+  }
+
+  /* ---------- 16. Selection float ---- */
+  .nb-sel-float {
+    /* Prevent overflow on narrow screens */
+    max-width: calc(100vw - 24px);
+    flex-wrap: wrap;
+  }
+
+  /* ---------- 17. Research view ---- */
+  /* On mobile the research canvas left rail floats as a drawer too */
+  .nb-app.research-canvas .nb-side {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 50;
+  }
+
+  /* ---------- 18. Touch targets: all interactive nav tiles ---- */
+  .nb-nav-tile {
+    min-height: 44px;
+  }
+  .nb-nav-grid {
+    gap: 6px;
+  }
+
+  /* ---------- 19. Today toolbar: wrap on small screens ---- */
+  .nb-read-toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .nb-today-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .nb-taskspage-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* Extra-small phones (< 375px) */
+@media (max-width: 374px) {
+  .nb-nav-grid {
+    grid-template-columns: 1fr;
+  }
+  .nb-msg { padding: 0 12px; }
+  .nb-proactive { padding: 0 12px; }
+  .nb-composer-wrap { padding: 0 8px 16px; }
+}

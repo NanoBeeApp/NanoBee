@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArtifactsView } from "@/components/artifacts/ArtifactsView";
+import { RouteErrorFallback } from "@/components/common/ErrorBoundary";
 
 // Search params are the bookmarkable source of truth for the Artifacts page:
 //   tab      — which top tab is active: 'mine' (你创建的) | 'favorites'
@@ -30,4 +31,7 @@ export const Route = createFileRoute("/_app/artifacts")({
 				: undefined,
 	}),
 	component: ArtifactsView,
+	errorComponent: ({ error, reset }) => (
+		<RouteErrorFallback error={error instanceof Error ? error : new Error(String(error))} reset={reset} />
+	),
 });

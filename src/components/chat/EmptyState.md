@@ -26,6 +26,14 @@ New-chat empty state: a single light headline ("聊点什么有趣的话题？" 
 ### 2026-06-12 — created
 - **Motivation**: guides first-time users straight into the "ask me to watch something" loop.
 
+### 2026-06-15 — i18n Phase 1: heading, subtitle, chip labels via useT()
+- **Motivation**: i18n foundation requires all wired surfaces to use the t() function
+  so locale changes reflect live without a reload.
+- **Changes**: imports `useT` from `@/lib/i18n/LocaleContext`; heading, subtitle, and
+  each starter chip label are replaced with `t('emptyState.*')` calls. The actual
+  prompt text sent to the AI stays hardcoded Chinese (it is a NL seed, not a UI label).
+  Added `labelKey` field to each STARTERS entry; `prompt` unchanged.
+
 ### 2026-06-15 — richer empty state with starter chips
 - **Motivation**: the bare headline offered no path forward for users who didn't know what to type.
 - **Goal**: inspire and guide without overwhelming — four amber scenario chips pre-fill the composer with a task-creating prompt, letting the user edit then send.

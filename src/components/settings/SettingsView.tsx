@@ -4,10 +4,15 @@
 // the backend falls back to NanoBee's built-in defaults when nothing is saved,
 // so there is no forced onboarding — this is just a normal page reachable from
 // the sidebar, and edits auto-save as you type.
+//
+// Change history:
+//   2026-06-15  Wired i18n Phase 1: page title, subtitle, loading/signed-out
+//               states and login button now use useT() strings.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Icons } from "../../icons/icons";
+import { useT } from "../../lib/i18n/LocaleContext";
 import {
 	DEFAULT_WEB_SEARCH_PROVIDER,
 	getProviderInfo,
@@ -92,25 +97,26 @@ export function SettingsView() {
 	const { data: user, isLoading: authLoading } = useAuthUser();
 	const settingsQuery = useAiSettings(Boolean(user));
 	const save = useSaveAiSettings();
+	const { t } = useT();
 
 	return (
 		<div className="nb-settings-page" data-testid="settings-page">
 			<header className="nb-settings-head">
-				<h1 className="nb-settings-title">设置</h1>
-				<p className="nb-settings-sub">配置 AI 模型与联网搜索供应商 · 修改自动保存</p>
+				<h1 className="nb-settings-title">{t('settings.pageTitle')}</h1>
+				<p className="nb-settings-sub">{t('settings.pageSubtitle')}</p>
 			</header>
 
 			{authLoading || (user && settingsQuery.isLoading) ? (
 				<div className="nb-settings-state" data-testid="settings-loading">
 					<Icons.spark size={22} style={{ color: "var(--ink-4)" }} />
-					<p>正在加载设置…</p>
+					<p>{t('settings.loading')}</p>
 				</div>
 			) : !user ? (
 				<div className="nb-settings-state" data-testid="settings-signed-out">
 					<Icons.bee size={26} sw={1.6} style={{ color: "var(--brand-2)" }} />
-					<p>登录后即可配置专属的 AI 模型与联网搜索供应商。</p>
+					<p>{t('settings.signedOut')}</p>
 					<Link to="/login" className="btn btn-primary" data-testid="settings-login-link">
-						登录 / 注册
+						{t('settings.loginButton')}
 					</Link>
 				</div>
 			) : (

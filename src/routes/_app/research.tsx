@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ResearchView } from "@/components/research/ResearchView";
+import { RouteErrorFallback } from "@/components/common/ErrorBoundary";
 
 // Search params are the bookmarkable source of truth for the research view's
 // state (see useResearchUrlSync): which project is open and which node's
@@ -19,4 +20,7 @@ export const Route = createFileRoute("/_app/research")({
 		node: typeof search.node === "string" && search.node ? search.node : undefined,
 	}),
 	component: ResearchView,
+	errorComponent: ({ error, reset }) => (
+		<RouteErrorFallback error={error instanceof Error ? error : new Error(String(error))} reset={reset} />
+	),
 });

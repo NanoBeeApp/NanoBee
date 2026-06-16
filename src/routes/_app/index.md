@@ -13,6 +13,11 @@ composer) into the `_app` layout outlet.
 
 ## Change history
 
+### 2026-06-15 — added errorComponent
+- **Motivation**: per-route error isolation — a crash in ChatView or CompareView
+  now shows `RouteErrorFallback` (retry + back-to-chat) instead of crashing the
+  whole shell.
+
 ### 2026-06-13 — created
 - **Motivation**: give the chat surface its own URL (`/`) under the new `_app`
   layout, replacing the old `routes/index.tsx` that mounted the whole app shell.

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChatView } from "@/components/chat/ChatView";
 import { CompareView } from "@/components/compare/CompareView";
+import { RouteErrorFallback } from "@/components/common/ErrorBoundary";
 
 // Home page (/): the main chat surface. `?compare=1` opens the multi-model
 // compare view as a SECOND-LEVEL page inside the chat page (not a separate
@@ -34,4 +35,7 @@ export const Route = createFileRoute("/_app/")({
 		sync: search.sync ? "1" : undefined,
 	}),
 	component: IndexView,
+	errorComponent: ({ error, reset }) => (
+		<RouteErrorFallback error={error instanceof Error ? error : new Error(String(error))} reset={reset} />
+	),
 });

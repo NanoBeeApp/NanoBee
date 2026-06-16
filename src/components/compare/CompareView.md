@@ -1,16 +1,18 @@
 # src/components/compare/CompareView.tsx
 
 ## Responsibility
-The `/compare` route's content (inside the app shell): toolbar (add model /
-regenerate all / sync-scroll / share), the horizontal column grid, the shared
-bottom composer, the empty-state guidance, and the provider-key dialog.
+A **feature of the chat page** (not a separate page, not a top-level nav entry):
+the compare sub-view rendered inside the chat route at `/?compare=1`, opened from
+the chat composer's "多模型对比" button. Owns the toolbar (add model / regenerate
+all / sync-scroll / share), the horizontal column grid, the shared bottom
+composer, the empty-state guidance, and the provider-key dialog.
 
 ## Relationships
 - Upstream: `useCompareStore` (all state + actions), `useAppStore` (`toast`),
   `useCompareUrlSync` (URL sync), `lib/compare-models` (column bounds),
   `icons/icons`.
 - Children: `CompareColumn`, `CompareComposer`, `ProviderKeyDialog`.
-- Rendered by: `routes/_app/compare.tsx`.
+- Rendered by: `routes/_app/index.tsx` (the chat route) when `?compare=1` is set.
 
 ## Key implementation notes
 - Calls `useCompareUrlSync()` once at the top, and loads the provider catalog once.
@@ -42,3 +44,11 @@ bottom composer, the empty-state guidance, and the provider-key dialog.
   unmount; back-button navigates to `{ to: '/', search: {} }` (clears all compare
   params cleanly); `Rendered by` note updated to reflect it's a sub-view of
   `routes/_app/index.tsx` not a separate route.
+
+### 2026-06-15 — Compare is a chat feature, not a separate page
+- Reason: per user, compare must be a feature inside chat without a separate page
+  treatment or a separate left-nav entry.
+- Changes: removed the `syncView('compare')` mount effect (and the `syncView`
+  selector) — there is no longer a `'compare'` view value, so the chat tile stays
+  active while compare is open. The toolbar/back-button and the rest of the layout
+  are unchanged; entry is solely the chat composer's "多模型对比" button.

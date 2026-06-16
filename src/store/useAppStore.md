@@ -22,6 +22,24 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ## Change history
 
+### 2026-06-15 — switch pagination cursor from oldestRowid to oldestCursor
+- **Motivation**: migration 0020 could not use `rowid` in `CREATE INDEX`; cursor switched to
+  opaque `"<created_at>_<id>"` string. All `oldestRowid: number | null` references updated to
+  `oldestCursor: string | null`; `loadOlderMessages` now URL-encodes the cursor in the `?before=` param.
+
+### 2026-06-15 — message pagination: convoPagination + loadOlderMessages
+- **Motivation**: the bootstrap response now returns only the most recent 30 messages per
+  chat; older history must be loaded on demand when the user scrolls to the top.
+- **Changes**:
+  - Added `convoPagination: Record<chatId, { hasMore, oldestCursor, loading }>` to
+    `AppState` — tracks per-chat pagination state initialised from the bootstrap response.
+  - `bootstrap()` now reads `data.pagination` from the server and hydrates
+    `convoPagination` (adding `loading: false` to each entry).
+  - Added `loadOlderMessages(chatId)` action: guards on `hasMore && !loading`, captures
+    `oldestCursor` as the cursor, fetches `GET /api/chats/:id/messages?before=<encoded-cursor>`,
+    then prepends the result to `convos[chatId]` with deduplication by id. Updates
+    `convoPagination[chatId]` with the new `hasMore` / `oldestCursor` from the response.
+
 ### 2026-06-15 — onboardingDone state + markOnboardingDone action (migration 0017)
 - **Motivation**: the first-run onboarding flow needs to persist "done" so it never reappears.
 - **Change**: added `onboardingDone: boolean` to `AppState` (defaults to `true` to avoid flash); `bootstrap()` now reads `data.onboardingDone` and sets it; added `markOnboardingDone()` which optimistically flips the flag then POSTs to `/api/onboarding/done`.
@@ -46,6 +64,16 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
   stream (send → final/error/stop), driving the composer's stop button and
   blocking a second send while one is in flight. Cleared in the stream's
   `finally`.
+
+### 2026-06-15 — mobile nav drawer state (`mobileNavOpen` + `setMobileNavOpen`)
+- **Motivation**: mobile-responsive pass adds an off-canvas sidebar drawer; the
+  toggle state needs to live in the store so the `_app` shell applies the
+  `mobile-nav-open` CSS class and all navigation actions close the drawer.
+- **Change**: added `mobileNavOpen: boolean` (initial `false`) to `AppState` and
+  `setMobileNavOpen(v)` action; all navigation actions (`selectChat`, `newChat`,
+  `newTask`, `newArtifact`, `openChat`, `openToday`, `openTasks`, `openResearch`,
+  `openArtifacts`, `openSettings`, `openCompare`) now set `mobileNavOpen: false`
+  so the drawer automatically closes when the user navigates to a page.
 
 ### 2026-06-15 — page-level quick-chat context (`VIEW_CONTEXT`, `ctxPage`)
 - **Motivation**: the quick chat only knew about Today's in-view article; on
@@ -238,3 +266,15 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
     dropdown.
   - `viewFromPath` is unchanged — compare detection is handled by `CompareView`
     calling `syncView('compare')` on mount and resetting to `'chat'` on unmount.
+
+### 2026-06-15 — compare demoted to a chat feature (removed `'compare'` view)
+- **Motivation**: per user, multi-model compare is a feature *inside* chat — not a
+  separate page and not a top-level nav entry. The `'compare'` view value only
+  existed to highlight a sidebar tile that has now been removed.
+- **Changes**:
+  - `View` type no longer includes `'compare'`.
+  - Removed `VIEW_PATH.compare`, `NEW_ACTION.compare`, and `VIEW_CONTEXT.compare`.
+  - Removed the `openCompare()` action (interface + impl) — compare is opened from
+    the chat composer's "多模型对比" button, which navigates to `/?compare=1`.
+  - `viewFromPath` comment updated: `/?compare=1` resolves to `'chat'`, so the chat
+    tile stays active while the compare sub-view is open.

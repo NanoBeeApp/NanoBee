@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TasksView } from "@/components/tasks/TasksView";
+import { RouteErrorFallback } from "@/components/common/ErrorBoundary";
 
 // Search params are the bookmarkable source of truth for the Tasks page:
 //   view   — 'home' (clean single-focus first screen, default when absent) |
@@ -38,4 +39,7 @@ export const Route = createFileRoute("/_app/tasks")({
 		tpl: typeof search.tpl === "string" && search.tpl ? search.tpl : undefined,
 	}),
 	component: TasksView,
+	errorComponent: ({ error, reset }) => (
+		<RouteErrorFallback error={error instanceof Error ? error : new Error(String(error))} reset={reset} />
+	),
 });

@@ -15,6 +15,12 @@ persist both sides + reply) and tasks (create / toggle / 404).
 
 ## Change history
 
+### 2026-06-15 — update pagination cursor assertions (rowid → oldestCursor)
+- **Motivation**: migration 0020 switched from rowid-based to `(created_at, id)` compound
+  cursor. Test types and cursor format updated: `oldestRowid: number | null` →
+  `oldestCursor: string | null`; `?before=999999999` → `?before=9999999999_~`; the
+  "non-numeric before" test became "invalid cursor" test (still returns 400).
+
 ### 2026-06-13 — updates read-state tests removed
 - **Motivation**: the read/unread feature was removed (routes `/api/updates/*`
   deleted, `unread` column dropped by migration 0006), so its tests went with it.

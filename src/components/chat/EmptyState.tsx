@@ -11,17 +11,21 @@
 // Matches the minimal NanoBee aesthetic.
 //
 // Change history:
+//   2026-06-15  Wired i18n (Phase 1): heading, subtitle, and starter chip
+//               labels now use useT() so they translate when locale switches.
 //   2026-06-15  Added scenario starter chips (richer empty state).
 
+import { useT } from '../../lib/i18n/LocaleContext';
 import { Icons } from '../../icons/icons';
 
-// Representative starter prompts that pre-fill the composer and immediately
-// lead into the NL → task suggestion pipeline.
+// Starter prompt prompts — the actual prompt text sent to the model stays in
+// Chinese (it is a NL seed to the AI, not a UI label). Only the visible chip
+// label is translated via i18n.
 const STARTERS = [
-  { icon: 'coins' as const, label: '盯黄金价格', prompt: '帮我盯着黄金价格，超过 3200 美元时通知我' },
-  { icon: 'news' as const, label: 'HN 每日热榜', prompt: '帮我每天早上 9 点推送 Hacker News 热门文章' },
-  { icon: 'bolt' as const, label: '关键词监控', prompt: '帮我监控"AI 新闻"关键词，有新内容时通知我' },
-  { icon: 'bell' as const, label: '每日提醒', prompt: '帮我每天早上 8 点发一条提醒，开始新的一天' },
+  { icon: 'coins' as const, labelKey: 'emptyState.starters.gold' as const, prompt: '帮我盯着黄金价格，超过 3200 美元时通知我' },
+  { icon: 'news' as const, labelKey: 'emptyState.starters.hn' as const, prompt: '帮我每天早上 9 点推送 Hacker News 热门文章' },
+  { icon: 'bolt' as const, labelKey: 'emptyState.starters.keyword' as const, prompt: '帮我监控"AI 新闻"关键词，有新内容时通知我' },
+  { icon: 'bell' as const, labelKey: 'emptyState.starters.reminder' as const, prompt: '帮我每天早上 8 点发一条提醒，开始新的一天' },
 ] as const;
 
 interface EmptyStateProps {
@@ -30,10 +34,11 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ onSeedComposer }: EmptyStateProps) {
+  const { t } = useT();
   return (
     <div className="nb-empty" data-testid="new-chat-empty-state">
-      <h1>聊点什么有趣的话题？</h1>
-      <p className="nb-empty-sub">或者让 NanoBee 帮你盯一件事，有动态了主动通知你</p>
+      <h1>{t('emptyState.heading')}</h1>
+      <p className="nb-empty-sub">{t('emptyState.sub')}</p>
       <div className="nb-empty-chips" data-testid="chat-starter-chips">
         {STARTERS.map((s) => {
           const Icon = Icons[s.icon];
@@ -45,7 +50,7 @@ export function EmptyState({ onSeedComposer }: EmptyStateProps) {
               data-testid={`chat-starter-${s.icon}`}
             >
               <Icon size={14} />
-              {s.label}
+              {t(s.labelKey)}
             </button>
           );
         })}

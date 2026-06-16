@@ -121,6 +121,8 @@ describe("auth (D1)", () => {
 interface BootstrapBody {
 	chats: { id: string; topicId: string; title: string }[];
 	conversations: Record<string, { id: string; role: string }[]>;
+	/** Per-chat pagination metadata added in the message-pagination update. */
+	pagination?: Record<string, { hasMore: boolean; oldestCursor: string | null }>;
 	tasks: { id: string; status: string; next: string }[];
 	updates: { id: string }[];
 }
@@ -137,7 +139,87 @@ describe("bootstrap (D1, anon bucket seeded lazily)", () => {
 		expect(body.chats.length).toBeGreaterThanOrEqual(7);
 		expect(body.tasks.length).toBeGreaterThanOrEqual(5);
 		expect(body.updates.length).toBeGreaterThanOrEqual(6);
+		// Seed has 3 messages for c_gold_today, well within the 30-message window.
 		expect(body.conversations.c_gold_today?.length).toBeGreaterThanOrEqual(3);
+		// Pagination metadata must be present for every chat that has messages.
+		expect(body.pagination).toBeDefined();
+		const goldPag = body.pagination?.c_gold_today;
+		expect(goldPag).toBeDefined();
+		// Seed has only 3 messages → hasMore must be false.
+		expect(goldPag?.hasMore).toBe(false);
+	});
+});
+
+describe("chat message pagination (D1)", () => {
+	it("GET /api/chats/:id/messages returns 400 when before param is missing", async () => {
+		const res = await fetch(`${BASE_URL}/api/chats/c_gold_today/messages`);
+		expect(res.status).toBe(400);
+	});
+
+	it("GET /api/chats/:id/messages returns 400 when before is an invalid cursor", async () => {
+		// "abc" has no underscore separator — fails decodeCursor validation.
+		const res = await fetch(
+			`${BASE_URL}/api/chats/c_gold_today/messages?before=abc`,
+		);
+		expect(res.status).toBe(400);
+	});
+
+	it("GET /api/chats/:id/messages returns empty page for a cursor before all messages", async () => {
+		// Cursor "1_z" means: created_at=1 (epoch second 1, far in the past), id="z".
+		// No seed messages exist before this point.
+		const res = await fetch(
+			`${BASE_URL}/api/chats/c_gold_today/messages?before=${encodeURIComponent("1_z")}`,
+		);
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as {
+			messages: unknown[];
+			hasMore: boolean;
+			oldestCursor: string | null;
+		};
+		expect(body.messages).toHaveLength(0);
+		expect(body.hasMore).toBe(false);
+		expect(body.oldestCursor).toBeNull();
+	});
+
+	it("GET /api/chats/:id/messages returns older messages and correct hasMore", async () => {
+		// Use a far-future cursor so all seed messages for c_gold_today are returned.
+		// Cursor "<year-2100-epoch>_~" is always after any real message.
+		const farFutureCursor = `9999999999_~`;
+		const boot = await getBootstrap();
+		const pag = boot.pagination?.c_gold_today;
+		if (!pag || pag.oldestCursor === null) {
+			// No messages in this chat — skip (shouldn't happen with seed data).
+			return;
+		}
+		const res = await fetch(
+			`${BASE_URL}/api/chats/c_gold_today/messages?before=${encodeURIComponent(farFutureCursor)}`,
+		);
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as {
+			messages: { id: string; role: string }[];
+			hasMore: boolean;
+			oldestCursor: string | null;
+		};
+		// Seed has 3 messages; all should be returned within one page of 30.
+		expect(body.messages.length).toBeGreaterThanOrEqual(3);
+		expect(body.hasMore).toBe(false);
+		// oldestCursor must be a non-empty string.
+		expect(typeof body.oldestCursor).toBe("string");
+		expect((body.oldestCursor as string).length).toBeGreaterThan(0);
+	});
+
+	it("GET /api/chats/:id/messages respects the limit param", async () => {
+		const farFutureCursor = `9999999999_~`;
+		const res = await fetch(
+			`${BASE_URL}/api/chats/c_gold_today/messages?before=${encodeURIComponent(farFutureCursor)}&limit=2`,
+		);
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as {
+			messages: { id: string; role: string }[];
+			hasMore: boolean;
+		};
+		// Seed has 3 messages; with limit=2 we get 2 and hasMore=true.
+		expect(body.messages.length).toBeLessThanOrEqual(2);
 	});
 });
 

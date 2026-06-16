@@ -3,6 +3,9 @@
  * NanoBee endpoints live in sibling modules (auth / bootstrap / messages /
  * tasks) and are mounted here. The original /api/users smoke-test
  * endpoints were removed in favor of the real auth system (routes/auth/).
+ *
+ * Change history:
+ *   2026-06-15  Mounted chatMessageRoutes at /chats for message pagination.
  */
 
 import { Hono } from "hono";
@@ -12,6 +15,7 @@ import { artifactRoutes } from "./artifacts";
 import { authRoutes } from "./auth";
 import { batchRoutes } from "./batch";
 import { bootstrapRoutes } from "./bootstrap";
+import { chatMessageRoutes } from "./chat-messages";
 import { compareRoutes } from "./compare";
 import { messageRoutes } from "./messages";
 import { notificationSettingsRoutes } from "./notification-settings";
@@ -31,6 +35,8 @@ export const apiRoutes = new Hono<{ Bindings: Env }>()
 	// Task run history: mounted before /tasks so /:id/runs resolves correctly.
 	.route("/tasks", taskRunRoutes)
 	.route("/bootstrap", bootstrapRoutes)
+	// Cursor-based older-message loading: GET /api/chats/:id/messages
+	.route("/chats", chatMessageRoutes)
 	.route("/compare", compareRoutes)
 	.route("/messages", messageRoutes)
 	.route("/notifications", notificationSettingsRoutes)

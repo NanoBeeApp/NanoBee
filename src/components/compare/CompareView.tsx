@@ -1,9 +1,11 @@
-// Multi-model compare page — a second-level view rendered inside the chat
-// route at /?compare=1. Owns the toolbar (add model / regenerate all / share),
-// the horizontal column grid (all columns scroll together vertically; shared
-// width is drag-resizable), the shared bottom composer, the empty-state
-// guidance, and the provider-key dialog. State + streaming live in
-// useCompareStore; URL sync is wired by useCompareUrlSync.
+// Multi-model compare — a feature OF the chat page (not a separate page and not
+// a top-level nav entry): a second-level view rendered inside the chat route at
+// /?compare=1, opened from the chat composer's "多模型对比" button and dismissed
+// back to chat. Owns the toolbar (add model / regenerate all / share), the
+// horizontal column grid (all columns scroll together vertically; shared width
+// is drag-resizable), the shared bottom composer, the empty-state guidance, and
+// the provider-key dialog. State + streaming live in useCompareStore; URL sync
+// is wired by useCompareUrlSync. The chat tile stays active while it is open.
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useCompareStore } from "../../store/useCompareStore";
@@ -34,17 +36,9 @@ export function CompareView() {
 	const retryColumn = useCompareStore((s) => s.retryColumn);
 	const canRun = useCompareStore((s) => s.canRun);
 	const toast = useAppStore((s) => s.toast);
-	const syncView = useAppStore((s) => s.syncView);
 	const navigate = useNavigate();
 
 	const [keyDialogOpen, setKeyDialogOpen] = useState(false);
-
-	// Register this sub-view with the app store so the sidebar highlights the
-	// compare tile while the page is active; reset to 'chat' on unmount.
-	useEffect(() => {
-		syncView("compare");
-		return () => syncView("chat");
-	}, [syncView]);
 
 	useEffect(() => {
 		if (!providersLoaded) void loadProviders();

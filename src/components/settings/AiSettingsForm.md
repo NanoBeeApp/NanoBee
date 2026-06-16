@@ -44,6 +44,17 @@ password-visibility and active-pane toggles; all data + callbacks come from
   and `authUser` local variable; the detail pane gets the `nb-ai-detail--account` modifier
   class for scrollable layout.
 
+### 2026-06-15 — i18n Phase 1: Language pane + useT wiring
+- **Motivation**: the settings page is a high-visibility surface; the language
+  switcher lives here so users can always reach it even before other surfaces are
+  migrated. The page title and other settings strings are also wired.
+- **Changes**: imports `useLocale`, `useT` from `@/lib/i18n/LocaleContext` and
+  `SUPPORTED_LOCALES`, `Locale` from `@/lib/i18n`; adds `"language"` to the
+  `activePane` union; adds a "Language / 语言" master-list row under "偏好设置";
+  adds `LanguagePane` component (renders one `nb-ai-prow` button per supported
+  locale, active locale gets ✓ tag); `LanguagePane` calls `onSetLocale` which
+  updates the LocaleContext and persists to localStorage — live update, no reload.
+
 ### 2026-06-15 — add Notifications entry to master list
 - **Motivation**: wire in the new `NotificationSettings` component.
 - **Changes**: added `"notifications"` to the `activePane` union; added a

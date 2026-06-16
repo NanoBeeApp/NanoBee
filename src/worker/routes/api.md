@@ -9,6 +9,7 @@ plus the smoke-test `hello` endpoint.
 - `apiRoutes` — Hono sub-app with:
   - `route /auth` → see `auth/index.ts` (register / login / OAuth / session)
   - `route /bootstrap` → see `bootstrap.ts`
+  - `route /chats` → see `chat-messages.ts` (`GET /:id/messages` — load-older pagination)
   - `route /messages` → see `messages.ts`
   - `route /tasks` → see `tasks.ts`
   - `GET /hello?name=` → `{ message, timestamp }`
@@ -25,8 +26,9 @@ plus the smoke-test `hello` endpoint.
 
 ## Verification
 1. `pnpm db:migrate:local && pnpm dev`
-2. `curl localhost:3333/api/bootstrap` → seeded `{ chats, conversations, tasks, updates }`
-3. `pnpm test:run` → all integration tests pass
+2. `curl localhost:3333/api/bootstrap` → seeded `{ chats, conversations, pagination, tasks, updates }`
+3. `curl "localhost:3333/api/chats/c_gold_today/messages?before=999999999"` → `{ messages, hasMore, oldestRowid }`
+4. `pnpm test:run` → all integration tests pass
 
 ## Change history
 
@@ -91,6 +93,11 @@ plus the smoke-test `hello` endpoint.
 - Endpoints: `POST /api/tasks/batch/preview`, `POST /api/tasks/batch`,
   `GET /api/tasks/batch/:id`, `POST /api/tasks/batch/:id/run`,
   `POST /api/tasks/batch/:id/retry-failed`.
+
+### 2026-06-15 — mount /chats for message pagination
+- Added `chatMessageRoutes` imported from `./chat-messages`; mounted at `/chats`.
+- Endpoint: `GET /api/chats/:id/messages?before=<rowid>&limit=<n>` → older-message page.
+- Mounted before `/compare` and `/messages` to avoid any potential path ambiguity.
 
 ### 2026-06-13 — mount /artifacts, drop /cards
 - **Motivation**: card generation moved to a chat agent tool; the standalone

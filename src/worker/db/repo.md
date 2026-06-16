@@ -6,8 +6,13 @@ the JSON-payload (de)serialization so route handlers stay thin.
 
 ## Core exports / API
 - `ANON_OWNER` — re-exported constant `"anon"` (canonical source: `artifacts/repo.ts`)
+- `BOOTSTRAP_MSG_LIMIT` — constant (30): the number of messages per chat returned at bootstrap
 - `listChats(db, owner)` → `ChatMeta[]` (pinned first, then newest first; seeds keep authored order)
-- `listConversations(db, owner)` → `Record<chatId, ChatMessage[]>` (insertion order)
+- `listConversations(db, owner)` → `Record<chatId, ChatMessage[]>` (insertion order; full history — for internal use only)
+- `encodeCursor(createdAt, id)` → `string` — produces an opaque `"<created_at>_<id>"` pagination cursor
+- `decodeCursor(cursor)` → `{ createdAt, id } | null` — parses the opaque cursor; returns null on malformed input
+- `listConversationsTrimmed(db, owner, limit)` → `{ conversations, pagination }` — bootstrap-time trimmed variant; returns the most recent `limit` messages per chat plus `ConvoPagination` metadata (hasMore + oldestCursor)
+- `listMessagesPage(db, chatId, owner, beforeCursor, limit)` → `{ messages, hasMore, oldestCursor }` — cursor-based older-message page for one chat; used by `GET /api/chats/:id/messages`
 - `listTasks(db, owner)` → `Task[]` (newest user-created first; seeds keep authored order)
 - `getTask(db, id, owner)` → `Task | null`
 - `listUpdates(db, owner)` → `UpdateItem[]`
@@ -19,12 +24,73 @@ the JSON-payload (de)serialization so route handlers stay thin.
 ## Notes
 - Hot/query fields (ids, topic, status, group) are real columns; rich
   display content lives in a `payload` JSON column — see migration 0002.
-- `listConversations` loads all messages for the owner in one query; fine at demo scale,
-  paginate per chat when conversations grow.
+- `listConversations` loads all messages for the owner in one query; kept for any
+  internal use that needs the full history. Bootstrap now uses `listConversationsTrimmed`.
+- `listConversationsTrimmed` uses an N+1 strategy: one `SELECT DISTINCT chat_id` query
+  followed by a `db.batch()` of per-chat `LIMIT limit+1` descending queries. Memory is
+  bounded to O(chats × limit × payload) — never loads all messages at once. The composite
+  index `idx_messages_owner_chat_pagination (owner, chat_id, created_at DESC, id DESC)`
+  added in migration 0020 makes each per-chat query a single index seek.
+- `listMessagesPage` uses a compound `(created_at, id)` cursor encoded as `"<epoch>_<id>"`.
+  The cursor is produced by `encodeCursor` and parsed by `decodeCursor`. SQLite's `rowid`
+  virtual column cannot be used in `CREATE INDEX`, so `created_at` (second-level) with `id`
+  as a tie-breaker provides equivalent ordering. Covered by the same composite index in 0020.
 - `ANON_OWNER` is defined in `artifacts/repo.ts` and re-exported here for convenience.
   That file is the canonical source; do not re-define the constant.
 
 ## Change history
+
+### 2026-06-15 — switch pagination cursor from rowid to (created_at, id) compound cursor
+- **Root cause**: migration 0020 used `CREATE INDEX ... (owner, chat_id, rowid DESC)`.
+  SQLite does not allow `rowid` (a virtual alias column) in explicit index definitions —
+  this caused `SQLITE_ERROR: no such column: rowid at offset 88` when applying the migration.
+- **Fix**: replaced `rowid`-based pagination with a compound `(created_at, id)` cursor
+  encoded as an opaque `"<epoch>_<id>"` string. The migration index now uses
+  `(owner, chat_id, created_at DESC, id DESC)` — all real columns, always valid.
+- **Changes**:
+  - Added `encodeCursor(createdAt, id)` and `decodeCursor(cursor)` helpers.
+  - `ConvoPagination.oldestRowid` → `oldestCursor: string | null`.
+  - `MessageRowWithRowid` → `MessageRowWithCursor` (uses `id` + `created_at` instead of `rowid`).
+  - `listConversationsTrimmed` queries now select `id, created_at, payload` and order by
+    `created_at DESC, id DESC`; cursor is built with `encodeCursor`.
+  - `listMessagesPage` signature: `beforeRowid: number` → `beforeCursor: string`; the WHERE
+    predicate uses compound `(created_at < ? OR (created_at = ? AND id < ?))` to handle ties.
+  - Route `chat-messages.ts`: validator changed from `regex /^\d+$/` to `decodeCursor` check.
+  - Store `useAppStore.ts`: `oldestRowid: number | null` → `oldestCursor: string | null`
+    throughout; URL param is now `encodeURIComponent(pag.oldestCursor)`.
+  - Tests `api.spec.ts`: updated `BootstrapBody.pagination` type, test cursors, and
+    response field assertions to match the new cursor shape.
+
+### 2026-06-15 — fix listConversationsTrimmed: bounded N+1 queries instead of unbounded bulk fetch
+- **Motivation**: the previous implementation fetched ALL messages for an owner in a single
+  unbounded query (`SELECT rowid, chat_id, payload FROM messages WHERE owner=? ORDER BY
+  chat_id ASC, rowid DESC`), then sliced per chat in JS. A user with 100 chats × 200
+  messages × ~2 KB = ~40 MB would hit the 128 MB Cloudflare Worker memory limit, creating
+  a DoS / OOM risk.
+- **Changes**:
+  - Replaced the bulk fetch with a two-step strategy: (1) `SELECT DISTINCT chat_id` to get
+    the list of chats for the owner; (2) `db.batch()` of per-chat `LIMIT limit+1`
+    descending queries — one round-trip to D1 regardless of chat count.
+  - Memory is now bounded to O(chats × limit × payload) regardless of total history length.
+  - Added the composite index `idx_messages_owner_chat_rowid` (migration 0020) so each
+    per-chat query is a single index seek rather than a full-scan-then-sort.
+  - `MessageRowWithRowid` interface is retained; `MessageRow.chat_id` is no longer selected
+    in the per-chat queries (chat_id is already known from the DISTINCT result).
+
+### 2026-06-15 — message pagination: listConversationsTrimmed + listMessagesPage
+- **Motivation**: bootstrap was returning every message of every chat; long
+  conversations would bloat the initial payload and delay first paint.
+- **Changes**:
+  - Added `BOOTSTRAP_MSG_LIMIT = 30` constant.
+  - Added `ConvoPagination` interface (`hasMore`, `oldestRowid`).
+  - Added `listConversationsTrimmed(db, owner, limit)` — fetches all rows
+    grouped per chat client-side, slices to the newest `limit`, reverses to
+    oldest→newest, and returns `{ conversations, pagination }`.
+  - Added `listMessagesPage(db, chatId, owner, beforeRowid, limit)` — rowid
+    cursor query for one chat, fetches `limit + 1` newest-first to detect
+    `hasMore`, then reverses to oldest→newest for the frontend.
+  - `listConversations` is retained for any internal use that needs the full
+    history (no callers changed; only bootstrap now uses the trimmed variant).
 
 ### 2026-06-15 — Surface triggerSpec in listTasks / getTask for the detail drawer
 - **Motivation**: The `TaskDetailDrawer` needs to show a structured trigger summary (schedule hour/minute, condition sourceId/op/threshold) from `triggerSpec`. The column existed in D1 (added in migration 0013) but was not included in `TaskRow` or the SELECT queries.

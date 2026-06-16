@@ -41,3 +41,6 @@ Route `/artifacts` — renders the card-deck gallery (`ArtifactsView`) into the
 - **Motivation**: give the artifacts view its own URL (`/artifacts`); previously
   it was reached only via the zustand `view` flag on the single `/` route.
 - **Goal**: deep-linkable, back/forward-friendly navigation per view.
+### 2026-06-15 — added errorComponent
+- **Motivation**: per-route error isolation via RouteErrorFallback.
+

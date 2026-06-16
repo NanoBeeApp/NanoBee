@@ -178,6 +178,22 @@ dialog (`setAiSetupOpen`).
 - **Goal**: the nav tile now opens the Artifacts view (`openArtifacts()`,
   testid `artifacts-entry`, label "Artifacts") instead of the cards view.
 
+### 2026-06-15 — mobile-responsive: close drawer on collapse + aria id
+- **Motivation**: on mobile the sidebar becomes an off-canvas drawer; collapsing
+  it (the `×` button in the sidebar brand row) must also close the mobile drawer.
+- **Changes**: the collapse button now calls both `setSideCollapsed(true)` and
+  `setMobileNavOpen(false)`. The `<aside>` gains `id="app-sidebar"` so the
+  mobile header's hamburger can reference it via `aria-controls`.
+
+### 2026-06-15 — i18n Phase 1: nav tile labels, new-action button, mode switch via useT()
+- **Motivation**: the i18n foundation (Phase 1) requires sidebar labels to be
+  driven by the active locale so switching zh ↔ en reflects live without a reload.
+- **Changes**: imports `useT` from `@/lib/i18n/LocaleContext`; adds `NEW_ACTION_KEY`
+  map (View → i18n key); replaces all hardcoded Chinese label strings with
+  `t('nav.*')`, `t('newAction.*')`, and `t('brand.tagline')` calls. The underlying
+  store's `NEW_ACTION` is still used for the `testid`; only the visible label is
+  redirected through i18n.
+
 ### 2026-06-15 — Compare nav tile added
 - **Motivation**: wiring the compare feature into the sidebar so users can reach
   the multi-model compare view directly from the nav rail without going through
@@ -189,3 +205,12 @@ dialog (`setAiSetupOpen`).
 - **Key decisions**: (1) expanded the grid from 6 to 7 tiles (4 rows, one partial
   row) — the 2-column grid layout handles odd counts gracefully. (2) placed Compare
   between Research and Settings so it groups with content-generation features.
+
+### 2026-06-15 — Compare nav tile removed (compare is a chat feature, not a page)
+- **Motivation**: per user, multi-model compare is a feature *inside* chat, not a
+  separate page, and it must not have its own entry in the left nav rail.
+- **Changes**: removed the "模型对比 / Compare" nav tile, the `openCompare` store
+  selector, and the `compare` entry from `NEW_ACTION_KEY`. The grid is back to 6
+  tiles. Compare is now reached only from the chat composer's "多模型对比" button
+  (→ `/?compare=1`), and while it is open the chat tile stays active (the route is
+  still `/`, so `view` remains `'chat'`).

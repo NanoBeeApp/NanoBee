@@ -37,6 +37,20 @@ Replaces the former `App.tsx` shell.
 
 ## Change history
 
+### 2026-06-15 — mobile-responsive pass + error boundary
+- **Motivation**: the shell had no mobile breakpoint (sidebar overflowed on phones);
+  and any route-level crash had no fallback UI.
+- **Changes**:
+  - `errorComponent` added to the route definition using `RouteErrorFallback` —
+    per-route crash isolation so the shell stays up when one view breaks.
+  - `MobileHeader` rendered at the top of the shell (CSS hides it on desktop);
+    it owns the hamburger button that toggles `mobileNavOpen` in the store.
+  - A `.nb-drawer-scrim` `<div>` renders in the DOM alongside the sidebar; CSS
+    makes it visible only when `.mobile-nav-open` is on `.nb-app`. Clicking the
+    scrim closes the drawer (`setMobileNavOpen(false)`).
+  - `mobileNavOpen` from the store is mapped to the `mobile-nav-open` CSS class
+    on `.nb-app`; `mobile.css` slides the sidebar in/out on that class.
+
 ### 2026-06-15 — first-run Onboarding overlay
 - **Motivation**: new signed-in users with no tasks should see a guided 3-step flow instead of a blank screen.
 - **Change**: imports `Onboarding` component and `onboarding.css`; reads `onboardingDone` and `tasks` from the store; renders `<Onboarding />` as a top-level overlay when `!onboardingDone && tasks.length === 0`.

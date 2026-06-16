@@ -9,6 +9,9 @@
 // navigate() into the store so navigation actions can change the URL.
 //
 // Change history:
+//   2026-06-15  Mobile-responsive pass: MobileHeader + off-canvas drawer scrim;
+//               `mobile-nav-open` class on .nb-app; RouteErrorFallback as
+//               errorComponent for per-route crash isolation.
 //   2026-06-15  Added first-run Onboarding overlay (migration 0017).
 import { useEffect, useLayoutEffect } from "react";
 import {
@@ -21,11 +24,13 @@ import { useAppStore, viewFromPath } from "@/store/useAppStore";
 import { useResearchStore } from "@/store/useResearchStore";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { FloatingControls } from "@/components/layout/FloatingControls";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 import { QuickChat } from "@/components/quickchat/QuickChat";
 import { SelectionFloat } from "@/components/selection/SelectionFloat";
 import { ToastStack } from "@/components/feedback/ToastStack";
 import { Onboarding } from "@/components/onboarding/Onboarding";
+import { RouteErrorFallback } from "@/components/common/ErrorBoundary";
 import "@/styles/onboarding.css";
 
 // Client-only: the shell is interactive state (zustand + window listeners) with
@@ -33,6 +38,9 @@ import "@/styles/onboarding.css";
 export const Route = createFileRoute("/_app")({
 	ssr: false,
 	component: AppLayout,
+	errorComponent: ({ error, reset }) => (
+		<RouteErrorFallback error={error instanceof Error ? error : new Error(String(error))} reset={reset} />
+	),
 });
 
 function AppLayout() {
@@ -41,6 +49,8 @@ function AppLayout() {
 	const view = useAppStore((s) => s.view);
 	const sideCollapsed = useAppStore((s) => s.sideCollapsed);
 	const sidePeek = useAppStore((s) => s.sidePeek);
+	const mobileNavOpen = useAppStore((s) => s.mobileNavOpen);
+	const setMobileNavOpen = useAppStore((s) => s.setMobileNavOpen);
 	const researchPhase = useResearchStore((s) => s.phase);
 	const notifOpen = useAppStore((s) => s.notifOpen);
 	const newForView = useAppStore((s) => s.newForView);
@@ -98,10 +108,27 @@ function AppLayout() {
 
 	return (
 		<div
-			className={`nb-app${sideCollapsed ? " side-collapsed" : ""}${sideCollapsed && sidePeek ? " side-peek" : ""}${researchCanvasFloating ? " research-canvas" : ""}`}
+			className={[
+				"nb-app",
+				sideCollapsed ? "side-collapsed" : "",
+				sideCollapsed && sidePeek ? "side-peek" : "",
+				researchCanvasFloating ? "research-canvas" : "",
+				mobileNavOpen ? "mobile-nav-open" : "",
+			].filter(Boolean).join(" ")}
 			data-testid="nanobee-app"
 		>
+			{/* Mobile-only top header (hamburger + brand + account); hidden on desktop */}
+			<MobileHeader />
+
 			<Sidebar />
+
+			{/* Scrim shown behind the off-canvas sidebar drawer on mobile */}
+			{/* biome-ignore lint/a11y/useKeyWithClickEvents: tap-to-close overlay */}
+			<div
+				className="nb-drawer-scrim"
+				aria-hidden="true"
+				onClick={() => setMobileNavOpen(false)}
+			/>
 
 			<section className="nb-chat" data-testid="center-surface">
 				<FloatingControls />

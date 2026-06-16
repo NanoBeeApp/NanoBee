@@ -32,7 +32,7 @@ const TITLE_MAX_CHARS = 22;
 const TASK_SEED = '帮我盯着 ';
 const ARTIFACT_SEED = '帮我做一组卡片：';
 
-export type View = 'chat' | 'today' | 'tasks' | 'artifacts' | 'research' | 'settings' | 'compare';
+export type View = 'chat' | 'today' | 'tasks' | 'artifacts' | 'research' | 'settings';
 export type SidebarMode = 'history' | 'topics';
 
 /** URL path for each view. The router is the source of truth for navigation;
@@ -44,9 +44,6 @@ export const VIEW_PATH: Record<View, string> = {
   artifacts: '/artifacts',
   research: '/research',
   settings: '/settings',
-  // Compare is a sub-view of the chat route (/?compare=1), not its own path.
-  // VIEW_PATH.compare is used as a hint; navigation is via openCompare().
-  compare: '/',
 };
 
 /** Label + test id for the sidebar's page-aware "new" button. Today / Settings
@@ -58,7 +55,6 @@ export const NEW_ACTION: Record<View, { label: string; testid: string }> = {
   artifacts: { label: '新建 Artifact', testid: 'new-artifact-button' },
   research: { label: '新建研究', testid: 'new-research-button' },
   settings: { label: '新建对话', testid: 'new-chat-button' },
-  compare: { label: '新建对话', testid: 'new-chat-button' },
 };
 
 /** The quick-chat context the user always has on each surface: `label` is the
@@ -73,12 +69,11 @@ export const VIEW_CONTEXT: Record<View, { label: string; agent: string } | null>
   tasks: { label: '任务', agent: '「任务」页（用户正在盯的事项列表）' },
   artifacts: { label: 'Artifacts', agent: '「Artifacts」卡片库页（已生成的卡片合集）' },
   research: { label: '研究画布', agent: '「研究画布」页（研究项目 / 大纲）' },
-  compare: { label: 'Compare', agent: '「模型对比」页（多模型并行对比）' },
 };
 
 /** Resolve a pathname back to its view (unknown paths fall back to chat).
- *  Note: compare lives at `/?compare=1` (same path as chat); the CompareView
- *  component calls syncView('compare') itself on mount. */
+ *  Note: the multi-model compare surface lives at `/?compare=1` (same path as
+ *  chat) — it is a feature of the chat page, so it resolves to `'chat'` here. */
 export function viewFromPath(pathname: string): View {
   switch (pathname) {
     case '/today': return 'today';
@@ -90,15 +85,31 @@ export function viewFromPath(pathname: string): View {
   }
 }
 
+/** Per-chat pagination metadata from the bootstrap response. */
+interface ChatPagination {
+  hasMore: boolean;
+  /** Opaque cursor string (format: "<created_at>_<id>") for the oldest loaded message. */
+  oldestCursor: string | null;
+}
+
 /** Server payload of GET /api/bootstrap. */
 interface BootstrapData {
   chats: ChatMeta[];
   conversations: Record<string, ChatMessage[]>;
+  /** Per-chat pagination flags (hasMore + oldestCursor). Present from bootstrap v2. */
+  pagination?: Record<string, ChatPagination>;
   tasks: Task[];
   updates: UpdateItem[];
   /** Whether the signed-in user has already completed (or skipped) the
    *  first-run onboarding flow. Always true for anon visitors. */
   onboardingDone?: boolean;
+}
+
+/** Response of GET /api/chats/:id/messages. */
+interface OlderMessagesData {
+  messages: ChatMessage[];
+  hasMore: boolean;
+  oldestCursor: string | null;
 }
 
 interface AppState {
@@ -108,6 +119,12 @@ interface AppState {
   activeTopicId: string | null;
   chats: ChatMeta[];
   convos: Record<string, ChatMessage[]>;
+  /**
+   * Per-chat pagination state. `hasMore` indicates earlier messages exist.
+   * `oldestCursor` is the opaque cursor to pass as `?before=` to the load-older endpoint.
+   * `loading` is true while a load-older request is in flight for that chat.
+   */
+  convoPagination: Record<string, { hasMore: boolean; oldestCursor: string | null; loading: boolean }>;
   sessionMeta: Record<string, SessionMeta>;
   tasks: Task[];
   createdTaskIds: string[];
@@ -131,6 +148,9 @@ interface AppState {
   /** Temporary "peek": the sidebar is shown as an overlay while collapsed
    *  (triggered by the left-edge reveal) and auto-closes on mouse leave. */
   sidePeek: boolean;
+  /** Mobile-only: true when the off-canvas sidebar drawer is slid open.
+   *  Drives the `.mobile-nav-open` class on `.nb-app` (see mobile.css). */
+  mobileNavOpen: boolean;
   /** Folded state of the QuickChat widget (a customer-service-style launcher
    *  bubble + popup). Folded by default: only the bubble shows; clicking it
    *  opens the popup, which then stays open until the bubble (or its close
@@ -163,6 +183,13 @@ interface AppState {
 
   // server sync
   bootstrap: () => Promise<void>;
+  /**
+   * Load the previous page of messages for one chat (scroll-to-top trigger).
+   * Prepends the older messages to the conversation without jumping the scroll
+   * position (the caller preserves scroll offset). No-ops when already loading
+   * or when hasMore is false.
+   */
+  loadOlderMessages: (chatId: string) => Promise<void>;
 
   // navigation
   /** Bind the router's navigate() (called once by the app layout). */
@@ -178,6 +205,8 @@ interface AppState {
   peekSidebar: () => void;
   /** End a temporary peek (called when the pointer leaves the sidebar). */
   endPeek: () => void;
+  /** Toggle (or set) the mobile off-canvas drawer. */
+  setMobileNavOpen: (v: boolean) => void;
   /** Collapse / expand the docked right chat panel. */
   setRightCollapsed: (v: boolean) => void;
   setNotifOpen: (v: boolean) => void;
@@ -198,8 +227,6 @@ interface AppState {
   openToday: () => void;
   openTasks: () => void;
   openResearch: () => void;
-  /** Open the multi-model compare page (chat sub-view at /?compare=1). */
-  openCompare: () => void;
   /** Ask the active center page (Today / Tasks) to scroll its matching item into view. */
   focusItem: (id: string) => void;
   // artifacts
@@ -461,6 +488,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeTopicId: null,
   chats: [],
   convos: {},
+  convoPagination: {},
   sessionMeta: {},
   tasks: [],
   createdTaskIds: [],
@@ -474,6 +502,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   notifOpen: false,
   sideCollapsed: false,
   sidePeek: false,
+  mobileNavOpen: false,
   rightCollapsed: true,
   pending: false,
   generating: false,
@@ -498,9 +527,20 @@ export const useAppStore = create<AppState>((set, get) => ({
         '[bootstrap] loaded from D1:',
         `${data.chats.length} chats, ${data.tasks.length} tasks, ${data.updates.length} updates, onboardingDone=${data.onboardingDone}`,
       );
+
+      // Build convoPagination from the server's per-chat pagination metadata.
+      // Adds a `loading: false` sentinel so the type is always complete.
+      const convoPagination: AppState['convoPagination'] = {};
+      if (data.pagination) {
+        for (const [chatId, p] of Object.entries(data.pagination)) {
+          convoPagination[chatId] = { hasMore: p.hasMore, oldestCursor: p.oldestCursor, loading: false };
+        }
+      }
+
       set({
         chats: data.chats,
         convos: data.conversations,
+        convoPagination,
         tasks: data.tasks,
         updates: data.updates,
         // Fall back to true (don't show onboarding) when the field is absent
@@ -514,15 +554,67 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  loadOlderMessages: async (chatId) => {
+    const pag = get().convoPagination[chatId];
+    // Guard: nothing to load, or already in flight.
+    if (!pag || !pag.hasMore || pag.loading || pag.oldestCursor === null) return;
+
+    // Mark loading for this chat.
+    set((s) => ({
+      convoPagination: {
+        ...s.convoPagination,
+        [chatId]: { ...s.convoPagination[chatId], loading: true },
+      },
+    }));
+
+    try {
+      const url = `/api/chats/${encodeURIComponent(chatId)}/messages?before=${encodeURIComponent(pag.oldestCursor)}`;
+      const res = await fetch(url, { credentials: 'same-origin' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as OlderMessagesData;
+
+      set((s) => {
+        const existing = s.convos[chatId] ?? [];
+        // Deduplicate: older messages should never overlap, but guard anyway.
+        const existingIds = new Set(existing.map((m) => m.id));
+        const fresh = data.messages.filter((m) => !existingIds.has(m.id));
+        return {
+          convos: {
+            ...s.convos,
+            [chatId]: [...fresh, ...existing],
+          },
+          convoPagination: {
+            ...s.convoPagination,
+            [chatId]: {
+              hasMore: data.hasMore,
+              oldestCursor: data.oldestCursor,
+              loading: false,
+            },
+          },
+        };
+      });
+    } catch (error) {
+      console.error('[loadOlderMessages] failed:', String(error));
+      // Clear loading flag; preserve hasMore so the user can retry.
+      set((s) => ({
+        convoPagination: {
+          ...s.convoPagination,
+          [chatId]: { ...s.convoPagination[chatId], loading: false },
+        },
+      }));
+    }
+  },
+
   bindNavigate: (fn) => set({ _navigate: fn }),
   syncView: (view) => { if (get().view !== view) set({ view }); },
-  openSettings: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.settings); },
+  openSettings: () => { set({ notifOpen: false, mobileNavOpen: false }); get()._navigate?.(VIEW_PATH.settings); },
 
   setSidebarMode: (sidebarMode) => set({ sidebarMode }),
   // Pinning or collapsing always ends any temporary peek.
   setSideCollapsed: (sideCollapsed) => set({ sideCollapsed, sidePeek: false }),
   peekSidebar: () => { if (get().sideCollapsed) set({ sidePeek: true }); },
   endPeek: () => { if (get().sidePeek) set({ sidePeek: false }); },
+  setMobileNavOpen: (mobileNavOpen) => set({ mobileNavOpen }),
   setRightCollapsed: (rightCollapsed) => set({ rightCollapsed }),
   setNotifOpen: (notifOpen) => set({ notifOpen }),
 
@@ -539,12 +631,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       activeTopicId: c ? c.topicId : (s.sessionMeta[id]?.topicId ?? 'gold'),
       notifOpen: false,
       quickCtx: null,
+      mobileNavOpen: false,
     }));
     get()._navigate?.(VIEW_PATH.chat);
   },
 
   newChat: () => {
-    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: null });
+    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: null, mobileNavOpen: false });
     get()._navigate?.(VIEW_PATH.chat);
   },
 
@@ -552,12 +645,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   // with a starter prompt, dropping the user into a fresh chat already primed to
   // create that entity (both are produced by the chat agent's tools, not a form).
   newTask: () => {
-    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: TASK_SEED });
+    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: TASK_SEED, mobileNavOpen: false });
     get()._navigate?.(VIEW_PATH.chat);
   },
 
   newArtifact: () => {
-    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: ARTIFACT_SEED });
+    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: ARTIFACT_SEED, mobileNavOpen: false });
     get()._navigate?.(VIEW_PATH.chat);
   },
 
@@ -578,16 +671,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // The sidebar "聊天" tile: just switch back to the chat view, keeping whatever
   // conversation is active (unlike newChat, which clears it).
-  openChat: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.chat); },
+  openChat: () => { set({ notifOpen: false, mobileNavOpen: false }); get()._navigate?.(VIEW_PATH.chat); },
 
-  openToday: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.today); },
+  openToday: () => { set({ notifOpen: false, mobileNavOpen: false }); get()._navigate?.(VIEW_PATH.today); },
 
-  openTasks: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.tasks); },
+  openTasks: () => { set({ notifOpen: false, mobileNavOpen: false }); get()._navigate?.(VIEW_PATH.tasks); },
 
-  openResearch: () => { set({ notifOpen: false }); get()._navigate?.(VIEW_PATH.research); },
-
-  openCompare: () => { set({ notifOpen: false }); get()._navigate?.('/?compare=1'); },
-
+  openResearch: () => { set({ notifOpen: false, mobileNavOpen: false }); get()._navigate?.(VIEW_PATH.research); },
 
   focusItem: (id) => set((s) => ({ focusItemId: id, focusItemTick: s.focusItemTick + 1 })),
 
@@ -596,7 +686,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   // gallery by clearing any prior selection. Always refreshes the list so a
   // just-created artifact shows up.
   openArtifacts: (id) => {
-    set({ notifOpen: false, selectedArtifactId: id ?? null });
+    set({ notifOpen: false, selectedArtifactId: id ?? null, mobileNavOpen: false });
     get()._navigate?.(VIEW_PATH.artifacts);
     void get().loadArtifacts();
   },
@@ -693,10 +783,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       await get().loadArtifacts();
       if (created) {
         set({ selectedArtifactId: created.id, artifactGenerating: false });
-        get().toast(`已生成 · ${created.title}`);
+        get().toast(`已创建 · ${created.title}`);
       } else {
         set({ artifactGenerating: false });
-        get().toast('这次没有生成卡片，换个说法再试试');
+        get().toast('这次没有创建数据视图，换个说法再试试');
       }
     } catch (error) {
       console.error('[artifacts] shortcut failed:', String(error));

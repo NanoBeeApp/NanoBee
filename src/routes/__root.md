@@ -17,6 +17,24 @@ QueryClientProvider.
 
 ## Change history
 
+### 2026-06-15 — global error boundary + mobile CSS
+- **Motivation**: a crashed React subtree left a blank white screen; mobile devices
+  got an unusable overflowing two-column layout.
+- **Changes**:
+  - Wraps `{children}` with `<ErrorBoundary>` (from `src/components/common/ErrorBoundary.tsx`)
+    as the root-level catch-all for any uncaught render error.
+  - Adds `mobile.css` as the last stylesheet link (after `app.css`) so the
+    mobile overrides win on specificity; load order mirrors the "tokens → base →
+    app → mobile" chain documented in the link list.
+
+### 2026-06-15 — mount LocaleProvider for i18n
+- **Motivation**: Phase 1 i18n foundation requires a React context that wraps the
+  whole tree so `useT()` and `useLocale()` work from any component.
+- **Changes**: imports `LocaleProvider` from `@/lib/i18n/LocaleContext` and wraps
+  the `ErrorBoundary` + `{children}` subtree inside it. `LocaleProvider` reads the
+  persisted locale from localStorage on mount (default "zh"); the choice is live for
+  the whole session and survives reload.
+
 ### 2026-06-12 — created
 - **Motivation**: integrate the client-side prototype (built in a parallel
   session from the approved design) into the TanStack Start template, which

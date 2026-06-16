@@ -19,3 +19,6 @@ formerly the `AiProviderSetupDialog` modal.
   with its own URL.
 - **Goal**: `/settings` is a first-class, deep-linkable page; the modal dialog
   (and its first-login auto-open) is removed in favor of this route.
+### 2026-06-15 — added errorComponent
+- **Motivation**: per-route error isolation via RouteErrorFallback.
+

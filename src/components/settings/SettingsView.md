@@ -37,6 +37,12 @@ loading / signed-out states.
   added page heading + loading / signed-out states; the old `onboarding/`
   dialog + form files were deleted.
 
+### 2026-06-15 — i18n Phase 1: page heading / subtitle / states via useT()
+- **Motivation**: i18n foundation requires all wired surfaces to use the t() function.
+- **Changes**: imports `useT` from `@/lib/i18n/LocaleContext`; page title, subtitle,
+  loading text, signed-out prompt, and login button label are now `t('settings.*')`
+  calls. Locale changes (zh ↔ en) reflect live without a reload.
+
 ### 2026-06-15 — wire NotificationSettings into SettingsView
 - **Motivation**: expose notification preferences on the /settings page.
 - **Changes**: pass `userSignedIn={true}` to `AiSettingsForm` (the

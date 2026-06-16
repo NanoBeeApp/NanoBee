@@ -4,6 +4,10 @@
 // a connection test. Stateless except for UI-only password-visibility toggles;
 // all data + callbacks come from SettingsView. Rendered inline on the /settings
 // page (no modal scrim) — changes auto-save, so there is no save/cancel pair.
+//
+// Change history:
+//   2026-06-15  Wired i18n Phase 1: settings page heading/subtitle/states and
+//               a new Language pane added to the master list (zh / en switcher).
 
 import { useState } from "react";
 import { Icons } from "../../icons/icons";
@@ -18,6 +22,9 @@ import {
 } from "../../lib/ai-providers";
 import type { TestConnectionResult } from "../../lib/useAiSettings";
 import { useAuthUser } from "../../lib/useAuth";
+import { useLocale, useT } from "../../lib/i18n/LocaleContext";
+import type { Locale } from "../../lib/i18n";
+import { SUPPORTED_LOCALES } from "../../lib/i18n";
 import { AccountSection } from "./AccountSection";
 import { NotificationSettings } from "./NotificationSettings";
 
@@ -72,10 +79,12 @@ export function AiSettingsForm(props: AiSettingsFormProps) {
 	const [showKey, setShowKey] = useState(false);
 	const [showWebSearchKey, setShowWebSearchKey] = useState(false);
 	// Which detail pane is shown: an AI model provider, web search, notification
-	// preferences, or account management.
-	const [activePane, setActivePane] = useState<"provider" | "websearch" | "notifications" | "account">("provider");
+	// preferences, account management, or language.
+	const [activePane, setActivePane] = useState<"provider" | "websearch" | "notifications" | "account" | "language">("provider");
 	const { data: authUser } = useAuthUser();
 	const webSearchInfo = getWebSearchProviderInfo(values.webSearchProvider);
+	const { t } = useT();
+	const { locale, setLocale } = useLocale();
 
 	// A model is "from the list" only when it matches a fetched id; otherwise the
 	// select shows the placeholder and the text input carries the manual value.
@@ -150,6 +159,22 @@ export function AiSettingsForm(props: AiSettingsFormProps) {
 						</span>
 						<span className="nb-ai-prow-name">通知</span>
 					</button>
+					<button
+						type="button"
+						className={`nb-ai-prow${activePane === "language" ? " selected" : ""}`}
+						aria-current={activePane === "language"}
+						onClick={() => setActivePane("language")}
+						data-testid="settings-language-entry"
+					>
+						<span
+							className="nb-ai-prow-logo"
+							style={{ background: "rgba(26,127,85,0.10)", color: "var(--success)" }}
+							aria-hidden="true"
+						>
+							<Icons.globe size={15} />
+						</span>
+						<span className="nb-ai-prow-name">{t('settings.language.sectionLabel')}</span>
+					</button>
 					{authUser && (
 						<button
 							type="button"
@@ -183,12 +208,14 @@ export function AiSettingsForm(props: AiSettingsFormProps) {
 			</div>
 
 			{/* Detail: AI model provider settings, standalone web search settings,
-			    notification preferences, or account management. */}
+			    notification preferences, account management, or language. */}
 			<div className={`nb-ai-detail${activePane === "account" ? " nb-ai-detail--account" : ""}`}>
 				{activePane === "notifications" ? (
 					<NotificationSettings userEnabled={props.userSignedIn ?? false} />
 				) : activePane === "account" ? (
 					authUser ? <AccountSection user={authUser} /> : null
+				) : activePane === "language" ? (
+					<LanguagePane locale={locale} onSetLocale={setLocale} t={t} />
 				) : activePane === "provider" ? (
 					<>
 						<div className="nb-ai-detail-head">
@@ -374,6 +401,85 @@ export function AiSettingsForm(props: AiSettingsFormProps) {
 				)}
 			</div>
 		</div>
+	);
+}
+
+// ── Language pane ─────────────────────────────────────────────────────────────
+
+// Map locale code to its i18n key so the label itself can be translated.
+const LOCALE_LABEL_KEY: Record<Locale, 'settings.language.zh' | 'settings.language.en'> = {
+	zh: 'settings.language.zh',
+	en: 'settings.language.en',
+};
+
+interface LanguagePaneProps {
+	locale: Locale;
+	onSetLocale: (locale: Locale) => void;
+	t: (key: Parameters<ReturnType<typeof useT>['t']>[0]) => string;
+}
+
+/**
+ * Language switcher detail pane shown in the Settings master-detail layout.
+ * Renders one button per supported locale; the active locale gets the
+ * selected visual state. Changing locale is instant and persisted to
+ * localStorage via the LocaleContext setLocale.
+ */
+function LanguagePane({ locale, onSetLocale, t }: LanguagePaneProps) {
+	return (
+		<>
+			<div className="nb-ai-detail-head">
+				<div className="title" data-testid="settings-language-title">
+					{t('settings.language.sectionLabel')}
+				</div>
+				<div className="sub">
+					Choose the display language for the app shell.
+				</div>
+			</div>
+			<div className="field">
+				<div
+					role="radiogroup"
+					aria-label={t('settings.language.sectionLabel')}
+					style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+					data-testid="language-switcher"
+				>
+					{SUPPORTED_LOCALES.map((code) => {
+						const selected = locale === code;
+						return (
+							<button
+								key={code}
+								type="button"
+								role="radio"
+								aria-checked={selected}
+								className={`nb-ai-prow${selected ? ' selected' : ''}`}
+								style={{ width: '100%' }}
+								onClick={() => onSetLocale(code)}
+								data-testid={`language-option-${code}`}
+							>
+								<span
+									className="nb-ai-prow-logo"
+									style={{
+										background: selected ? 'rgba(99,91,255,0.12)' : 'var(--surface-2)',
+										color: selected ? 'var(--brand-2)' : 'var(--ink-3)',
+									}}
+									aria-hidden="true"
+								>
+									<Icons.globe size={14} />
+								</span>
+								<span className="nb-ai-prow-name">{t(LOCALE_LABEL_KEY[code])}</span>
+								{selected && (
+									<span
+										className="nb-ai-prow-tag"
+										style={{ marginLeft: 'auto' }}
+									>
+										✓
+									</span>
+								)}
+							</button>
+						);
+					})}
+				</div>
+			</div>
+		</>
 	);
 }
 

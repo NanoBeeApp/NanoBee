@@ -31,3 +31,6 @@ layout outlet.
 - **Motivation**: give the research view its own URL (`/research`); previously
   it was reached only via the zustand `view` flag on the single `/` route.
 - **Goal**: deep-linkable, back/forward-friendly navigation per view.
+### 2026-06-15 — added errorComponent
+- **Motivation**: per-route error isolation via RouteErrorFallback.
+

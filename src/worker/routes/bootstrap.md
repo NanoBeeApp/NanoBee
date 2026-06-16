@@ -6,8 +6,10 @@ conversations, tasks, Today updates) in one round-trip. The database always
 starts empty; returned state reflects only real user activity.
 
 ## Core exports / API
-- `bootstrapRoutes` — Hono sub-app: `GET /` → `{ chats, conversations, tasks, updates }` | `500`
+- `bootstrapRoutes` — Hono sub-app: `GET /` → `{ chats, conversations, pagination, tasks, updates, onboardingDone }` | `500`
   - Results are scoped to the caller's owner bucket (signed-in user id or `"anon"`).
+  - `conversations`: the most recent 30 messages per chat (oldest→newest within the window).
+  - `pagination`: `Record<chatId, { hasMore: boolean, oldestRowid: number | null }>` — per-chat cursor for load-older requests.
 
 ## Dependencies
 - Upstream: `db/repo`, `db/seed`, `auth/cookies`, `auth/store`, `../api-worker` (Env type)
@@ -41,6 +43,18 @@ starts empty; returned state reflects only real user activity.
 ### 2026-06-15 — include onboardingDone in bootstrap response (migration 0017)
 - **Motivation**: the onboarding flow needs the flag without a second round-trip.
 - **Change**: `resolveOwner` now returns both `owner` and `userId`; a separate D1 query reads `users.onboarding_done`; users with existing tasks are auto-completed to avoid showing the flow to active users after the migration is applied. The response now includes `onboardingDone: boolean`.
+
+### 2026-06-15 — message pagination: trimmed bootstrap conversations
+- **Motivation**: the bootstrap payload was returning every message of every chat
+  (no limit), which bloats the initial response for users with long conversation
+  histories.
+- **Change**: switched from `listConversations` (full history) to
+  `listConversationsTrimmed` (last 30 per chat). The response now includes a
+  `pagination` field: `Record<chatId, { hasMore, oldestRowid }>` so the frontend
+  can offer to load older pages on demand via `GET /api/chats/:id/messages`.
+- **Key decision**: the trimming is done in JS (not SQL window functions) because
+  D1's window function support is limited; at the expected scale (≤hundreds of
+  messages per user at bootstrap) the full-table scan is acceptable.
 
 ### 2026-06-15 — multi-tenant owner isolation + lazy anon seed
 - **Motivation**: migration 0012 adds `owner` columns to all four core tables. Each user
