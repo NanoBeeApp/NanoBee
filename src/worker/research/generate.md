@@ -26,6 +26,15 @@ reply against the contract, and retries once with a repair instruction.
 
 ## Change history
 
+### 2026-06-16 — default model → DeepSeek V4 Flash: widen the per-call timeout
+- **Motivation**: the backend default switched to DeepSeek V4 Flash, which is
+  much slower on the large outline payload (~100s observed vs ~34s on the prior
+  Gemini default) — close enough to the 120s window to risk timeouts on heavier
+  topics.
+- **Change**: `CALL_OPTS.timeoutMs` 120_000 → 150_000; the root-cause comment was
+  generalized so it no longer hard-codes Gemini's reasoning behavior. `maxTokens`
+  stays 16_000 (payload size, not the model, drives it).
+
 ### 2026-06-16 — Fix /generate 502 (raise the token budget)
 - **Motivation**: `POST /api/research/generate` returned 502 for outline mode.
   The failure trace showed both the first reply and the repair retry truncated

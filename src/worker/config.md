@@ -15,6 +15,18 @@ default list limit). Route files must reference this instead of hardcoding.
 
 ## Change history
 
+### 2026-06-16 — raise AI.REQUEST_TIMEOUT_MS 30s → 60s (default model is slower)
+- **Motivation**: the backend default model switched to DeepSeek V4 Flash, which
+  is markedly slower than the previous Gemini default (a long answer plus its
+  reasoning trace can run tens of seconds). The 30s chat timeout risked aborting
+  legitimate long completions.
+- **Change**: `AI.REQUEST_TIMEOUT_MS` → 60_000; generalized the
+  `MAX_COMPLETION_TOKENS` comment so it no longer hard-codes Gemini's reasoning
+  behavior. (Research generation keeps its own larger per-call window in
+  `worker/research/generate.ts`.)
+- **Key decision**: raise the ceiling only — normal fast replies are unaffected;
+  a genuinely stuck call still aborts before any client gives up.
+
 ### 2026-06-12 — created
 - **Motivation**: template init; repo rule forbids duplicating magic
   strings/numbers across files.

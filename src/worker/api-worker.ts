@@ -27,7 +27,7 @@ export type Env = {
 	GITHUB_CLIENT_ID?: string;
 	GITHUB_CLIENT_SECRET?: string;
 	// Built-in OpenRouter key — the backend default AI provider
-	// (Gemini 3.5 Flash) for users who haven't supplied their own key
+	// (DeepSeek V4 Flash) for users who haven't supplied their own key
 	OPENROUTER_API_KEY?: string;
 	// Built-in Tavily key — the default for the web-search tool when the
 	// user hasn't entered their own key in the AI settings dialog

@@ -18,19 +18,21 @@ export const CONFIG = {
 	DEFAULT_LIST_LIMIT: 50,
 
 	// AI chat-completion settings (provider catalog lives in src/lib/ai-providers.ts;
-	// the backend default is OpenRouter + Gemini 3.5 Flash via OPENROUTER_API_KEY)
+	// the backend default is OpenRouter + DeepSeek V4 Flash via OPENROUTER_API_KEY)
 	AI: {
-		// Abort slow provider calls so the chat request never hangs
-		REQUEST_TIMEOUT_MS: 30_000,
+		// Abort slow provider calls so the chat request never hangs. The default
+		// DeepSeek V4 Flash is markedly slower than the previous Gemini default
+		// (a long answer plus reasoning can run tens of seconds), so this leaves
+		// headroom; a stuck call still aborts before a client would give up.
+		REQUEST_TIMEOUT_MS: 60_000,
 		// Ceiling on a single completion. This is the OpenAI-style "max
-		// completion tokens", which for reasoning models (the default
-		// Gemini 3.5 Flash reasons mandatorily, ~1000-1300 tokens per turn,
-		// and reasoning cannot be disabled or meaningfully capped on OpenRouter)
-		// is shared by the hidden reasoning trace AND the visible answer. It
-		// must therefore be generous enough to leave room for the answer after
-		// reasoning, or replies get truncated mid-sentence (finish_reason:
-		// "length"). It is a safety ceiling, not a target length — answer
-		// brevity, if wanted, belongs in the prompt, not in a tiny cap.
+		// completion tokens", which for reasoning-capable models — and the
+		// flash-tier defaults typically do reason — is shared by the hidden
+		// reasoning trace AND the visible answer. It must therefore be generous
+		// enough to leave room for the answer after reasoning, or replies get
+		// truncated mid-sentence (finish_reason: "length"). It is a safety
+		// ceiling, not a target length — answer brevity, if wanted, belongs in
+		// the prompt, not in a tiny cap.
 		MAX_COMPLETION_TOKENS: 4096,
 		// Upper bound on user-supplied key / URL / model field lengths
 		MAX_FIELD_LENGTH: 300,

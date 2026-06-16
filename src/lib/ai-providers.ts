@@ -2,7 +2,7 @@
  * AI provider catalog shared by the worker and the frontend.
  * Pure data with no platform dependencies, so both sides agree on the same
  * provider list and defaults. NanoBee's backend default is OpenRouter
- * running Gemini 3.5 Flash (`google/gemini-3.5-flash`).
+ * running DeepSeek V4 Flash (`deepseek/deepseek-v4-flash`).
  */
 
 export type AiProviderId =
@@ -48,11 +48,11 @@ export const AI_PROVIDERS: AiProviderInfo[] = [
 		id: "openrouter",
 		label: "OpenRouter",
 		defaultBaseUrl: "https://openrouter.ai/api/v1",
-		defaultModel: "google/gemini-3.5-flash",
+		defaultModel: "deepseek/deepseek-v4-flash",
 		protocol: "openai",
 		keyOptional: true,
 		canListModels: true,
-		hint: "默认推荐。不填 API Key 时使用 NanoBee 内置额度（Gemini 3.5 Flash）。",
+		hint: "默认推荐。不填 API Key 时使用 NanoBee 内置额度（DeepSeek V4 Flash）。",
 	},
 	{
 		id: "openai",
@@ -176,7 +176,7 @@ export const AI_PROVIDERS: AiProviderInfo[] = [
 	},
 ];
 
-/** Backend default: OpenRouter + Gemini 3.5 Flash via NanoBee's built-in key. */
+/** Backend default: OpenRouter + DeepSeek V4 Flash via NanoBee's built-in key. */
 export const DEFAULT_AI_PROVIDER: AiProviderId = "openrouter";
 
 export const AI_PROVIDER_IDS = AI_PROVIDERS.map((p) => p.id) as [

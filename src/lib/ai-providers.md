@@ -22,7 +22,7 @@ and the frontend (setup dialog UI), so the two can never disagree.
   `lib/useAiSettings.ts`, `components/onboarding/*`
 
 ## Notes
-- The backend default model is `google/gemini-3.5-flash` on OpenRouter
+- The backend default model is `deepseek/deepseek-v4-flash` on OpenRouter
   (verified live against the OpenRouter models API).
 - `hint` strings are zh-CN UI copy rendered under the provider picker.
 - `canListModels` gates the "auto-fetch models" button; Zhipu and DashScope
@@ -31,6 +31,18 @@ and the frontend (setup dialog UI), so the two can never disagree.
   non-OpenAI vendors are reached through their OpenAI-compatible endpoints.
 
 ## Change history
+
+### 2026-06-16 — switch backend default model to DeepSeek V4 Flash
+- **Motivation**: per request, the built-in (no-key) experience should run on
+  DeepSeek V4 Flash instead of Gemini 3.5 Flash.
+- **Change**: `openrouter.defaultModel` → `deepseek/deepseek-v4-flash` (slug
+  verified live against the OpenRouter models API); zh-CN `hint` updated to
+  match. `DEFAULT_AI_PROVIDER` stays `"openrouter"`.
+- **Key decision**: change only the single source-of-truth `defaultModel`; the
+  worker `defaultConfig`/fallback and the frontend setup form both read it. The
+  model-compare preset list keeps its Gemini 3.5 Flash entry (an option there,
+  not the default). DeepSeek V4 Flash is noticeably slower, so chat / research
+  call timeouts were given more headroom (see config.ts / research/generate.ts).
 
 ### 2026-06-12 — add mainstream providers + model-list flag
 - **Motivation**: users asked to configure any mainstream LLM provider from the

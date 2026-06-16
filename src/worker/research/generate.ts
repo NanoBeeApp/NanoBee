@@ -43,13 +43,15 @@ export class ResearchGenerationError extends Error {
 // mode is the worst case: a strict-JSON `outline` title tree PLUS a full
 // mirrored `outlineBriefs` tree (every title duplicated, each node carrying a
 // ≤120-char brief) for a 5–8 node, 2–5 children-each tree — easily ~8–11k
-// output tokens. On the default Gemini 3.5 Flash that budget is ALSO shared
-// with ~1000–1300 mandatory reasoning tokens (see CONFIG.AI note), so a 4k cap
-// truncated the JSON mid-string → invalid JSON → both the first parse and the
-// repair retry failed → the route 502'd. Give it a budget that comfortably
-// fits the whole tree (it is a ceiling, not a target — the model stops when the
-// JSON closes), with matching timeout headroom for the longer generation.
-const CALL_OPTS = { maxTokens: 16_000, timeoutMs: 120_000 } as const;
+// output tokens, and on a reasoning default model that budget is also shared
+// with the hidden reasoning trace, so the old 4k cap truncated the JSON
+// mid-string → invalid JSON → both the first parse and the repair retry failed
+// → the route 502'd. Give it a budget that comfortably fits the whole tree (a
+// ceiling, not a target — the model stops when the JSON closes). The timeout is
+// generous because the default DeepSeek V4 Flash is slow on a payload this
+// large (~100s observed); each model call (incl. the repair retry) gets its
+// own window.
+const CALL_OPTS = { maxTokens: 16_000, timeoutMs: 150_000 } as const;
 
 /** The mode that produced this run: explicit, else inferred from `question`. */
 function deriveKind(input: ResearchGenerationInput): ResearchTraceKind {

@@ -2,7 +2,7 @@
  * Per-user AI provider settings: D1 repository + runtime config resolution.
  * The chat pipeline asks `resolveAiConfig` which provider/model/key to use;
  * users without settings (or signed-out visitors) get the backend default —
- * OpenRouter + Gemini 3.5 Flash with NanoBee's built-in OPENROUTER_API_KEY.
+ * OpenRouter + DeepSeek V4 Flash with NanoBee's built-in OPENROUTER_API_KEY.
  */
 
 import type { D1Database } from "@cloudflare/workers-types";
@@ -176,7 +176,7 @@ export async function resolveWebSearchKey(
 	return key ? { provider: DEFAULT_WEB_SEARCH_PROVIDER, key } : null;
 }
 
-/** Backend default config (OpenRouter + Gemini 3.5 Flash, built-in key). */
+/** Backend default config (OpenRouter + DeepSeek V4 Flash, built-in key). */
 function defaultConfig(env: Env): AiRuntimeConfig {
 	const info = getProviderInfo(DEFAULT_AI_PROVIDER);
 	return {

@@ -5,7 +5,7 @@ Per-user AI provider settings: D1 repository (read/upsert on the
 `user_ai_settings` table) plus runtime resolution. `resolveAiConfig` answers
 "which provider / base URL / model / API key should this request use" — the
 user's saved settings when present, otherwise the backend default
-(OpenRouter + Gemini 3.5 Flash with the built-in `OPENROUTER_API_KEY`).
+(OpenRouter + DeepSeek V4 Flash with the built-in `OPENROUTER_API_KEY`).
 
 ## Core exports / API
 - `getUserAiSettings(db, userId)` → `UserAiSettings | null` (key masked to
