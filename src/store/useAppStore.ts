@@ -880,6 +880,74 @@ export const useAppStore = create<AppState>((set, get) => ({
   sendQuick: async (text) => {
     if (!text.trim()) return;
     const s = get();
+
+    // On the research canvas (with an open project) the quick chat is research-
+    // aware: the question becomes a new node at the very TOP of the canvas +
+    // sidebar outline, its article streams as the answer, and the SAME answer is
+    // mirrored here into the popup bubble. The node carries the grounding (it
+    // reads whatever node the user is currently viewing) — see askOnCanvas.
+    const research = useResearchStore.getState();
+    if (s.view === 'research' && research.phase === 'canvas' && research.order.length > 0) {
+      let id = s.quickChatId;
+      const userMessageId = nextId();
+      const patch: Partial<AppState> = { quickPending: true };
+      if (!id) {
+        id = nextId('c');
+        patch.quickChatId = id;
+        patch.sessionMeta = {
+          ...s.sessionMeta,
+          [id]: { id, title: truncateTitle(text), topicId: s.quickCtx?.topicId ?? 'gold' },
+        };
+      }
+      patch.convos = {
+        ...s.convos,
+        [id]: [...(s.convos[id] ?? []), { id: userMessageId, role: 'user', text }],
+      };
+      set(patch);
+      const chatId = id;
+
+      // Mirror the node's streamed article into a popup bubble, created lazily on
+      // the first token so the thinking indicator stays up until the answer
+      // actually starts (matches the main chat stream).
+      let placeholderId: string | null = null;
+      const onContent = (partial: string) => {
+        if (!placeholderId) {
+          placeholderId = nextId('m');
+          const ph: AiMessage = { id: placeholderId, role: 'ai', md: partial, paras: [], streaming: true };
+          set((st) => ({
+            quickPending: false,
+            convos: { ...st.convos, [chatId]: [...(st.convos[chatId] ?? []), ph] },
+          }));
+        } else {
+          patchConvo(set, chatId, (msgs) =>
+            msgs.map((m) => (m.id === placeholderId ? { ...(m as AiMessage), md: partial } : m)),
+          );
+        }
+      };
+
+      const res = await useResearchStore.getState().askOnCanvas(text.trim(), onContent);
+      set({ quickPending: false });
+      if (res && placeholderId) {
+        patchConvo(set, chatId, (msgs) =>
+          msgs.map((m) => (m.id === placeholderId ? { ...(m as AiMessage), md: res.content, streaming: false } : m)),
+        );
+      } else if (!res) {
+        const failMd = '抱歉，这条没能生成出来，请稍后再试。';
+        if (placeholderId) {
+          patchConvo(set, chatId, (msgs) =>
+            msgs.map((m) => (m.id === placeholderId ? { ...(m as AiMessage), md: failMd, streaming: false } : m)),
+          );
+        } else {
+          patchConvo(set, chatId, (msgs) => [
+            ...msgs,
+            { id: nextId('m'), role: 'ai', md: failMd, paras: [] } as AiMessage,
+          ]);
+        }
+        get().toast('生成失败，请稍后重试');
+      }
+      return;
+    }
+
     let id = s.quickChatId;
     const userMessageId = nextId();
     const patch: Partial<AppState> = { quickPending: true };

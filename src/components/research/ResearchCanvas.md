@@ -34,6 +34,17 @@ indented under its parent along a vertical rail.
 
 ## Change history
 
+### 2026-06-17 — Scroll to the focused node, not just the active one
+- **Motivation**: The canvas quick-chat (`askOnCanvas`) lights a freshly created
+  node WITHOUT opening its reading overlay (it sets only `highlightedNodeId`), so
+  the old `activeNodeId`-only scroll effect never brought the new top node into
+  view.
+- **Goal**: Scroll to whichever node is the current focus.
+- **Key decision**: Compute `scrollTarget = activeNodeId ?? highlightedNodeId` and
+  drive the scroll effect off it. The only new trigger is the lit-but-not-active
+  case (the quick-chat node); every existing flow sets both ids, so behavior is
+  unchanged elsewhere.
+
 ### 2026-06-15 — "查看大纲生成过程" debug entry under the banner
 - **Motivation**: the user wants to inspect, from the canvas, how the AI
   generated this outline (the left-side directory) — every execution step — for

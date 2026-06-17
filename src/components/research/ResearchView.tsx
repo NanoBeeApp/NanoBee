@@ -5,7 +5,9 @@
 // lives in the left sidebar (ResearchNavList → "新研究"), not on the canvas; the
 // only floating canvas chrome is a transient generation-status / error pill.
 
+import { useEffect } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
+import { useAppStore } from "../../store/useAppStore";
 import { useResearchUrlSync } from "./useResearchUrlSync";
 import { ResearchWelcome } from "./ResearchWelcome";
 import { ResearchCanvas } from "./ResearchCanvas";
@@ -23,6 +25,22 @@ export function ResearchView() {
   // Re-mount the canvas per topic so each project initialises (and restores) its
   // own saved pan/zoom independently — see ResearchCanvas' viewport memory.
   const projectId = useResearchStore((s) => s.projectId);
+
+  // Tell the quick chat what the user is currently looking at on the canvas (the
+  // open reading overlay, or the lit card) so its "正在看 · …" chip is specific
+  // and the model grounds the answer in that node. Cleared on leaving the page.
+  const viewingId = useResearchStore((s) => s.activeNodeId ?? s.highlightedNodeId);
+  const viewingTitle = useResearchStore((s) => {
+    const id = s.activeNodeId ?? s.highlightedNodeId;
+    return id ? s.nodes[id]?.title ?? null : null;
+  });
+  const setQuickCtx = useAppStore((s) => s.setQuickCtx);
+  useEffect(() => {
+    setQuickCtx(
+      viewingId && viewingTitle ? { id: viewingId, title: viewingTitle, topicId: "gold" } : null,
+    );
+  }, [viewingId, viewingTitle, setQuickCtx]);
+  useEffect(() => () => setQuickCtx(null), [setQuickCtx]);
 
   if (phase === "welcome") {
     return (

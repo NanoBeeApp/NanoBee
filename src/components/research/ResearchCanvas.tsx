@@ -119,15 +119,19 @@ export function ResearchCanvas() {
     setT((prev) => ({ ...prev, ty: prev.ty + deltaY }));
   }, []);
 
-  // Scroll to the active node (sidebar row, deep link, grown child, canvas card
-  // click). rAF lets a just-created card lay out first.
+  // Scroll to the focused node (sidebar row, deep link, grown child, canvas card
+  // click). The canvas quick-chat lights a fresh node WITHOUT opening its reading
+  // overlay (it only sets `highlightedNodeId`), so we scroll to whichever is the
+  // current focus — the open node, else the lit one. rAF lets a just-created card
+  // lay out first.
+  const scrollTarget = activeNodeId ?? highlightedNodeId;
   useEffect(() => {
-    if (!activeNodeId) return;
-    if (scrolledTo.current === activeNodeId) return;
-    scrolledTo.current = activeNodeId;
-    const raf = requestAnimationFrame(() => nudgeToCard(activeNodeId));
+    if (!scrollTarget) return;
+    if (scrolledTo.current === scrollTarget) return;
+    scrolledTo.current = scrollTarget;
+    const raf = requestAnimationFrame(() => nudgeToCard(scrollTarget));
     return () => cancelAnimationFrame(raf);
-  }, [activeNodeId, nudgeToCard]);
+  }, [scrollTarget, nudgeToCard]);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {

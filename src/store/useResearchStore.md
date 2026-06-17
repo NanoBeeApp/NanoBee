@@ -31,6 +31,22 @@ snapshot persistence.
 
 ## Change history
 
+### 2026-06-17 — Add `askOnCanvas` for research-aware quick chat
+- **Motivation**: On the research canvas the quick chat should feed the canvas:
+  a question asked there should become a node at the very TOP of the outline
+  (leading both the canvas and the sidebar tree), grounded in what the user is
+  currently looking at.
+- **Goal**: One action that spawns the node, streams the answer as its article,
+  and mirrors the streamed text back to the caller (the popup).
+- **Key decision**: Insert the node at `order` index 1 (first child of the root)
+  so it tops the outline; only LIGHT it (`highlightedNodeId`), deliberately NOT
+  setting `activeNodeId`, so the full reading overlay stays closed — the answer
+  already lives in the quick-chat popup and the canvas just scrolls to the lit
+  card. Reuses `generateContentStream` (content mode) grounded in the currently
+  viewed node (`activeNodeId ?? highlightedNodeId`) captured before the highlight
+  moves. `onContent` callback lets `useAppStore.sendQuick` mirror the same answer
+  into the popup bubble.
+
 ### 2026-06-15 — Fix TS 5.9 `never` narrowing in `generateContentStream`
 - **Motivation**: TypeScript 5.9 tightened control-flow analysis for
   closure-mutated `let` variables; `result` (written inside `handleFrame`) was

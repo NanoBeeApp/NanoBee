@@ -58,6 +58,20 @@ interface ResearchState {
   ) => Promise<void>;
   /** Ask a custom follow-up answered inline (chat-style) below the node's article. */
   askInReading: (nodeId: string, question: string) => Promise<void>;
+  /**
+   * Ask a question from the canvas quick-chat. Spawns a NEW node from the
+   * question and inserts it at the very top of the outline (the first child of
+   * the root), so it leads both the canvas and the sidebar tree. The answer
+   * streams in as that node's article and is mirrored to `onContent` so the
+   * quick-chat popup shows the same answer. Grounded in whatever node the user
+   * is currently viewing. Returns the final article text (null on failure) so
+   * the caller can finalize its popup bubble. No-ops (returns null) when no
+   * project is open.
+   */
+  askOnCanvas: (
+    question: string,
+    onContent?: (partial: string) => void,
+  ) => Promise<{ content: string } | null>;
   closeReading: () => void;
   /** Load a project; optionally open `openNodeId`'s reading overlay (deep link). */
   loadProject: (id: string, openNodeId?: string) => Promise<void>;
@@ -536,6 +550,97 @@ export const useResearchStore = create<ResearchState>((set, get) => {
           : { ...t, status: "failed" },
       );
       schedulePersist();
+    },
+
+    askOnCanvas: async (questionRaw, onContent) => {
+      const question = questionRaw.trim();
+      if (!question) return null;
+      const s = get();
+      const rootId = s.order[0];
+      if (!rootId) return null; // no open project — nothing to attach to
+
+      // Ground the answer in the node the user is currently looking at (the open
+      // reading overlay, or the lit card) — captured BEFORE we steal the
+      // highlight for the new node below.
+      const viewingId = s.activeNodeId ?? s.highlightedNodeId;
+      const viewing = viewingId ? s.nodes[viewingId] : null;
+      const context = [
+        s.topic,
+        viewing ? `当前正在看：${viewing.title}` : null,
+        viewing?.summary,
+        viewing?.content?.slice(0, 1500),
+      ]
+        .filter(Boolean)
+        .join(" / ");
+
+      // The new node leads the root's children: splice it in at `order` index 1
+      // (right after the root) so it tops both the canvas outline and the
+      // sidebar tree. We only LIGHT it (highlightedNodeId) — we deliberately do
+      // NOT set activeNodeId, so the full reading overlay stays closed: the
+      // answer already lives in the quick-chat popup, and the canvas just scrolls
+      // to the lit card (see ResearchCanvas' scrollTarget). The user can click
+      // the card later to read it in the overlay.
+      const nodeId = nextId("rn");
+      const node: ResearchNode = {
+        id: nodeId,
+        parentId: rootId,
+        depth: 1,
+        title: question,
+        status: "loading",
+        sourceQuestion: question,
+        needsContent: true,
+      };
+      set((st) => {
+        const order = [...st.order];
+        order.splice(1, 0, nodeId);
+        return {
+          nodes: { ...st.nodes, [nodeId]: node },
+          order,
+          highlightedNodeId: nodeId,
+          projectHighlighted: false,
+        };
+      });
+
+      const { result, trace } = await generateContentStream(
+        { topic: s.topic, question, context: context || undefined },
+        (partial) => {
+          set((st) => {
+            const prev = st.nodes[nodeId];
+            if (!prev) return {};
+            return { nodes: { ...st.nodes, [nodeId]: { ...prev, content: partial } } };
+          });
+          onContent?.(partial);
+        },
+      );
+      // Stash the article-generation trace under this node's id (even on failure)
+      // so its reading overlay can open the "生成过程" debug modal.
+      if (trace) set((st) => ({ traces: { ...st.traces, [nodeId]: trace } }));
+      set((st) => {
+        const prev = st.nodes[nodeId];
+        if (!prev) return {};
+        if (!result) {
+          // Drop partial streamed text so the failed node shows a clean error
+          // state rather than half an article.
+          return { nodes: { ...st.nodes, [nodeId]: { ...prev, content: undefined, status: "failed" } } };
+        }
+        return {
+          nodes: {
+            ...st.nodes,
+            [nodeId]: {
+              ...prev,
+              content: result.content,
+              questions: result.questions,
+              brief: result.summary,
+              summary: result.summary,
+              tags: result.tags,
+              status: "ready",
+              needsContent: false,
+            } as ResearchNode,
+          },
+        };
+      });
+      schedulePersist();
+      return result ? { content: result.content } : null;
     },
 
     closeReading: () => set({ activeNodeId: null }),

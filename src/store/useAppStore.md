@@ -22,6 +22,20 @@ Global zustand store: navigation (view, active chat/topic, collapse states), cha
 
 ## Change history
 
+### 2026-06-17 — `sendQuick`: research-aware branch on the canvas
+- **Motivation**: On the research canvas a quick-chat question should land on the
+  canvas (a new node at the top of the outline + sidebar), with the SAME streamed
+  answer mirrored into the popup bubble.
+- **Changes**:
+  - `sendQuick` now detects the research canvas (`view === 'research'` + an open
+    project via `useResearchStore`) and, in that case, delegates generation to
+    `useResearchStore.askOnCanvas(text, onContent)`. The node carries the answer;
+    `onContent` lazily creates a streaming popup bubble and updates it token by
+    token (mirrors the main chat stream), finalized on completion (or an error
+    bubble + toast on failure). The generic quick-chat path is unchanged.
+  - The model grounding is handled inside `askOnCanvas` (it reads the node the
+    user is viewing), so this branch passes no extra context.
+
 ### 2026-06-15 — switch pagination cursor from oldestRowid to oldestCursor
 - **Motivation**: migration 0020 could not use `rowid` in `CREATE INDEX`; cursor switched to
   opaque `"<created_at>_<id>"` string. All `oldestRowid: number | null` references updated to

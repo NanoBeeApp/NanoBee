@@ -29,6 +29,15 @@ chrome is a transient generation-status / error pill. Imports the scoped
 
 ## Change history
 
+### 2026-06-17 — Feed the quick-chat "正在看 · …" context from the canvas
+- **Motivation**: The quick chat should know which node the user is currently
+  looking at on the canvas (so its chip is specific and the model grounds answers
+  in that node), mirroring how TodayView reports the in-view article.
+- **Goal**: Keep `useAppStore.quickCtx` in sync with the focused research node.
+- **Key decision**: An effect mirrors `activeNodeId ?? highlightedNodeId` (and its
+  title) into `setQuickCtx`, and clears it on unmount. Selectors read only the id +
+  title so streaming a node's body doesn't thrash the context.
+
 ### 2026-06-14 — Re-mount the canvas per topic (`key={projectId}`)
 - **Motivation**: per-topic canvas pan/zoom memory needs each project to start
   from its own saved viewport; keeping one long-lived canvas across topic
