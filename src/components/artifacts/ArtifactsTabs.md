@@ -1,23 +1,10 @@
-# components/artifacts/ArtifactsTabs.tsx
+# ArtifactsTabs
 
-## Responsibility
-Pure-render component for the tab bar at the top of the Artifacts page: two fixed personal tabs (`你创建的` (Your creations) / `你收藏的` (Your favorites)) plus category tabs (Finance / Tech / Developer …).
+Top tab bar for the Artifacts (数据视图) page: the two personal tabs (你创建的 /
+你收藏的) followed by the browse categories (科技 / 开发者 / 财经 / 新闻 / 生活).
+Pure render — the active tab + change handler come from the parent
+(`ArtifactsView` via `useArtifactsUrlSync`); the value is the URL `tab` param.
 
-## Core exports / API
-- `ArtifactsTabs({ activeTab, onSelect })`
-
-## Dependencies
-- Upstream: `artifacts/recommended.ts` (`ARTIFACT_CATEGORIES`), `icons/icons.tsx`
-- Downstream: `ArtifactsView.tsx`
-
-## Key implementation notes
-- Pure rendering; active state and the select callback come from the parent (via `useArtifactsUrlSync`); tab values are the URL `tab` parameter
-- Personal tabs and category tabs are separated by a blank gap (no hard divider line — follows the "reduce border emphasis" rule)
-- Each tab carries `role` / `aria-selected` and `data-testid`
-
-## Change history
-
-### 2026-06-15 — Created
-- **Motivation**: the artifacts page needed a top tab bar
-- **Goal**: pure-render bar with personal tabs + category tabs
-- **Key decisions**: categories sourced from the `recommended` module; pure rendering makes it easy to test; gap instead of divider
+## Change history & motivation
+- 2026-06-17 — Restyled from `nb-arti-tab` to the design's `af-tab` chrome
+  (underline-active, soft-tinted). Structure unchanged.

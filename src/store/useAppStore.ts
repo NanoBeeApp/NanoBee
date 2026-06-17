@@ -215,6 +215,9 @@ interface AppState {
   newChat: () => void;
   /** Start a fresh chat seeded toward task creation (sidebar "新建任务"). */
   newTask: () => void;
+  /** Start a fresh chat seeded with the user's own sentence, ready to compile a
+   *  task from it ("对话即配置" — the Tasks-page create bar). */
+  composeTask: (text: string) => void;
   /** Start a fresh chat seeded toward artifact creation (sidebar "新建 Artifact"). */
   newArtifact: () => void;
   /** Page-aware "new" dispatch bound to the sidebar button + ⌘N: chat → new
@@ -651,6 +654,15 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   newArtifact: () => {
     set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: ARTIFACT_SEED, mobileNavOpen: false });
+    get()._navigate?.(VIEW_PATH.chat);
+  },
+
+  // The Tasks-page create bar: drop the user into a fresh chat with their own
+  // sentence prefilled, so the agent compiles the trigger rule from it. Falls
+  // back to the generic task seed when the text is blank.
+  composeTask: (text) => {
+    const seed = text.trim() ? text.trim() : TASK_SEED;
+    set({ activeChatId: null, activeTopicId: null, notifOpen: false, quickCtx: null, composerSeed: seed, mobileNavOpen: false });
     get()._navigate?.(VIEW_PATH.chat);
   },
 

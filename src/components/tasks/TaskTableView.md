@@ -1,20 +1,10 @@
-# TaskTableView.tsx
+# TaskTableView
 
-## Responsibility
-Manager table view: dense rows with multi-select + a light bulk-action bar
-(pause/resume, move topic, export, delete) for the high-density "lots of tasks /
-batch results" case. The bulk bar is a pale floating strip (no dark block, per the
-white-surface rule).
+The compact table view of the manager: a scan-friendly grid (任务 / 类型 / 触发 /
+上次运行 / 下次 / 状态). Clicking a row opens the detail drawer. Pure render off
+the `TaskVM[]`.
 
-## Dependencies
-- Upstream: TaskTypeBadge, `taskMeta` (`statusLabel`, `statusTone`), `TasksEmpty`, `useAppStore` (`deleteTask`, `toast`), `src/types.ts` (`Task`)
-- Downstream: AllTasksView
-
-## Key implementation notes
-- Selection is local component state (a `Set<string>`); the bulk bar appears only when something is selected.
-
-## Change history
-
-### 2026-06-15 — Created
-- **Motivation**: Power users managing many/batch tasks need a sortable, multi-select table — kept off the home screen.
-- **Goal**: A dense table with multi-select bulk actions wired to the real store actions.
+## Change history & motivation
+- 2026-06-17 — Rewritten to the design's `tp-table` markup. Dropped the old
+  multi-select + bulk-action bar (not part of the design); selection/bulk-ops can
+  return later as a separate affordance if needed.

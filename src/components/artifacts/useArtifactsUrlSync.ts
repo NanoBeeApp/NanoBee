@@ -26,8 +26,9 @@ const routeApi = getRouteApi("/_app/artifacts");
 
 /** Default tab: a new user lands on "你创建的". */
 export const DEFAULT_ARTIFACTS_TAB = "mine";
-/** Default view mode: a quiet flat list rather than heavy cards. */
-export const DEFAULT_ARTIFACTS_VM: ArtifactsViewMode = "list";
+/** Default item view inside a data-view detail: the generative card templates
+ *  (the gallery itself has no view switch — `vm` only drives the detail). */
+export const DEFAULT_ARTIFACTS_VM: ArtifactsViewMode = "card";
 
 interface ArtifactsUrlState {
   tab: string;

@@ -1,13 +1,21 @@
-# DataViewDetail.tsx
+# DataViewDetail
 
-Detail surface for a data view (kind='data_view'). Header (title + refresh /
-favorite / delete) + source/filter sub-header + non-blocking PipelineStatusBar +
-a view switch (list / card / table / timeline) over the fetched item stream.
-Polls the store (loadArtifacts) every 2s while the pipeline is in progress and
-re-fetches items via `GET /api/artifacts/:id/items` as they land. Refresh hits
-`POST /api/artifacts/:id/refresh`. P1 implements list + card; table/timeline show
-a placeholder. View mode is local state (seeded from the view's defaultView).
+The detail surface for one data view, rebuilt to the design: header (back +
+source icon + title + source/filter + favorite/refresh/delete), a derived
+"概览" block, a non-blocking pipeline stepper while the async fetch runs, a count
++ card/list toolbar, and the item stream rendered with the generative card
+templates (`AFCards`) or a uniform list.
 
-## 变更历史与出发点
-- 2026-06-15 新建（P1）。取代旧 word-deck 详情对 data_view 的渲染（ArtifactDetail 按 kind 分支）。
-  视觉对齐 V2 设计稿（private/design/nanobee-data-views-agy-v2.html）。
+## Wiring
+- Items come from `GET /api/artifacts/:id/items`; while the pipeline runs it polls
+  `loadArtifacts` every 2s and re-fetches items as they land (skeleton → items).
+- The overview text + pipeline stage are **derived** from the real
+  `pipelineStatus` + items (the backend stores no AI overview), so the surface
+  stays honest while matching the design.
+- Card vs list is the URL `vm` so it survives a refresh.
+
+## Change history & motivation
+- 2026-06-17 — Rewritten to the design's `af-detail`. Replaced the old `nb-dv-`
+  header + four-tab switch + `PipelineStatusBar` / `DataViewListPane` /
+  `DataViewCard` with the design's overview + pipeline stepper + generative card
+  templates and a card/list toggle.

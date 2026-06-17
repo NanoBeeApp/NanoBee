@@ -1,16 +1,10 @@
-# TaskBoardView.tsx
+# TaskBoardView
 
-## Responsibility
-Manager board view: tasks grouped into columns by execution state (运行中 / 已暂停
-/ 异常 / 已完成). Light columns, gaps not rules. Each card is compact (dot + title +
-badge + trigger). Empty columns show a pale placeholder rather than blank space.
+The kanban view of the manager: tasks grouped into three status columns
+(运行中 / 需处理 / 已暂停). Light columns, gaps not rules; each card is compact
+(icon + title + trigger + result). Clicking a card opens the detail drawer; empty
+columns show a pale placeholder. Pure render off the `TaskVM[]`.
 
-## Dependencies
-- Upstream: TaskTypeBadge, TaskStatusDot, `TasksEmpty`, `src/types.ts` (`Task`)
-- Downstream: AllTasksView
-
-## Change history
-
-### 2026-06-15 — Created
-- **Motivation**: A status-grouped board gives an at-a-glance health view for users who prefer columns.
-- **Goal**: Group tasks into status columns with compact cards and non-empty empty columns.
+## Change history & motivation
+- 2026-06-17 — Rewritten to the design's `tp-kanban` markup with three
+  status-based columns (was four execution-state columns under `nb-tk-board`).

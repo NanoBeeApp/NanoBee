@@ -92,6 +92,33 @@ export interface Task {
   /** Structured declarative trigger specification (optional; present when the task
    *  was created with a triggerSpec and the server includes it in the payload). */
   triggerSpec?: TriggerSpec;
+
+  // ── Optional presentation/enrichment fields ─────────────────────────────
+  // All optional and carried verbatim in the task JSON payload (rowToTask
+  // spreads it), so they round-trip without a schema/migration change. The
+  // Tasks page derives sensible fallbacks when they are absent.
+  /** Surface this task as a "重点盯梢" featured card at the top of the page. */
+  featured?: boolean;
+  /** The one-sentence natural-language spec shown in the drawer ("对话即配置"). */
+  nlSpec?: string;
+  /** Human-readable cooldown between firings (condition tasks). */
+  cooldown?: string;
+  /** Notification channel label (e.g. "事项页 · 推送"). */
+  channel?: string;
+  /** Data source label (e.g. "NanoBee data-hub"). */
+  source?: string;
+  /** Total successful/attempted run count (denormalized for display). */
+  runs?: number;
+  /** Success-rate label (e.g. "98%"). */
+  successRate?: string;
+  /** When the task needs attention: why it failed + the suggested fix. */
+  failure?: { reason: string; fix: string };
+  /** Render the featured card as a dark live-monitor with a metric + sparkline. */
+  monitor?: boolean;
+  /** Live metric for a monitor featured card. */
+  metric?: { label: string; value: string; dir: 'up' | 'down'; delta: string };
+  /** Sparkline series for a monitor featured card. */
+  spark?: number[];
 }
 
 /** A proactive update — one readable item on the Today page / notifications. */
