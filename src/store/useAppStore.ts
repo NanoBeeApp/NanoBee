@@ -886,8 +886,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     // sidebar outline, its article streams as the answer, and the SAME answer is
     // mirrored here into the popup bubble. The node carries the grounding (it
     // reads whatever node the user is currently viewing) — see askOnCanvas.
+    // While the initial outline is still generating we fall back to the generic
+    // quick chat: startResearch replaces nodes/order wholesale when the outline
+    // lands, which would otherwise clobber a node added mid-generation.
     const research = useResearchStore.getState();
-    if (s.view === 'research' && research.phase === 'canvas' && research.order.length > 0) {
+    if (
+      s.view === 'research' &&
+      research.phase === 'canvas' &&
+      !research.generating &&
+      research.order.length > 0
+    ) {
       let id = s.quickChatId;
       const userMessageId = nextId();
       const patch: Partial<AppState> = { quickPending: true };
