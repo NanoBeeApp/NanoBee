@@ -1,10 +1,13 @@
 /**
  * Account section within the /settings master-detail panel.
- * Displays four sub-sections:
+ * Now the single home for everything the (removed) top-right avatar dropdown
+ * used to own. Top to bottom:
+ *   0. Identity — avatar + name + email header
  *   1. Profile — change display name
  *   2. Security — change password (email accounts only)
  *   3. Sessions — list + revoke active sessions
  *   4. Data — export + delete account (with explicit confirm step)
+ *   5. Apps & session — native app downloads + sign out
  *
  * Rendered as the "account" pane of AiSettingsForm when the user clicks the
  * "Account" row in the master list. Requires the user to be signed in (the
@@ -13,7 +16,8 @@
 
 import { useState } from "react";
 import { Icons } from "../../icons/icons";
-import type { SessionUser } from "../../lib/useAuth";
+import { APP_DOWNLOAD_LINKS } from "../../config";
+import { useLogout, type SessionUser } from "../../lib/useAuth";
 import {
 	accountMessageFor,
 	useChangeName,
@@ -37,6 +41,25 @@ function formatRelativeTime(unixSec: number): string {
 	return `${Math.floor(diffSec / 86400)}d ago`;
 }
 
+/** Avatar image with an initials fallback (ported from the old AccountFoot). */
+function Avatar({ image, name }: { image: string | null; name: string }) {
+	if (image) {
+		return (
+			<img
+				className="avatar avatar-lg"
+				src={image}
+				alt={name}
+				referrerPolicy="no-referrer"
+			/>
+		);
+	}
+	return (
+		<span className="avatar avatar-lg" style={{ background: "#ffe5da", color: "#7a2e10" }}>
+			{(name || "?").slice(0, 1).toUpperCase()}
+		</span>
+	);
+}
+
 function parseUserAgent(ua: string | null): string {
 	if (!ua) return "Unknown device";
 	// Very simple UA parse — just enough for a human-readable label.
@@ -46,6 +69,82 @@ function parseUserAgent(ua: string | null): string {
 	if (/Windows/.test(ua)) return "Windows";
 	if (/Linux/.test(ua)) return "Linux";
 	return "Unknown device";
+}
+
+// ---------------------------------------------------------------------------
+// Identity header: avatar + name + email
+// ---------------------------------------------------------------------------
+
+function IdentityHeader({ user }: { user: SessionUser }) {
+	const displayName = user.name || user.email.split("@")[0];
+	return (
+		<div className="nb-acct-section nb-acct-identity" data-testid="account-identity">
+			<Avatar image={user.image} name={displayName} />
+			<div className="nb-acct-identity-meta">
+				<div className="nb-acct-identity-name">{displayName}</div>
+				<div className="nb-acct-identity-email" title={user.email}>{user.email}</div>
+			</div>
+		</div>
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Apps & session: native app downloads + sign out
+// ---------------------------------------------------------------------------
+
+function AppsSection() {
+	const logout = useLogout();
+	return (
+		<div className="nb-acct-section" data-testid="account-apps">
+			<h3 className="nb-acct-section-title">Apps & session</h3>
+
+			<div className="nb-acct-data-row">
+				<div className="nb-acct-data-info">
+					<span className="nb-acct-data-label">Download apps</span>
+					<span className="nb-acct-data-hint">Get the native iOS and Mac apps.</span>
+				</div>
+				<div className="nb-acct-apps-links">
+					<a
+						className="btn btn-secondary btn-sm"
+						href={APP_DOWNLOAD_LINKS.ios}
+						target="_blank"
+						rel="noopener noreferrer"
+						data-testid="account-download-ios"
+					>
+						<Icons.smartphone size={13} />
+						iOS
+					</a>
+					<a
+						className="btn btn-secondary btn-sm"
+						href={APP_DOWNLOAD_LINKS.mac}
+						target="_blank"
+						rel="noopener noreferrer"
+						data-testid="account-download-mac"
+					>
+						<Icons.monitor size={13} />
+						Mac
+					</a>
+				</div>
+			</div>
+
+			<div className="nb-acct-data-row">
+				<div className="nb-acct-data-info">
+					<span className="nb-acct-data-label">Sign out</span>
+					<span className="nb-acct-data-hint">Sign out of NanoBee on this device.</span>
+				</div>
+				<button
+					type="button"
+					className="btn btn-secondary btn-sm"
+					disabled={logout.isPending}
+					onClick={() => logout.mutate()}
+					data-testid="account-signout"
+				>
+					<Icons.logout size={13} />
+					{logout.isPending ? "Signing out…" : "Sign out"}
+				</button>
+			</div>
+		</div>
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -454,10 +553,12 @@ export interface AccountSectionProps {
 export function AccountSection({ user }: AccountSectionProps) {
 	return (
 		<div className="nb-acct-pane" data-testid="account-section">
+			<IdentityHeader user={user} />
 			<ProfileSection user={user} />
 			<SecuritySection />
 			<SessionsSection />
 			<DataSection />
+			<AppsSection />
 		</div>
 	);
 }

@@ -1,17 +1,19 @@
 // Mobile-only top header bar.  Rendered by _app.tsx and visible only at
 // <=768px (display:none on desktop via mobile.css).  Contains:
 //   Left  — hamburger (panelLeft icon) that toggles the off-canvas sidebar drawer.
-//   Center — NanoBee bee logo + wordmark (acts as a home affordance on mobile).
-//   Right  — account avatar (re-uses AccountFoot which owns its own dropdown).
+//   Right — NanoBee bee logo + wordmark (acts as a home affordance on mobile).
+//
+// The account avatar was removed from here too — account / downloads / sign-out
+// live in Settings → Account, reachable via the drawer's 设置 tile.
 //
 // The sidebar open/close state uses the `mobileNavOpen` flag in the app store,
 // which the CSS reacts to via `.nb-app.mobile-nav-open`.
 //
 // Change history:
+//   2026-06-18  Removed the account avatar (AccountFoot); account moved to Settings.
 //   2026-06-15  Created — part of the mobile-responsive pass.
 import { useAppStore } from "../../store/useAppStore";
 import { Icons } from "../../icons/icons";
-import { AccountFoot } from "../sidebar/AccountFoot";
 
 export function MobileHeader() {
   const mobileNavOpen = useAppStore((s) => s.mobileNavOpen);
@@ -38,10 +40,6 @@ export function MobileHeader() {
           <Icons.bee size={14} sw={1.6} style={{ color: "#fff" }} />
         </div>
         Nano<b>Bee</b>
-      </div>
-
-      <div className="nb-mobile-header-right">
-        <AccountFoot />
       </div>
     </header>
   );

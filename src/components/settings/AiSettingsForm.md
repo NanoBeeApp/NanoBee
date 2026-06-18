@@ -1,30 +1,55 @@
 # src/components/settings/AiSettingsForm.tsx
 
 ## Responsibility
-Pure render component for the AI settings page. Master-detail layout: a provider
-list on the left (model providers + a standalone "Web 搜索" (Web Search) entry), the selected
-provider's settings on the right (API key with show/hide, API host, model picker
-with auto-fetch, connection test). Stateless except for UI-only
-password-visibility and active-pane toggles; all data + callbacks come from
-`SettingsView`.
+Pure render component for the /settings page. Three-column layout: setting
+**categories** (left) → the active category's **items** (middle) → the selected
+item's **detail** pane (right). Categories: 通用 (General: 通用/AI 模型/联网搜索/
+通知/快捷键/账户), 研究画布 (Research Canvas: 回复风格), 任务, 聊天 (placeholders).
+Stateless except for UI-only toggles (password visibility, active category/item)
+and the reply style (read from `useResearchPrefs`); all AI data + callbacks come
+from `SettingsView`.
 
 ## Core exports
-- `AiSettingsForm(props)` — the master-detail form, rendered inline on the page
-  (wrapped in `.nb-ai-split.nb-settings-split`, no modal scrim/close).
+- `AiSettingsForm(props)` — the 3-column form, rendered inline on the page
+  (wrapped in `.nb-settings-3col.nb-settings-split`, no modal scrim/close).
 - Types: `AiSetupFormValues`, `TestStatus`, `SaveState`, `AiSettingsFormProps`.
 
 ## Dependencies
 - Upstream: `@/icons/icons`, `@/icons/provider-logos`, `@/lib/ai-providers`,
-  `@/lib/useAiSettings` (TestConnectionResult type).
+  `@/lib/useAiSettings` (TestConnectionResult type), `@/store/useResearchPrefs`,
+  `@/research/styles`, `./ModelCombobox`, `./AccountSection`,
+  `./NotificationSettings`, `./ShortcutsSection`.
 - Downstream: `SettingsView`.
 
 ## Key notes
-- Inline auto-save status line lives at the bottom of the master column (there
-  is no save/cancel pair — changes persist automatically).
-- Reuses the existing `.nb-ai-*` styles; the page wrapper (`.nb-settings-*`) is
-  added by `SettingsView` / app.css.
+- Inline auto-save status line lives at the bottom of the **items** column and
+  only shows on the server-persisted panes (AI 模型 / 联网搜索); the General and
+  回复风格 panes persist to localStorage instantly.
+- The provider picker is a chip grid (`.nb-prov-grid`) inside the AI 模型 detail
+  pane (it used to be the whole master column).
+- Reuses the existing `.nb-ai-*` styles; new `.nb-set-*` / `.nb-prov-*` /
+  `.nb-style-*` styles live in app.css.
 
 ## Change history
+
+### 2026-06-18 — add the 快捷键 (Shortcuts) item
+- **Motivation**: user asked to display and edit keyboard shortcuts in Settings.
+- **Change**: added a `shortcuts` pane under the 通用 category (between 通知 and
+  账户) rendering `<ShortcutsSection />`; it persists to localStorage like the
+  General / 回复风格 panes, so it is excluded from the auto-save hint.
+
+### 2026-06-18 — Rebuild into a 3-column categories → items → detail layout
+- **Motivation**: the settings page needed first-class categories (研究画布,
+  任务, 聊天) alongside 通用, and a home for the new AI reply-style picker.
+- **Changes**: replaced the 2-column master-detail with `.nb-settings-3col`
+  (categories | items | detail) driven by a `buildCategories()` nav tree and a
+  single `activePane` leaf state; split the detail into per-pane components
+  (`AiModelPane`, `WebSearchPane`, `ResearchStylePane`, `ComingSoonPane`,
+  `GeneralPane`); moved the 13-provider list into `AiModelPane` as a chip grid
+  (`.nb-prov-grid`); extracted `ModelCombobox` into its own file; added the
+  研究画布 → 回复风格 pane reading/writing `useResearchPrefs`. The page heading,
+  auto-save effect and props contract (`AiSettingsFormProps`) are unchanged, so
+  `SettingsView` needed no edits. The old `LanguagePane` is now `GeneralPane`.
 
 ### 2026-06-16 — model picker → single editable combobox
 - **Motivation**: the model field rendered two stacked controls — a native

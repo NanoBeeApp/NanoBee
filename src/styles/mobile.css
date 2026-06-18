@@ -142,6 +142,9 @@ details[open] .nb-error-detail-toggle::before { transform: rotate(90deg); }
   color: var(--ink);
 }
 .nb-mobile-brand {
+  /* Pushed to the right edge: the hamburger owns the left, the brand the right
+     (the account avatar that used to sit here moved to Settings → Account). */
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -160,13 +163,6 @@ details[open] .nb-error-detail-toggle::before { transform: rotate(90deg); }
   flex-shrink: 0;
 }
 .nb-mobile-brand b { color: #8c5a12; }
-/* Right slot in the mobile header (account avatar etc.) */
-.nb-mobile-header-right {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
 
 /* ---- Mobile drawer overlay scrim ---- */
 .nb-drawer-scrim {
@@ -334,9 +330,10 @@ details[open] .nb-error-detail-toggle::before { transform: rotate(90deg); }
   /* Task detail scrim: already uses position:absolute in tasks.css;
      the bottom-sheet animation on mobile is handled by .nb-tk-drawer overrides above */
 
-  /* ---------- 10. Settings page (AI split) ---- */
-  /* Already has its own 560px breakpoint; reinforce for 768 */
-  .nb-ai-split {
+  /* ---------- 10. Settings page (3-column) ---- */
+  /* app.css owns the ≤760px stack; here just reinforce the single column and
+     trim padding for the ≤768 range. */
+  .nb-settings-3col {
     grid-template-columns: 1fr;
   }
   .nb-settings-head {

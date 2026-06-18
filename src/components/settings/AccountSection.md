@@ -7,6 +7,11 @@ Rendered when the user clicks the "Account" row in the left master list
 
 ## Sub-sections
 
+### IdentityHeader
+Compact header at the very top of the pane: avatar (image, or initials fallback
+ported from the old `AccountFoot`) + display name + email. This is the identity
+marker the removed top-right avatar dropdown used to show.
+
 ### ProfileSection
 Change display name via `PATCH /api/auth/account/name`. Shows the current
 email read-only.
@@ -28,12 +33,18 @@ sessions at once.
   box, type "DELETE" exactly, then submit. On success the page hard-navigates
   to /login.
 
+### AppsSection
+"Apps & session": native iOS / Mac app download buttons (`APP_DOWNLOAD_LINKS`)
+and a "Sign out" button (`useLogout`). These moved here from the removed
+top-right avatar dropdown so no account action was lost.
+
 ## Props
 - `user: SessionUser` — the currently signed-in user (from `useAuthUser`)
 
 ## Dependencies
 - `../../lib/useAccount` (all account mutations + session query)
-- `../../lib/useAuth` (SessionUser type)
+- `../../lib/useAuth` (SessionUser type, `useLogout`)
+- `../../config` (`APP_DOWNLOAD_LINKS`)
 - `../../icons/icons` (Icons)
 
 ## Notes
@@ -43,6 +54,11 @@ sessions at once.
 
 ## Change history & rationale
 
+- 2026-06-18 — became the single account home after the top-right avatar
+  dropdown was removed. Added `IdentityHeader` (avatar + name + email) at the
+  top and `AppsSection` (app downloads + sign out) at the bottom, so logout and
+  downloads — previously only in the avatar menu — stay reachable. Recent-updates
+  ("最近动态") was not relocated: its content already lives on the Today page.
 - 2026-06-15 — handle nullable `lastSeenAt` in SessionsSection: display
   "unknown" instead of passing null to `formatRelativeTime`.
 - 2026-06-15 — initial creation for account management feature (agent run).

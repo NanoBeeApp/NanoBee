@@ -575,10 +575,13 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-settings-state { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; }
 .nb-settings-state p { margin: 0; max-width: 320px; font-size: 14px; color: var(--ink-3); line-height: 1.6; }
 
-/* Two columns: master (provider list) left, detail right, distinguished by bg.
-   On the page the split fills the area below the heading. */
-.nb-ai-split { display: grid; grid-template-columns: 216px minmax(0, 1fr); flex: 1; min-height: 0; }
+/* Three columns: setting categories (left) → the active category's items
+   (middle) → the selected item's detail (right). The two left rails share the
+   .nb-ai-master surface (surface-2); a selected row's white fill pops against
+   it, and slim borders separate the three regions. */
+.nb-settings-3col { display: grid; grid-template-columns: 176px 208px minmax(0, 1fr); flex: 1; min-height: 0; }
 .nb-settings-split { border-top: 1px solid var(--border); }
+.nb-set-cats, .nb-set-items { border-right: 1px solid var(--border); }
 
 .nb-ai-master { background: var(--surface-2); padding: 10px 10px 12px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
 .nb-ai-master-label { padding: 8px 10px 6px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
@@ -680,9 +683,50 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-ai-test-status.tone-error .dot { background: var(--danger); }
 @keyframes nbpulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-@media (max-width: 560px) {
-	.nb-ai-split { grid-template-columns: 1fr; }
-	.nb-ai-master-list { flex-direction: row; flex-wrap: wrap; gap: 6px; max-height: 120px; }
+/* Provider picker inside the AI-model detail pane: a wrapped grid of compact
+   logo+name chips (replaces the old full-height provider master column). */
+.nb-prov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 6px; }
+.nb-prov-chip {
+	display: flex; align-items: center; gap: 8px; min-width: 0;
+	padding: 7px 9px; border-radius: 10px; background: var(--surface-2); text-align: left;
+	transition: background var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out);
+}
+.nb-prov-chip:hover { background: var(--surface-3); }
+/* Selected = brand-soft fill + a weak inset brand ring (no hard border). */
+.nb-prov-chip.selected { background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand-2); }
+.nb-prov-chip svg { flex-shrink: 0; }
+.nb-prov-chip-name { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 500; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nb-prov-chip.selected .nb-prov-chip-name { color: var(--brand-2); font-weight: 600; }
+
+/* Reply-style picker (研究画布 → 回复风格): a column of selectable description
+   cards, same selected language (brand-soft + inset ring) as the chips above. */
+.nb-style-list { display: flex; flex-direction: column; gap: 8px; }
+.nb-style-opt {
+	display: flex; align-items: flex-start; gap: 12px; text-align: left;
+	padding: 12px 14px; border-radius: 12px; background: var(--surface-2);
+	transition: background var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out);
+}
+.nb-style-opt:hover { background: var(--surface-3); }
+.nb-style-opt.selected { background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand-2); }
+.nb-style-opt-main { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.nb-style-opt-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+.nb-style-opt.selected .nb-style-opt-label { color: var(--brand-2); }
+.nb-style-opt-desc { font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
+.nb-style-opt-check { flex-shrink: 0; width: 18px; height: 18px; margin-top: 1px; display: grid; place-items: center; color: var(--brand-2); }
+
+/* Placeholder pane for categories with no settings yet (任务 / 聊天). */
+.nb-set-soon { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px 24px; text-align: center; }
+.nb-set-soon p { margin: 0; max-width: 280px; font-size: 13.5px; color: var(--ink-3); line-height: 1.6; }
+
+/* Narrow screens: stack the three regions; the two rails become wrapping chip
+   rows above the detail pane. */
+@media (max-width: 760px) {
+	.nb-settings-3col { grid-template-columns: 1fr; grid-auto-rows: min-content; }
+	.nb-set-cats, .nb-set-items { border-right: none; border-bottom: 1px solid var(--border); }
+	.nb-set-cats { flex-direction: row; flex-wrap: wrap; align-items: center; }
+	.nb-set-cats .nb-ai-master-grp { width: 100%; }
+	.nb-set-items .nb-ai-master-list { flex-direction: row; flex-wrap: wrap; gap: 6px; max-height: 132px; }
+	.nb-prov-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }
 
 /* ---------- Notification settings section ---------- */
@@ -773,6 +817,15 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-ai-detail--account { padding: 0; gap: 0; }
 .nb-acct-pane { display: flex; flex-direction: column; overflow-y: auto; height: 100%; }
 
+/* Identity header: avatar + name + email (consolidates the old avatar dropdown) */
+.nb-acct-identity { flex-direction: row; align-items: center; gap: 13px; }
+.nb-acct-identity-meta { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.nb-acct-identity-name { font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+.nb-acct-identity-email { font-size: 12.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Apps & session: side-by-side download buttons */
+.nb-acct-apps-links { display: flex; gap: 6px; flex-shrink: 0; }
+
 /* Each sub-section (Profile / Security / Sessions / Data) */
 .nb-acct-section { padding: 18px 24px 20px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
 .nb-acct-section:last-child { border-bottom: 0; }
@@ -830,6 +883,39 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-acct-confirm-label { font-size: 12.5px; color: var(--ink-2); margin: 0; }
 .nb-acct-confirm-input { width: 140px; font-family: var(--font-mono); letter-spacing: 1px; }
 .nb-acct-confirm-actions { display: flex; gap: 8px; }
+
+/* ── Settings → Shortcuts pane ──────────────────────────────────────────── */
+.nb-sc-list { display: flex; flex-direction: column; gap: 6px; }
+.nb-sc-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface);
+}
+.nb-sc-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.nb-sc-label { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.nb-sc-desc { font-size: 12px; color: var(--ink-3); line-height: 1.45; }
+.nb-sc-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+/* Key chip — monospace kbd-style. The button variant is rebindable. */
+.nb-sc-key {
+  min-width: 30px; padding: 3px 9px; text-align: center;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+  color: var(--ink-2); background: var(--surface-3);
+  border: 1px solid var(--border); border-radius: 7px;
+}
+.nb-sc-key-btn { cursor: pointer; transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+.nb-sc-key-btn:hover { color: var(--brand-2); border-color: var(--brand-2); background: var(--brand-soft); }
+.nb-sc-key-static { color: var(--ink-3); }
+.nb-sc-capture {
+  padding: 3px 10px; font-size: 12px; font-weight: 600;
+  color: var(--brand-2); background: var(--brand-soft);
+  border: 1px dashed var(--brand-2); border-radius: 7px;
+}
+.nb-sc-reset {
+  display: inline-grid; place-items: center; width: 26px; height: 26px;
+  color: var(--ink-4); background: transparent; border: 0; border-radius: 7px;
+  cursor: pointer; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.nb-sc-reset:hover { color: var(--ink); background: var(--surface-2); }
 
 @media (prefers-reduced-motion: reduce) {
   .nb-push-state.state-loading .dot { animation: nbpulse 1s var(--ease-out) infinite !important; }

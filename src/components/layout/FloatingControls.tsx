@@ -1,11 +1,10 @@
 // Floating corner controls — the design intentionally has no fixed header to
 // maximize the content area. Top-left (only when the sidebar is collapsed):
-// expand sidebar, plus back-to-chat while reading the Today page;
-// top-right: a single account avatar whose dropdown gathers everything else.
-// (Re-opening the quick chat is now the floating bubble's job — see QuickChat.)
+// expand sidebar, plus back-to-chat while reading the Today page.
+// The top-right account avatar was removed — account, downloads and sign-out
+// now live in Settings → Account (reachable from the sidebar's 设置 tile).
 import { useAppStore } from '../../store/useAppStore';
 import { Icons } from '../../icons/icons';
-import { AccountFoot } from '../sidebar/AccountFoot';
 
 export function FloatingControls() {
   const view = useAppStore((s) => s.view);
@@ -44,9 +43,6 @@ export function FloatingControls() {
           </div>
         </>
       )}
-      <div className="nb-float tr">
-        <AccountFoot />
-      </div>
     </>
   );
 }

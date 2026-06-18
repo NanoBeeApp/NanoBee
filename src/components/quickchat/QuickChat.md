@@ -17,6 +17,18 @@ Quick-chat assistant, present on every non-chat surface (today / tasks / artifac
 
 ## Change history
 
+### 2026-06-18 — panel-toggle icon (match the left rail) + D shortcut
+- **Motivation**: the right sidebar's collapse / re-open buttons used `chevR`
+  (a chevron), which didn't read as a "panel" the way the left rail's
+  `panelLeft` toggle does. The user asked the right popup's icon to match the
+  left one.
+- **Change**: swapped both the `.nb-rc-tools` collapse button and the
+  `.nb-rc-reopen` edge tab from `Icons.chevR` to `Icons.panelRight` (the mirror
+  of the rail's `panelLeft`), and dropped the now-unneeded `transform:
+  rotate(180deg)` on `.nb-rc-reopen svg` in `quickchat.css`. The global `D`
+  shortcut (see `_app.tsx` / `lib/shortcuts.ts`) now also toggles this rail,
+  alongside the existing ⌘J / Esc.
+
 ### 2026-06-18 — collapsible right sidebar (was bottom-right bubble + popup)
 - **Motivation**: on the research canvas the bottom-right launcher bubble + popup
   read as a customer-service widget floating over the work; the user asked for a

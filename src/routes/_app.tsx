@@ -22,6 +22,8 @@ import {
 } from "@tanstack/react-router";
 import { useAppStore, viewFromPath } from "@/store/useAppStore";
 import { useResearchStore } from "@/store/useResearchStore";
+import { useShortcuts } from "@/store/useShortcuts";
+import { eventMatchesBinding, isEditableTarget } from "@/lib/shortcuts";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { FloatingControls } from "@/components/layout/FloatingControls";
 import { MobileHeader } from "@/components/layout/MobileHeader";
@@ -95,6 +97,32 @@ function AppLayout() {
 		window.addEventListener("keydown", onKeyDown);
 		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [newForView]);
+
+	// Global single-key shortcuts: toggle the left sidebar (default S) / right
+	// quick-chat sidebar (default D). Keys are user-configurable in
+	// Settings → Shortcuts, so we read the live bindings + current panel state
+	// fresh from the stores on each keypress (the listener is registered once).
+	// Bare keys stand down while the user is typing (editable target / IME) so
+	// they never swallow input.
+	useEffect(() => {
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.isComposing || e.keyCode === 229) return;
+			if (isEditableTarget(e.target)) return;
+			if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+			const { bindings } = useShortcuts.getState();
+			const app = useAppStore.getState();
+			if (eventMatchesBinding(e, bindings.toggleLeftSidebar)) {
+				e.preventDefault();
+				app.setSideCollapsed(!app.sideCollapsed);
+			} else if (eventMatchesBinding(e, bindings.toggleRightSidebar)) {
+				e.preventDefault();
+				app.setRightCollapsed(!app.rightCollapsed);
+			}
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, []);
 
 	// The quick-chat sidebar docks on the right of every non-chat surface
 	// (see QuickChat). Reserve a grid column for it when it's expanded; when it's

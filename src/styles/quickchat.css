@@ -22,8 +22,8 @@
   height: 60px;
   display: grid;
   place-items: center;
-  /* The chevR glyph points right by default; flip it so it points inward
-     (toward the screen) to read as "pull the panel out". */
+  /* The panelRight glyph (a panel with its divider on the right) mirrors the
+     left rail's panelLeft toggle — no rotation needed. */
   color: var(--ink-3);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -33,5 +33,4 @@
   transition: color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out),
     width var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
 }
-.nb-rc-reopen svg { transform: rotate(180deg); }
 .nb-rc-reopen:hover { width: 30px; color: var(--ink); background: #fff; border-color: var(--border-2); }

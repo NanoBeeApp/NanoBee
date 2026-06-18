@@ -37,8 +37,22 @@ Replaces the former `App.tsx` shell.
   `useResearchStore.phase` so the shell knows when the canvas is live.
 - Hosts the bootstrap effect (load D1 state) and the ⌘N shortcut, which triggers
   the current page's "new" action (`newForView`), matching the sidebar button.
+- **Global single-key shortcuts**: a second keydown effect toggles the left
+  sidebar (default `S`) / right quick-chat sidebar (default `D`). Keys are
+  user-configurable (Settings → Shortcuts), so the listener is registered once
+  and reads the live bindings (`useShortcuts.getState()`) + panel state
+  (`useAppStore.getState()`) fresh per keypress. Bare keys stand down while an
+  editable target is focused or an IME is composing (see `lib/shortcuts.ts`).
 
 ## Change history
+
+### 2026-06-18 — global S/D sidebar shortcuts
+- **Motivation**: quick keyboard access to collapse/expand both rails, with the
+  keys rebindable in Settings.
+- **Change**: added a keydown effect that matches the configurable bindings from
+  `useShortcuts` (`lib/shortcuts.ts` helpers) and calls `setSideCollapsed` /
+  `setRightCollapsed`. Reads stores via `getState()` so the listener mounts once
+  and never goes stale on a rebind.
 
 ### 2026-06-18 — quick chat docks again as a collapsible right sidebar
 - **Motivation**: the quick chat moved back from a floating bubble + popup to a

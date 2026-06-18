@@ -120,7 +120,7 @@ export function QuickChat() {
         aria-label="展开快速对话（⌘J）"
         aria-expanded={false}
         data-testid="expand-right-chat">
-        <Icons.chevR size={18} />
+        <Icons.panelRight size={18} />
       </button>
     );
   }
@@ -148,7 +148,7 @@ export function QuickChat() {
         )}
         <button className="btn btn-ghost btn-icon btn-sm" title="收起 · ⌘J / Esc" onClick={() => setRightCollapsed(true)}
           data-testid="collapse-right-chat" aria-label="收起快速对话">
-          <Icons.chevR size={17} />
+          <Icons.panelRight size={17} />
         </button>
       </div>
 

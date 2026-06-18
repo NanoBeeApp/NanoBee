@@ -1,13 +1,21 @@
 # src/components/layout/FloatingControls.tsx
 
 ## Responsibility
-Floating corner buttons replacing a fixed header: top-left (when the sidebar is collapsed) the panel-toggle that *pins* the sidebar open, plus back-to-chat on the Today page; top-right a single account control (`AccountFoot` — an avatar + chevron button whose dropdown menu gathers notifications, AI settings, app downloads and logout). While collapsed it also renders a wide left-edge reveal zone (`.nb-edge-reveal`) — hovering the screen's left edge fades in a soft glow and clicking anywhere in the strip *peeks* the sidebar open temporarily (overlay that auto-closes on pointer leave), distinct from the panel icon which pins it.
+Floating corner buttons replacing a fixed header: top-left (only when the sidebar is collapsed) the panel-toggle that *pins* the sidebar open, plus back-to-chat on the Today page. The top-right account avatar was removed (see 2026-06-18) — there is no longer a `.nb-float.tr` control. While collapsed it also renders a wide left-edge reveal zone (`.nb-edge-reveal`) — hovering the screen's left edge fades in a soft glow and clicking anywhere in the strip *peeks* the sidebar open temporarily (overlay that auto-closes on pointer leave), distinct from the panel icon which pins it.
 
 ## Dependencies
-- Upstream: store, icons, `AccountFoot` (the whole top-right account dropdown)
+- Upstream: store, icons
 - Downstream: App
 
 ## Change history
+
+### 2026-06-18 — remove the top-right account avatar
+- **Motivation**: user request — drop the top-right avatar and move account into
+  Settings. The corner now stays clean (content-area-maximizing intent).
+- **Change**: removed the `.nb-float.tr` wrapper and the `AccountFoot` import/use;
+  the component now renders only the collapsed-state top-left controls + the
+  edge-reveal zone. Account identity, app downloads and sign out moved to
+  Settings → Account (`AccountSection`).
 
 ### 2026-06-14 — drop the quick-chat re-open button
 - **Motivation**: the quick chat became a customer-service-style floating bubble
