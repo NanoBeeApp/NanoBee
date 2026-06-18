@@ -12,7 +12,6 @@ interface Props {
 }
 
 export function ResearchNodeCard({ node, active, onOpen }: Props) {
-  const loading = node.status === "loading";
   const failed = node.status === "failed";
   return (
     <button
@@ -23,10 +22,9 @@ export function ResearchNodeCard({ node, active, onOpen }: Props) {
       onClick={() => onOpen(node.id)}
       data-testid={`research-node-${node.id}`}
       title={node.title}>
-      {(node.isRoot || loading) && (
+      {node.isRoot && (
         <div className="rc-node-head">
-          {node.isRoot && <span className="rc-node-kind">研究方向</span>}
-          {loading && <span className="rc-node-spinner" aria-label="生成中" />}
+          <span className="rc-node-kind">研究方向</span>
         </div>
       )}
       <div className="rc-node-title">{node.title}</div>

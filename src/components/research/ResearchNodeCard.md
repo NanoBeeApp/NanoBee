@@ -16,11 +16,20 @@ laid out in normal flow by the parent canvas.
   vertical rail and the card fills its column.
 - Title + brief carry the content; the whole card is one clickable button, so
   no per-card "click to read" CTA or expand/expanded status text is shown. Only
-  the root keeps a `"研究方向"` ("Research direction") kind badge; a spinner
-  shows while loading and a failed state on error. `depth-N` drives subtle
-  per-level styling.
+  the root keeps a `"研究方向"` ("Research direction") kind badge, and a failed
+  state shows on error. Loading is intentionally silent — no per-card spinner.
+  `depth-N` drives subtle per-level styling.
 
 ## Change history
+
+### 2026-06-18 — Drop the per-card loading spinner
+- **Motivation**: user asked to remove the spinning loading indicator on canvas
+  cards — it added motion/noise while the outline was still streaming.
+- **Goal**: keep cards quiet during generation; the card title already conveys
+  the node, and the reading overlay keeps its own first-byte spinner.
+- **Key decision**: removed the `loading` flag and the `rc-node-spinner` span;
+  the card head now renders only for the root `"研究方向"` badge. The
+  `.rc-node-spinner` CSS class stays (still used by `ReadingOverlay`).
 
 ### 2026-06-14 — All-white cards, no gray depth fill, no hover lift
 - **Motivation**: user asked to drop the gray card backgrounds (depth-2/3 used
