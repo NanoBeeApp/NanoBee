@@ -330,14 +330,11 @@ details[open] .nb-error-detail-toggle::before { transform: rotate(90deg); }
   /* Task detail scrim: already uses position:absolute in tasks.css;
      the bottom-sheet animation on mobile is handled by .nb-tk-drawer overrides above */
 
-  /* ---------- 10. Settings page (3-column) ---- */
+  /* ---------- 10. Settings page (2-column) ---- */
   /* app.css owns the ≤760px stack; here just reinforce the single column and
      trim padding for the ≤768 range. */
-  .nb-settings-3col {
+  .nb-settings-2col {
     grid-template-columns: 1fr;
-  }
-  .nb-settings-head {
-    padding: 16px 16px 12px;
   }
   .nb-ai-detail {
     padding: 16px 16px 20px;

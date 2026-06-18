@@ -1,24 +1,27 @@
 # src/components/settings/AiSettingsForm.tsx
 
 ## Responsibility
-Pure render component for the /settings page. Three-column layout: setting
-**categories** (left) → the active category's **items** (middle) → the selected
-item's **detail** pane (right). Categories: 通用 (General: 通用/AI 模型/联网搜索/
-通知/快捷键/账户), 研究画布 (Research Canvas: 回复风格), 任务, 聊天 (placeholders).
-Stateless except for UI-only toggles (password visibility, active category/item)
-and the reply style (read from `useResearchPrefs`); all AI data + callbacks come
-from `SettingsView`.
+Pure render component for the /settings page. Two-column layout: the active
+category's **items** (left) → the selected item's **detail** pane (right). The
+setting **categories** (通用 / 研究画布 / 任务 / 聊天) used to be a third leftmost
+column but now live in the left app sidebar (`SettingsNavList`); the active
+category is shared through the `useSettingsNav` store. Categories: 通用 (General:
+通用/AI 模型/联网搜索/通知/快捷键/账户), 研究画布 (Research Canvas: 回复风格), 任务,
+聊天 (placeholders). Stateless except for UI-only toggles (password visibility)
+and the reply style (read from `useResearchPrefs`); the active pane comes from
+`useSettingsNav` and all AI data + callbacks come from `SettingsView`.
 
 ## Core exports
-- `AiSettingsForm(props)` — the 3-column form, rendered inline on the page
-  (wrapped in `.nb-settings-3col.nb-settings-split`, no modal scrim/close).
+- `AiSettingsForm(props)` — the 2-column form, rendered inline on the page
+  (wrapped in `.nb-settings-2col`, no modal scrim/close).
 - Types: `AiSetupFormValues`, `TestStatus`, `SaveState`, `AiSettingsFormProps`.
 
 ## Dependencies
 - Upstream: `@/icons/icons`, `@/icons/provider-logos`, `@/lib/ai-providers`,
   `@/lib/useAiSettings` (TestConnectionResult type), `@/store/useResearchPrefs`,
-  `@/research/styles`, `./ModelCombobox`, `./AccountSection`,
-  `./NotificationSettings`, `./ShortcutsSection`.
+  `@/store/useSettingsNav` (active pane), `@/research/styles`, `./settings-nav`
+  (`buildCategories` / `categoryIdForPane` / `NavIcon`), `./ModelCombobox`,
+  `./AccountSection`, `./NotificationSettings`, `./ShortcutsSection`.
 - Downstream: `SettingsView`.
 
 ## Key notes
@@ -31,6 +34,18 @@ from `SettingsView`.
   `.nb-style-*` styles live in app.css.
 
 ## Change history
+
+### 2026-06-18 — categories → sidebar; page becomes 2-column
+- **Motivation**: the user asked to remove the settings page header, move the
+  leftmost categories column into the left app sidebar, and surface a "设置"
+  header at the top of that sidebar list.
+- **Changes**: extracted the nav model (types, tints, `buildCategories`,
+  `NavIcon`, new `categoryIdForPane`) into `./settings-nav` shared with the new
+  `sidebar/SettingsNavList`; replaced the local `activePane` `useState` with the
+  shared `useSettingsNav` store; deleted the categories column (column 1) from the
+  JSX so the page now renders only items + detail; switched the wrapper from
+  `.nb-settings-3col.nb-settings-split` to `.nb-settings-2col`. The items/detail
+  rendering and the `AiSettingsFormProps` contract are otherwise unchanged.
 
 ### 2026-06-18 — add the 快捷键 (Shortcuts) item
 - **Motivation**: user asked to display and edit keyboard shortcuts in Settings.

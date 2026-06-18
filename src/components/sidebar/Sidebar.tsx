@@ -23,6 +23,7 @@ import { TodayNavList } from './TodayNavList';
 import { TasksNavList } from './TasksNavList';
 import { ArtifactsNavList } from './ArtifactsNavList';
 import { ResearchNavList } from './ResearchNavList';
+import { SettingsNavList } from './SettingsNavList';
 
 /** Map view → the i18n key for its new-action label. */
 const NEW_ACTION_KEY: Record<View, 'newAction.chat' | 'newAction.task' | 'newAction.artifact' | 'newAction.research'> = {
@@ -176,6 +177,8 @@ export function Sidebar() {
           <ArtifactsNavList />
         ) : view === 'research' ? (
           <ResearchNavList />
+        ) : view === 'settings' ? (
+          <SettingsNavList />
         ) : null}
       </div>
     </aside>

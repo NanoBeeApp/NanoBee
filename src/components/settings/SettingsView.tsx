@@ -101,11 +101,6 @@ export function SettingsView() {
 
 	return (
 		<div className="nb-settings-page" data-testid="settings-page">
-			<header className="nb-settings-head">
-				<h1 className="nb-settings-title">{t('settings.pageTitle')}</h1>
-				<p className="nb-settings-sub">{t('settings.pageSubtitle')}</p>
-			</header>
-
 			{authLoading || (user && settingsQuery.isLoading) ? (
 				<div className="nb-settings-state" data-testid="settings-loading">
 					<Icons.spark size={22} style={{ color: "var(--ink-4)" }} />

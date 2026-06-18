@@ -14,10 +14,18 @@ shows on the chat view. The account avatar lives in the top-right floating bar
 
 ## Dependencies
 - Upstream: store, ChatHistoryList, TopicGroupList, TodayNavList, TasksNavList,
-  ArtifactsNavList, ResearchNavList, icons
+  ArtifactsNavList, ResearchNavList, SettingsNavList, icons
 - Downstream: App
 
 ## Change history
+
+### 2026-06-18 — settings categories show in the sidebar scroll area
+- **Motivation**: the user asked to move the settings page's leftmost categories
+  column into the left sidebar, shown when the Settings page is active.
+- **Change**: the context-aware scroll area now renders `<SettingsNavList />` when
+  `view === 'settings'` (previously it rendered `null` there). `SettingsNavList`
+  owns the "设置" header + the category rows and drives the page via
+  `useSettingsNav`.
 
 ### 2026-06-18 — nav entries collapse into an "Apps" hover popup
 - **Motivation**: design handoff (`NanoBee.html` mockup) — the always-expanded

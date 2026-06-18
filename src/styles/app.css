@@ -592,23 +592,20 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-ai-close:hover { background: var(--surface-3); color: var(--ink-2); }
 
 /* ---------- /settings page (AI model & web search) ---------- */
-/* White page surface; a slim heading bar over the master-detail body so the
-   content area stays maximal (no modal frame, no footer band). */
+/* White page surface; the master-detail body fills the whole content area now
+   that the page heading lives in the sidebar (no modal frame, no footer band). */
 .nb-settings-page { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surface); overflow: hidden; }
-.nb-settings-head { flex-shrink: 0; padding: 20px 28px 16px; }
-.nb-settings-title { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
-.nb-settings-sub { margin: 4px 0 0; font-size: 13px; color: var(--ink-3); line-height: 1.55; }
-/* Centered states (loading / signed-out) fill the body below the heading. */
+/* Centered states (loading / signed-out) fill the body. */
 .nb-settings-state { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; }
 .nb-settings-state p { margin: 0; max-width: 320px; font-size: 14px; color: var(--ink-3); line-height: 1.6; }
 
-/* Three columns: setting categories (left) → the active category's items
-   (middle) → the selected item's detail (right). The two left rails share the
-   .nb-ai-master surface (surface-2); a selected row's white fill pops against
-   it, and slim borders separate the three regions. */
-.nb-settings-3col { display: grid; grid-template-columns: 176px 208px minmax(0, 1fr); flex: 1; min-height: 0; }
-.nb-settings-split { border-top: 1px solid var(--border); }
-.nb-set-cats, .nb-set-items { border-right: 1px solid var(--border); }
+/* Two columns: the active category's items (left) → the selected item's detail
+   (right). The setting categories themselves now live in the left app sidebar
+   (SettingsNavList). The items rail uses the .nb-ai-master surface (surface-2);
+   a selected row's white fill pops against it, and a slim border separates the
+   two regions. */
+.nb-settings-2col { display: grid; grid-template-columns: 208px minmax(0, 1fr); flex: 1; min-height: 0; }
+.nb-set-items { border-right: 1px solid var(--border); }
 
 .nb-ai-master { background: var(--surface-2); padding: 10px 10px 12px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
 .nb-ai-master-label { padding: 8px 10px 6px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
@@ -747,13 +744,11 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-set-soon { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px 24px; text-align: center; }
 .nb-set-soon p { margin: 0; max-width: 280px; font-size: 13.5px; color: var(--ink-3); line-height: 1.6; }
 
-/* Narrow screens: stack the three regions; the two rails become wrapping chip
-   rows above the detail pane. */
+/* Narrow screens: stack the two regions; the items rail becomes a wrapping chip
+   row above the detail pane. */
 @media (max-width: 760px) {
-	.nb-settings-3col { grid-template-columns: 1fr; grid-auto-rows: min-content; }
-	.nb-set-cats, .nb-set-items { border-right: none; border-bottom: 1px solid var(--border); }
-	.nb-set-cats { flex-direction: row; flex-wrap: wrap; align-items: center; }
-	.nb-set-cats .nb-ai-master-grp { width: 100%; }
+	.nb-settings-2col { grid-template-columns: 1fr; grid-auto-rows: min-content; }
+	.nb-set-items { border-right: none; border-bottom: 1px solid var(--border); }
 	.nb-set-items .nb-ai-master-list { flex-direction: row; flex-wrap: wrap; gap: 6px; max-height: 132px; }
 	.nb-prov-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }

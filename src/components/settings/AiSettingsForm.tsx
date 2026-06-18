@@ -1,13 +1,16 @@
 // Pure render component for the /settings page.
-// Three-column layout: setting categories (左) → the items of the active
-// category (中) → the selected item's detail pane (右). The "通用" (General)
-// category holds the AI model provider, web search, notifications, language and
-// account panes; "研究画布" (Research Canvas) holds the AI reply-style picker;
-// "任务"/"聊天" are placeholders for future settings. Stateless except for
-// UI-only toggles (password visibility, the active category/item, the reply
-// style which it reads from useResearchPrefs); all AI data + callbacks come from
-// SettingsView. Rendered inline on the page (no modal scrim) — changes auto-save,
-// so there is no save/cancel pair.
+// Two-column layout: the items of the active category (左) → the selected item's
+// detail pane (右). The setting *categories* (通用 / 研究画布 / 任务 / 聊天) used
+// to be a third leftmost column but now live in the left app sidebar
+// (SettingsNavList); the active category is shared through the useSettingsNav
+// store. The "通用" (General) category holds the AI model provider, web search,
+// notifications, shortcuts, language and account panes; "研究画布" (Research
+// Canvas) holds the AI reply-style picker; "任务"/"聊天" are placeholders for
+// future settings. Stateless except for UI-only toggles (password visibility,
+// the reply style which it reads from useResearchPrefs); the active pane comes
+// from useSettingsNav and all AI data + callbacks come from SettingsView.
+// Rendered inline on the page (no modal scrim) — changes auto-save, so there is
+// no save/cancel pair.
 //
 // Change history:
 //   2026-06-15  Wired i18n Phase 1: settings page heading/subtitle/states and
@@ -45,6 +48,8 @@ import { ModelCombobox } from "./ModelCombobox";
 import { AccountSection } from "./AccountSection";
 import { NotificationSettings } from "./NotificationSettings";
 import { ShortcutsSection } from "./ShortcutsSection";
+import { buildCategories, categoryIdForPane, NavIcon } from "./settings-nav";
+import { useSettingsNav } from "../../store/useSettingsNav";
 
 export interface AiSetupFormValues {
 	provider: AiProviderId;
@@ -91,96 +96,19 @@ export interface AiSettingsFormProps {
 	userSignedIn?: boolean;
 }
 
-// ── Navigation model ──────────────────────────────────────────────────────────
-
-/** A leaf settings pane (the detail shown in the right column). */
-type PaneId =
-	| "general"
-	| "ai-model"
-	| "websearch"
-	| "notifications"
-	| "shortcuts"
-	| "account"
-	| "research-style"
-	| "tasks-soon"
-	| "chat-soon";
-
-type CategoryId = "general" | "research" | "tasks" | "chat";
-
-interface NavItem {
-	id: PaneId;
-	label: string;
-	icon: keyof typeof Icons;
-	tint: { bg: string; color: string };
-}
-
-interface NavCategory {
-	id: CategoryId;
-	label: string;
-	icon: keyof typeof Icons;
-	tint: { bg: string; color: string };
-	items: NavItem[];
-}
-
-const TINT_BRAND = { bg: "rgba(99,91,255,0.10)", color: "var(--brand-2)" };
-const TINT_SKY = { bg: "rgba(14,165,233,0.12)", color: "#0ea5e9" };
-const TINT_GREEN = { bg: "rgba(26,127,85,0.10)", color: "var(--success)" };
-const TINT_GREY = { bg: "var(--surface-3)", color: "var(--ink-3)" };
-
-/** Build the category → item tree. The Account item only appears when signed in. */
-function buildCategories(signedIn: boolean): NavCategory[] {
-	const generalItems: NavItem[] = [
-		{ id: "general", label: "通用", icon: "gear", tint: TINT_GREY },
-		{ id: "ai-model", label: "AI 模型", icon: "spark", tint: TINT_BRAND },
-		{ id: "websearch", label: "联网搜索", icon: "globe", tint: TINT_SKY },
-		{ id: "notifications", label: "通知", icon: "bell", tint: TINT_BRAND },
-		{ id: "shortcuts", label: "快捷键", icon: "bolt", tint: TINT_GREEN },
-	];
-	if (signedIn) {
-		generalItems.push({ id: "account", label: "账户", icon: "at", tint: TINT_SKY });
-	}
-	return [
-		{ id: "general", label: "通用", icon: "gear", tint: TINT_GREY, items: generalItems },
-		{
-			id: "research",
-			label: "研究画布",
-			icon: "book",
-			tint: TINT_BRAND,
-			items: [{ id: "research-style", label: "回复风格", icon: "star", tint: TINT_BRAND }],
-		},
-		{
-			id: "tasks",
-			label: "任务",
-			icon: "list",
-			tint: TINT_GREEN,
-			items: [{ id: "tasks-soon", label: "通用", icon: "gear", tint: TINT_GREY }],
-		},
-		{
-			id: "chat",
-			label: "聊天",
-			icon: "chat",
-			tint: TINT_SKY,
-			items: [{ id: "chat-soon", label: "通用", icon: "gear", tint: TINT_GREY }],
-		},
-	];
-}
-
-/** Small logo tile used by the category / item rows. */
-function NavIcon({ icon, tint }: { icon: keyof typeof Icons; tint: { bg: string; color: string } }) {
-	const Icon = Icons[icon];
-	return (
-		<span className="nb-ai-prow-logo" style={{ background: tint.bg, color: tint.color }} aria-hidden="true">
-			<Icon size={15} />
-		</span>
-	);
-}
+// The category → item nav model (types, `buildCategories`, `NavIcon`) lives in
+// ./settings-nav and is shared with the sidebar's SettingsNavList, which now
+// renders the categories column. This page renders only the items + detail.
 
 export function AiSettingsForm(props: AiSettingsFormProps) {
 	const { values, info, hasStoredKey, hasStoredWebSearchKey, error } = props;
 	const { models, modelsLoading, modelsError, testStatus, testResult, saveState, saveText } = props;
 	const [showKey, setShowKey] = useState(false);
 	const [showWebSearchKey, setShowWebSearchKey] = useState(false);
-	const [activePane, setActivePane] = useState<PaneId>("ai-model");
+	// The active pane is shared with the sidebar's category list (SettingsNavList)
+	// so clicking a category there drives this page's item list + detail.
+	const activePane = useSettingsNav((s) => s.activePane);
+	const setActivePane = useSettingsNav((s) => s.setActivePane);
 	const { data: authUser } = useAuthUser();
 	const webSearchInfo = getWebSearchProviderInfo(values.webSearchProvider);
 	const { t } = useT();
@@ -188,8 +116,7 @@ export function AiSettingsForm(props: AiSettingsFormProps) {
 	const { replyStyle, setReplyStyle } = useResearchPrefs();
 
 	const categories = buildCategories(Boolean(authUser));
-	const activeCategory =
-		categories.find((c) => c.items.some((i) => i.id === activePane))?.id ?? "general";
+	const activeCategory = categoryIdForPane(activePane);
 	const items = categories.find((c) => c.id === activeCategory)?.items ?? [];
 	// Only the AI-model / web-search panes write to the server, so the auto-save
 	// hint is meaningless on the localStorage-backed panes (general / style).
@@ -202,32 +129,9 @@ export function AiSettingsForm(props: AiSettingsFormProps) {
 			: "sk-...";
 
 	return (
-		<div className="nb-settings-3col nb-settings-split" data-testid="ai-settings-form">
-			{/* Column 1: setting categories */}
-			<nav className="nb-ai-master nb-set-cats" aria-label="设置分类">
-				<div className="nb-ai-master-grp">设置</div>
-				<div role="radiogroup" aria-label="设置分类" style={{ display: "contents" }}>
-					{categories.map((cat) => {
-						const selected = activeCategory === cat.id;
-						return (
-							<button
-								key={cat.id}
-								type="button"
-								role="radio"
-								aria-checked={selected}
-								className={`nb-ai-prow${selected ? " selected" : ""}`}
-								onClick={() => setActivePane(cat.items[0].id)}
-								data-testid={`settings-category-${cat.id}`}
-							>
-								<NavIcon icon={cat.icon} tint={cat.tint} />
-								<span className="nb-ai-prow-name">{cat.label}</span>
-							</button>
-						);
-					})}
-				</div>
-			</nav>
-
-			{/* Column 2: items of the active category */}
+		<div className="nb-settings-2col" data-testid="ai-settings-form">
+			{/* Column 1: items of the active category (the categories themselves now
+			    live in the left app sidebar — see SettingsNavList). */}
 			<div className="nb-ai-master nb-set-items">
 				<div className="nb-ai-master-list" role="radiogroup" aria-label={`${activeCategory} 设置项`}>
 					{items.map((item) => {
@@ -261,7 +165,7 @@ export function AiSettingsForm(props: AiSettingsFormProps) {
 				)}
 			</div>
 
-			{/* Column 3: the active pane's detail */}
+			{/* Column 2: the active pane's detail */}
 			<div className={`nb-ai-detail${activePane === "account" ? " nb-ai-detail--account" : ""}`}>
 				{activePane === "general" ? (
 					<GeneralPane locale={locale} onSetLocale={setLocale} t={t} />
