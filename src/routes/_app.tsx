@@ -49,6 +49,7 @@ function AppLayout() {
 	const view = useAppStore((s) => s.view);
 	const sideCollapsed = useAppStore((s) => s.sideCollapsed);
 	const sidePeek = useAppStore((s) => s.sidePeek);
+	const rightCollapsed = useAppStore((s) => s.rightCollapsed);
 	const mobileNavOpen = useAppStore((s) => s.mobileNavOpen);
 	const setMobileNavOpen = useAppStore((s) => s.setMobileNavOpen);
 	const researchPhase = useResearchStore((s) => s.phase);
@@ -95,8 +96,11 @@ function AppLayout() {
 		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [newForView]);
 
-	// The quick-chat widget floats over content as a bottom-right bubble + popup
-	// (see QuickChat), so the shell no longer reserves a grid column for it.
+	// The quick-chat sidebar docks on the right of every non-chat surface
+	// (see QuickChat). Reserve a grid column for it when it's expanded; when it's
+	// collapsed the column drops away and only its slim re-open tab is shown. The
+	// `withRightChat` condition must match QuickChat's own `hidden` guard.
+	const withRightChat = view !== "chat" && view !== "settings";
 
 	// On the research canvas (the live canvas phase, not the welcome screen) the
 	// left rail floats over a full-width, position-stable canvas: opening/closing
@@ -112,6 +116,8 @@ function AppLayout() {
 				"nb-app",
 				sideCollapsed ? "side-collapsed" : "",
 				sideCollapsed && sidePeek ? "side-peek" : "",
+				withRightChat ? "with-rightchat" : "",
+				withRightChat && rightCollapsed ? "right-collapsed" : "",
 				researchCanvasFloating ? "research-canvas" : "",
 				mobileNavOpen ? "mobile-nav-open" : "",
 			].filter(Boolean).join(" ")}

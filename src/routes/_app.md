@@ -25,9 +25,12 @@ Replaces the former `App.tsx` shell.
 - **navigate bridge**: an effect binds the router's `navigate()` into the store
   (`bindNavigate`) so actions like `openToday` / `selectChat` / `send` change
   the URL. `to` is a plain string cast past the typed-route union.
-- The quick chat is a fixed-position floating widget (bubble + popup, see
-  QuickChat), so the shell no longer adds a `with-rightchat` grid column; it
-  self-gates on `view` (`chat` / `settings` hide it).
+- The quick chat docks as a collapsible right sidebar (see QuickChat). The shell
+  adds `with-rightchat` whenever the sidebar is shown (`withRightChat =
+  view !== 'chat' && view !== 'settings'`, mirroring QuickChat's own `hidden`
+  guard) and `right-collapsed` when `rightCollapsed` is set — together they
+  reserve / drop the grid's third column. On the research canvas the column is
+  instead floated as a fixed overlay (app.css) so the canvas stays position-stable.
 - `research-canvas` is applied only on the live research canvas
   (`view === 'research' && researchPhase === 'canvas'`). It makes the left rail
   float over a full-width, position-stable canvas (CSS in app.css). Reads
@@ -36,6 +39,16 @@ Replaces the former `App.tsx` shell.
   the current page's "new" action (`newForView`), matching the sidebar button.
 
 ## Change history
+
+### 2026-06-18 — quick chat docks again as a collapsible right sidebar
+- **Motivation**: the quick chat moved back from a floating bubble + popup to a
+  docked, collapsible right sidebar (see QuickChat), so the shell must reserve
+  its grid column again.
+- **Change**: re-read `rightCollapsed`; re-added the `withRightChat = view !==
+  'chat' && view !== 'settings'` flag and the `with-rightchat` /
+  `right-collapsed` classes on `.nb-app`. The grid is `sidebar | content |
+  rightchat` when expanded and drops back to two columns when collapsed; on the
+  research canvas the rail is floated as an overlay regardless (CSS).
 
 ### 2026-06-15 — mobile-responsive pass + error boundary
 - **Motivation**: the shell had no mobile breakpoint (sidebar overflowed on phones);

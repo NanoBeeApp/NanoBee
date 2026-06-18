@@ -1,21 +1,43 @@
 # src/components/quickchat/QuickChat.tsx
 
 ## Responsibility
-Customer-service-style floating quick-chat widget, present on every non-chat surface (today / tasks / artifacts / research). A launcher bubble pinned bottom-right; clicking it opens a popup chat panel above it. Popup, top-to-bottom: header (bee glyph + `"快速对话"` ("Quick chat") + `"在聊天页打开"` ("Open in chat") handoff once there are messages + close ×), context chip (`"正在看 · …"` ("Now viewing · …") with clear button), message feed reusing MessageView (or a centered empty state), composer. Styles live in `styles/quickchat.css` (`.nb-qc-bubble` / `.nb-qc-pop`); panel internals reuse the `.nb-rc-*` / `.nb-qc` styles from app.css.
+Quick-chat assistant, present on every non-chat surface (today / tasks / artifacts / research). It docks as a **collapsible right sidebar** — a real grid column (`.nb-rightchat`) on today/tasks/artifacts, a fixed overlay floating over the position-stable research canvas. **No header bar.** When open, top-to-bottom: a minimal right-aligned control cluster (`.nb-rc-tools` — collapse chevron, plus an `"在聊天页打开"` ("Open in chat") handoff once there are messages), an optional context chip (`"正在看 · …"` ("Now viewing · …") with clear button), the message feed reusing MessageView (or a centered empty state), and the composer. When collapsed, the panel is gone and only a slim re-open tab (`.nb-rc-reopen`) clings to the right edge of the screen. The collapsed-tab styles live in `styles/quickchat.css`; the panel internals (`.nb-rightchat` / `.nb-rc-*` / `.nb-qc`) live in app.css.
 
 ## Dependencies
 - Upstream: store, icons, MessageView, ThinkingIndicator, `lib/useImeComposition`, `styles/quickchat.css`
-- Downstream: `_app` layout (rendered as a fixed-position overlay; the layout no longer reserves a grid column for it)
+- Downstream: `_app` layout (renders it as the `.nb-rightchat` grid child; the shell adds the `with-rightchat` / `right-collapsed` classes — keep that condition in sync with this component's `hidden` guard)
 
 ## Key notes
-- Returns null on the chat view (centered bottom composer is the quick chat's "full form") and on the settings page (a configuration surface).
-- Folded by default (`rightCollapsed` starts `true`): only the bubble shows. Clicking the bubble toggles `rightCollapsed`; while open (`!rightCollapsed`) the popup renders and stays open until the bubble or the header's `×` closes it (no auto-close on mouse leave). The bubble shows the bee icon when folded, `×` when open.
-- **⌘J / Ctrl+J toggles the popup, and Escape closes it when open** (the listener is inert on the chat / settings surfaces where the widget isn't rendered). It `preventDefault`s so the browser's own ⌘J (downloads) stays out of the way while the app owns it. The shortcut is surfaced to the user via the bubble's hover tooltip and a `⌘J` kbd chip in the popup header; the close button's tooltip notes `Esc`. Opening the popup (via the shortcut or a bubble click) auto-focuses the composer.
-- The popup floats over content (fixed, bottom-right) instead of squeezing a grid column, so opening/closing it never reflows the page.
-- The feed pins to the bottom on new messages, on the pending indicator, and whenever the popup (re)opens.
+- Returns null on the chat view (centered bottom composer is the quick chat's "full form") and on the settings page (a configuration surface). The shell's `withRightChat` flag mirrors this exact condition.
+- Collapsed by default (`rightCollapsed` starts `true`): only the re-open tab shows, keeping the content area maximal. The tab toggles `rightCollapsed`; while open (`!rightCollapsed`) the docked panel renders and stays open until the collapse chevron, Escape or ⌘J folds it.
+- **⌘J / Ctrl+J toggles the sidebar, and Escape collapses it when open** (the listener is inert on the chat / settings surfaces where the widget isn't rendered). It `preventDefault`s so the browser's own ⌘J (downloads) stays out of the way while the app owns it. The shortcut is surfaced via the tab's and the collapse button's tooltips. Opening (via the shortcut or a tab click) auto-focuses the composer.
+- On the research canvas the docked column is lifted into a fixed right-edge overlay (app.css `.research-canvas .nb-rightchat`) so opening/closing it never resizes or shifts the canvas; on the other surfaces it pushes content as the grid's third column.
+- The feed pins to the bottom on new messages, on the pending indicator, and whenever the sidebar (re)opens.
 - Quick conversations get session metadata so they appear in the sidebar's `"刚刚"` ("Just now") group.
 
 ## Change history
+
+### 2026-06-18 — collapsible right sidebar (was bottom-right bubble + popup)
+- **Motivation**: on the research canvas the bottom-right launcher bubble + popup
+  read as a customer-service widget floating over the work; the user asked for a
+  proper right sidebar chat that can collapse, with no header bar and a minimal
+  look.
+- **Goal**: dock the assistant as a right rail (a grid column on
+  today/tasks/artifacts, a fixed overlay over the position-stable research
+  canvas), collapsible to a slim edge tab, with the header removed.
+- **Key decisions**: reinstated the docked `.nb-rightchat` panel (its styles +
+  the `with-rightchat` / `right-collapsed` / research-canvas-overlay rules were
+  still in app.css from the pre-bubble era) and re-added the shell classes in
+  `_app.tsx` (`withRightChat = view !== 'chat' && 'settings'`, matching the
+  component's `hidden` guard). Dropped the `.nb-rc-head` header bar (title / bee
+  glyph / ⌘J chip) and the floating bubble + popup; replaced them with a minimal
+  `.nb-rc-tools` cluster (collapse chevron + the existing open-in-chat handoff)
+  and a `.nb-rc-reopen` edge tab for the collapsed state. Kept `rightCollapsed`
+  semantics (still defaults `true` → collapsed, content area stays maximal), the
+  ⌘J toggle / Esc collapse, the IME guard, the context chip, the feed and the
+  composer unchanged. Removed the now-dead `.nb-qc-bubble` / `.nb-qc-pop` /
+  `.nb-rc-head` / `.nb-rc-glyph` CSS and the stale `.nb-qc-launcher`/`.nb-qc-popup`
+  mobile rules; mobile now floats `.nb-rightchat` as a full-screen overlay.
 
 ### 2026-06-15 — context chip is always present (page baseline, not just articles)
 - **Motivation**: the "正在看 · …" chip only rendered when a specific article was
