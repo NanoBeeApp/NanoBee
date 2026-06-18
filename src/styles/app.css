@@ -711,8 +711,10 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 @keyframes nbpulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 /* Provider picker inside the AI-model detail pane: a wrapped grid of compact
-   logo+name chips (replaces the old full-height provider master column). */
-.nb-prov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 6px; }
+   logo+name chips (replaces the old full-height provider master column). Min
+   column width fits the longest provider name + "默认" tag (OpenRouter) without
+   truncation — see the settings-3col design review. */
+.nb-prov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); gap: 6px; }
 .nb-prov-chip {
 	display: flex; align-items: center; gap: 8px; min-width: 0;
 	padding: 7px 9px; border-radius: 10px; background: var(--surface-2); text-align: left;
@@ -912,28 +914,38 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-acct-confirm-actions { display: flex; gap: 8px; }
 
 /* ── Settings → Shortcuts pane ──────────────────────────────────────────── */
-.nb-sc-list { display: flex; flex-direction: column; gap: 6px; }
+/* Per the approved design (private/design/shortcuts-settings-agy-v2.html): a
+   single light-gray rounded group container partitions each group by background
+   colour (not per-row borders), with borderless rows separated by a hover tint
+   — keeps the 弱化-border intent and reads as one calm block. */
+.nb-sc-list {
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--surface-2); border-radius: 12px; padding: 6px;
+}
 .nb-sc-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
-  background: var(--surface);
+  padding: 12px 14px; border-radius: 8px;
+  transition: background var(--dur-1) var(--ease-out);
 }
+.nb-sc-row:hover { background: var(--surface-3); }
 .nb-sc-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .nb-sc-label { font-size: 13.5px; font-weight: 600; color: var(--ink); }
 .nb-sc-desc { font-size: 12px; color: var(--ink-3); line-height: 1.45; }
 .nb-sc-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 /* Key chip — monospace kbd-style. The button variant is rebindable. */
 .nb-sc-key {
-  min-width: 30px; padding: 3px 9px; text-align: center;
+  min-width: 30px; padding: 4px 10px; text-align: center;
   font-family: var(--font-mono); font-size: 12px; font-weight: 600;
-  color: var(--ink-2); background: var(--surface-3);
+  color: var(--ink-2); background: var(--surface); /* sits on the group's gray */
   border: 1px solid var(--border); border-radius: 7px;
 }
 .nb-sc-key-btn { cursor: pointer; transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
 .nb-sc-key-btn:hover { color: var(--brand-2); border-color: var(--brand-2); background: var(--brand-soft); }
-.nb-sc-key-static { color: var(--ink-3); }
+.nb-sc-key-btn:focus-visible { outline: 2px solid var(--brand-2); outline-offset: 1px; }
+/* Read-only built-in keys: still readable (>=4.5:1), just visibly non-interactive. */
+.nb-sc-key-static { color: var(--ink-2); background: var(--surface-2); }
 .nb-sc-capture {
-  padding: 3px 10px; font-size: 12px; font-weight: 600;
+  padding: 4px 11px; font-size: 12px; font-weight: 600;
   color: var(--brand-2); background: var(--brand-soft);
   border: 1px dashed var(--brand-2); border-radius: 7px;
 }
@@ -942,7 +954,8 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   color: var(--ink-4); background: transparent; border: 0; border-radius: 7px;
   cursor: pointer; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
 }
-.nb-sc-reset:hover { color: var(--ink); background: var(--surface-2); }
+.nb-sc-reset:hover { color: var(--ink); background: var(--surface); }
+.nb-sc-reset:focus-visible { outline: 2px solid var(--brand-2); outline-offset: 1px; }
 
 @media (prefers-reduced-motion: reduce) {
   .nb-push-state.state-loading .dot { animation: nbpulse 1s var(--ease-out) infinite !important; }

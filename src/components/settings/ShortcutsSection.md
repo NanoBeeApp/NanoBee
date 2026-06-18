@@ -30,6 +30,16 @@ shortcuts (⌘N / ⌘J / Esc) for discoverability.
 
 ## Change history
 
+### 2026-06-18 — align rows to the reviewed design + a11y
+- **Motivation**: a design-稿 review (requirements → design → review pass) flagged
+  that per-row bordered boxes read as cards and that the key chips lacked a
+  keyboard focus ring.
+- **Change** (CSS in `styles/app.css`): each group is now a single light-gray
+  rounded container (`.nb-sc-list`) with borderless rows separated by a hover
+  tint (background-colour partition over per-row borders), and the editable key /
+  reset buttons gained a `:focus-visible` outline. Read-only built-in keys use a
+  higher-contrast colour. No behaviour change.
+
 ### 2026-06-18 — Created
 - **Motivation**: user asked for a Settings panel that displays and lets them
   edit keyboard shortcuts, alongside the new global S/D sidebar toggles.
