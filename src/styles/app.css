@@ -125,47 +125,74 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-brand .name b { color: var(--nb-amber-ink); }
 .nb-brand .sub { font-size: 10.5px; color: var(--ink-3); font-family: var(--font-mono); letter-spacing: 0.02em; margin-top: 1px; white-space: nowrap; }
 
-/* New-chat button — sits at the foot of the fixed header (below the switch),
-   styled as a quiet white affordance so the amber tiles remain the rail's
-   visual anchor. */
-.nb-newchat {
-  display: flex; align-items: center; gap: 9px; width: 100%;
-  padding: 11px 14px; border-radius: 11px; margin: 8px 0 4px;
-  background: var(--surface); color: var(--ink); font-weight: 600; font-size: 13.5px;
-  border: 1px solid var(--border); box-shadow: var(--sh-1);
-  transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
-}
-.nb-newchat:hover { background: var(--surface-2); border-color: var(--border-2); }
-.nb-newchat:active { transform: translateY(1px); }
-.nb-newchat .kbd { margin-left: auto; font-family: var(--font-mono); font-size: 10px; padding: 2px 7px; background: var(--surface-3); color: var(--ink-3); border-radius: 6px; }
-
-/* Nav grid — uniform 2×3 neutral tiles (聊天 / 今日事项 / 任务 / Artifacts /
-   研究画布 / 设置). Each tile is a short, wide rectangle: a small rounded
-   icon-chip on the left with the label to its right on one line; the selected
-   tile switches to the indigo brand accent (lavender fill + indigo ring + a
-   filled white-on-indigo chip). Optional count badges trail at the right end. */
-.nb-nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 2px; }
-.nb-nav-tile {
-  display: flex; flex-direction: row; align-items: center; gap: 9px;
-  padding: 8px 10px; border-radius: 11px; min-height: 0; position: relative;
+/* Launcher row — a single "Apps" button (left) that reveals the six page
+   entries in a hover popup, plus the page-aware "new" button (right). Replaces
+   the old always-expanded 3×2 nav grid so the rail header stays compact. */
+.nb-launchbar { display: flex; gap: 7px; margin-top: 2px; position: relative; }
+.nb-apps-wrap { position: relative; flex: 1; min-width: 0; }
+.nb-apps-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 9px 12px; border-radius: 10px;
   border: 1px solid var(--border); background: var(--surface);
-  color: var(--ink); font-weight: 600; font-size: 13px; letter-spacing: -0.01em;
-  transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+  color: var(--ink); font-weight: 650; font-size: 13px;
+  box-shadow: var(--sh-1); cursor: pointer;
+  transition: border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out);
 }
-.nb-nav-tile:hover { background: var(--surface-2); border-color: var(--border-2); }
-.nb-nav-tile:active { transform: translateY(1px); }
-.nb-nav-tile .ic {
-  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
-  display: grid; place-items: center;
-  background: var(--surface-2); color: var(--ink);
-  transition: background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
-}
-.nb-nav-tile .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.nb-apps-btn:hover, .nb-apps-btn.active { border-color: var(--border-2); background: var(--surface-2); }
+.nb-apps-btn .ai { display: inline-flex; color: var(--ink-2); flex-shrink: 0; }
+.nb-apps-btn .al { letter-spacing: -0.01em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-apps-btn .achev { margin-left: auto; color: var(--ink-4); display: inline-flex; flex-shrink: 0; transform: rotate(90deg); transition: transform var(--dur-2) var(--ease-out); }
+.nb-launchbar.open .nb-apps-btn .achev { transform: rotate(-90deg); }
 
-/* Selected tile — indigo brand accent (the design's active "聊天" state). */
-.nb-nav-tile.active { background: var(--brand-soft); border-color: var(--brand-2); box-shadow: 0 0 0 3px rgba(99,91,255,0.14); }
-.nb-nav-tile.active:hover { background: var(--brand-soft); border-color: var(--brand-2); }
-.nb-nav-tile.active .ic { background: var(--brand-2); color: #fff; }
+/* "New" button — sits beside Apps in the launcher row; its label + action
+   follow the current page (new chat / task / artifact / research); ⌘N triggers
+   the same. A quiet white affordance so neither button dominates the rail. */
+.nb-newbtn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 13px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--ink-2); font-weight: 650; font-size: 13px; white-space: nowrap;
+  box-shadow: var(--sh-1); cursor: pointer;
+  transition: border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+}
+.nb-newbtn:hover { border-color: var(--border-2); color: var(--ink); background: var(--surface-2); }
+.nb-newbtn:active { transform: translateY(1px); }
+.nb-newbtn .kbd { font-family: var(--font-mono); font-size: 10px; padding: 1px 6px; background: var(--surface-3); color: var(--ink-3); border-radius: 5px; }
+
+/* Apps popup — holds the six page entries, anchored under the Apps button and
+   spanning the full launcher row. JS toggles `.open` on the launchbar; it stays
+   open while the pointer is over the button or the popup. */
+.nb-apps-pop {
+  position: absolute; top: calc(100% + 7px); left: 0; right: 0; z-index: 60;
+  padding: 7px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; box-shadow: var(--sh-3); transform-origin: top left;
+  opacity: 0; visibility: hidden; transform: scale(0.96) translateY(-6px);
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out), visibility var(--dur-2) var(--ease-out);
+}
+.nb-launchbar.open .nb-apps-pop { opacity: 1; visibility: visible; transform: scale(1) translateY(0); pointer-events: auto; }
+
+/* Flat entry tiles inside the popup — no nested borders, hover background only;
+   the active page tile gets a soft fill with an indigo icon. */
+.nb-qgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.nb-qtile {
+  position: relative; display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: flex-start; gap: 9px;
+  min-height: 60px; padding: 12px 13px; border-radius: 10px;
+  border: none; background: transparent; text-align: left;
+  color: var(--ink); cursor: pointer;
+  transition: background var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.nb-qtile:hover { background: var(--surface-2); transform: scale(1.04); }
+.nb-qtile:active { transform: scale(1.0); }
+.nb-qtile .qi { display: inline-flex; color: var(--ink-2); }
+.nb-qtile .ql { font-size: 13.5px; font-weight: 650; color: var(--ink); letter-spacing: -0.01em; white-space: nowrap; }
+.nb-qtile.active { background: var(--surface-2); }
+.nb-qtile.active .qi { color: var(--brand-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-apps-pop { transition: none; transform: none; }
+}
 
 /* view switch segmented */
 /* Horizontal margin stays 0 so the segmented switch lines up flush with the

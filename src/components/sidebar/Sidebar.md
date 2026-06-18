@@ -1,15 +1,16 @@
 # src/components/sidebar/Sidebar.tsx
 
 ## Responsibility
-Left rail: brand row with collapse button, a uniform 3×2 nav grid (聊天 / 今日事项
-/ 任务 / Artifacts / 研究画布 / 设置 — Chat / Today / Tasks / Artifacts / Research
-Canvas / Settings), the history/topics switch, then the "新建对话" (⌘N — New Chat)
-button at the foot of the fixed header. The scroll area below is
+Left rail: brand row with collapse button, then a **launcher row** — an "Apps"
+button on the left that reveals the six page entries (聊天 / 今日事项 / 任务 /
+Artifacts / 研究画布 / 设置 — Chat / Today / Tasks / Artifacts / Research Canvas /
+Settings) in a **hover/click popup**, plus the page-aware "新建" (⌘N — New) button
+on the right. Below it sits the history/topics switch. The scroll area below is
 **context-aware**: it renders the list that belongs to the current page (chats,
 today items, tasks, decks, or research projects). The history/topics switch only
 shows on the chat view. The account avatar lives in the top-right floating bar
-(`FloatingControls` / `AccountFoot`); the Settings tile opens the AI/settings
-dialog (`setAiSetupOpen`).
+(`FloatingControls` / `AccountFoot`); the Settings entry navigates to `/settings`
+(`openSettings`).
 
 ## Dependencies
 - Upstream: store, ChatHistoryList, TopicGroupList, TodayNavList, TasksNavList,
@@ -17,6 +18,30 @@ dialog (`setAiSetupOpen`).
 - Downstream: App
 
 ## Change history
+
+### 2026-06-18 — nav entries collapse into an "Apps" hover popup
+- **Motivation**: design handoff (`NanoBee.html` mockup) — the always-expanded
+  3×2 nav grid took a fixed block of the rail header. The mockup folds the six
+  entries behind a single compact "Apps" button that reveals them in a popup, and
+  merges the "new" button into the same launcher row.
+- **Goal**: match the mockup — a `.nb-launchbar` row holding the Apps button
+  (left) + New button (right); the six page entries live in a `.nb-apps-pop`
+  popup that opens on hover or click.
+- **Key decisions**: (1) the popup opens on `onMouseEnter` and closes on
+  `onMouseLeave` with a ~130ms grace delay (timer ref) so the pointer can travel
+  button → popup without dismissing it; clicking the button toggles it, and it is
+  a real `<button aria-haspopup aria-expanded>` for keyboard/touch. (2) the six
+  entries became flat `.nb-qtile` tiles inside the popup (icon over label, no
+  nested borders, hover background only); each keeps its original `data-testid`
+  (`chat-entry` … `settings-entry`) and active state (`view === key`). (3) the
+  standalone foot `.nb-newchat` button was removed and re-expressed as the
+  `.nb-newbtn` inside the launchbar — same `newForView` action, dynamic label
+  (`NEW_ACTION_KEY[view]`), testid (`NEW_ACTION[view].testid`), and ⌘N. (4) added
+  the `nav.apps` i18n key (zh/en both "Apps"). (5) dropped the now-unused
+  `.nb-nav-grid` / `.nb-nav-tile` / `.nb-newchat` CSS and repointed the mobile
+  touch-target + single-column overrides at `.nb-apps-btn` / `.nb-newbtn` /
+  `.nb-qtile` / `.nb-qgrid`. No count badges are shown in the popup (the rail had
+  none since the 2026-06-14 badge removal).
 
 ### 2026-06-14 — page-aware "new" button (label + action follow the page)
 - **Motivation**: user feedback — the foot button always said "新建对话" (New Chat)

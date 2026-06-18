@@ -5,6 +5,7 @@
 export const zh = {
   // ── App shell / Sidebar navigation ──────────────────────────────────────
   nav: {
+    apps: 'Apps',
     chat: '聊天',
     today: '今日事项',
     tasks: '任务',

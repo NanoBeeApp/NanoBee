@@ -11,9 +11,11 @@
 //   2026-06-15  Wired i18n (Phase 1): nav tile labels, new-action button label,
 //               brand tagline, mode switch, and collapse tooltip now use useT()
 //               instead of hardcoded Chinese strings.
+import { useState, useRef, useEffect } from 'react';
 import { useAppStore, NEW_ACTION } from '../../store/useAppStore';
 import { useT } from '../../lib/i18n/LocaleContext';
 import type { View } from '../../store/useAppStore';
+import type { IconName } from '../../types';
 import { Icons } from '../../icons/icons';
 import { ChatHistoryList } from './ChatHistoryList';
 import { TopicGroupList } from './TopicGroupList';
@@ -58,6 +60,31 @@ export function Sidebar() {
   const isChatView = view === 'chat';
   const newCfg = NEW_ACTION[view];
 
+  // Apps popup open state. Hovering the button opens it; a short grace delay on
+  // leave lets the pointer travel button → popup without dismissing it. A click
+  // toggles it (and keyboard/touch users get a real button to press).
+  const [appsOpen, setAppsOpen] = useState(false);
+  const appsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openApps = () => {
+    if (appsTimer.current) clearTimeout(appsTimer.current);
+    setAppsOpen(true);
+  };
+  const closeApps = (delay = 130) => {
+    if (appsTimer.current) clearTimeout(appsTimer.current);
+    appsTimer.current = setTimeout(() => setAppsOpen(false), delay);
+  };
+  useEffect(() => () => { if (appsTimer.current) clearTimeout(appsTimer.current); }, []);
+
+  // The six page entries, surfaced inside the Apps popup (was the 3×2 nav grid).
+  const apps: Array<{ key: View; icon: IconName; label: string; onClick: () => void; testid: string }> = [
+    { key: 'chat', icon: 'chat', label: t('nav.chat'), onClick: openChat, testid: 'chat-entry' },
+    { key: 'today', icon: 'news', label: t('nav.today'), onClick: openToday, testid: 'today-inbox-entry' },
+    { key: 'tasks', icon: 'bolt', label: t('nav.tasks'), onClick: openTasks, testid: 'tasks-entry' },
+    { key: 'artifacts', icon: 'grid', label: t('nav.artifacts'), onClick: () => openArtifacts(), testid: 'artifacts-entry' },
+    { key: 'research', icon: 'spark', label: t('nav.research'), onClick: openResearch, testid: 'research-entry' },
+    { key: 'settings', icon: 'gear', label: t('nav.settings'), onClick: openSettings, testid: 'settings-entry' },
+  ];
+
   return (
     // onMouseLeave only matters while peeking (endPeek is a no-op otherwise):
     // moving the pointer off the temporarily-opened sidebar auto-collapses it.
@@ -79,45 +106,47 @@ export function Sidebar() {
           </button>
         </div>
 
-        {/* Uniform 3×2 tile grid — every entry is an equal-sized short
-            rectangle (icon-chip left, label right on one line) so the grid
-            stays compact and reads as one balanced block. */}
-        <div className="nb-nav-grid" data-testid="sidebar-nav-grid">
-          <button className={`nb-nav-tile${isChatView ? ' active' : ''}`} onClick={openChat}
-            data-testid="chat-entry">
-            <span className="ic"><Icons.chat size={17} /></span>
-            <span className="label">{t('nav.chat')}</span>
+        {/* Launcher row: an "Apps" hover popup holding the six page entries on
+            the left, plus the page-aware "new" button on the right. The popup
+            replaces the old always-expanded 3×2 nav grid so the rail header
+            stays compact; it opens on hover or click and the active page tile
+            stays highlighted inside it. */}
+        <div className={`nb-launchbar${appsOpen ? ' open' : ''}`} data-testid="sidebar-launchbar">
+          <div className="nb-apps-wrap" onMouseEnter={openApps} onMouseLeave={() => closeApps()}>
+            <button className={`nb-apps-btn${appsOpen ? ' active' : ''}`}
+              aria-haspopup="true" aria-expanded={appsOpen}
+              onClick={() => setAppsOpen((o) => !o)} data-testid="apps-entry">
+              <span className="ai"><Icons.grid size={17} /></span>
+              <span className="al">{t('nav.apps')}</span>
+              <span className="achev"><Icons.chevR size={14} /></span>
+            </button>
+          </div>
+
+          <button className="nb-newbtn" onClick={newForView} data-testid={newCfg.testid}>
+            <Icons.plus size={16} />
+            <span className="nl">{t(NEW_ACTION_KEY[view])}</span>
+            <span className="kbd">⌘N</span>
           </button>
 
-          <button className={`nb-nav-tile${view === 'today' ? ' active' : ''}`} onClick={openToday}
-            data-testid="today-inbox-entry">
-            <span className="ic"><Icons.news size={17} /></span>
-            <span className="label">{t('nav.today')}</span>
-          </button>
-
-          <button className={`nb-nav-tile${view === 'tasks' ? ' active' : ''}`} onClick={openTasks}
-            data-testid="tasks-entry">
-            <span className="ic"><Icons.bolt size={17} /></span>
-            <span className="label">{t('nav.tasks')}</span>
-          </button>
-
-          <button className={`nb-nav-tile${view === 'artifacts' ? ' active' : ''}`} onClick={() => openArtifacts()}
-            data-testid="artifacts-entry">
-            <span className="ic"><Icons.grid size={17} /></span>
-            <span className="label">{t('nav.artifacts')}</span>
-          </button>
-
-          <button className={`nb-nav-tile${view === 'research' ? ' active' : ''}`} onClick={openResearch}
-            data-testid="research-entry">
-            <span className="ic"><Icons.spark size={17} /></span>
-            <span className="label">{t('nav.research')}</span>
-          </button>
-
-          <button className={`nb-nav-tile${view === 'settings' ? ' active' : ''}`} onClick={openSettings}
-            data-testid="settings-entry">
-            <span className="ic"><Icons.gear size={17} /></span>
-            <span className="label">{t('nav.settings')}</span>
-          </button>
+          {/* Rendered inside the launchbar so it inherits its width and the
+              pointer can travel button → popup without crossing a dead gap. */}
+          <div className="nb-apps-pop" role="menu" data-testid="apps-popup"
+            onMouseEnter={openApps} onMouseLeave={() => closeApps()}>
+            <div className="nb-qgrid">
+              {apps.map((a) => {
+                const Icon = Icons[a.icon];
+                return (
+                  <button key={a.key} role="menuitem"
+                    className={`nb-qtile${view === a.key ? ' active' : ''}`}
+                    onClick={() => { a.onClick(); setAppsOpen(false); }}
+                    data-testid={a.testid}>
+                    <span className="qi"><Icon size={18} /></span>
+                    <span className="ql">{a.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* The history/topics switch only makes sense for the chat list. */}
@@ -127,16 +156,6 @@ export function Sidebar() {
             <button className={sidebarMode === 'topics' ? 'active' : ''} onClick={() => setSidebarMode('topics')}>{t('nav.topicGroups')}</button>
           </div>
         )}
-
-        {/* The "new" button lives at the foot of the fixed header, right above
-            the list it seeds — a quiet white affordance so the amber tiles stay
-            the visual anchor of the rail. Its label + action follow the current
-            page (new chat / task / artifact / research); ⌘N triggers the same. */}
-        <button className="nb-newchat" onClick={newForView} data-testid={newCfg.testid}>
-          <Icons.plus size={16} />
-          {t(NEW_ACTION_KEY[view])}
-          <span className="kbd">⌘N</span>
-        </button>
       </div>
 
       <div className="nb-side-scroll" data-testid="sidebar-scroll-area">

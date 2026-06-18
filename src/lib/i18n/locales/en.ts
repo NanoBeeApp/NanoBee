@@ -18,6 +18,7 @@ type DeepPartial<T> = {
 export const en: DeepPartial<ZhDict> = {
   // ── App shell / Sidebar navigation ──────────────────────────────────────
   nav: {
+    apps: 'Apps',
     chat: 'Chat',
     today: "Today's Inbox",
     tasks: 'Tasks',

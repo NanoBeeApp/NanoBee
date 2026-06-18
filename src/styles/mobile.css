@@ -419,12 +419,13 @@ details[open] .nb-error-detail-toggle::before { transform: rotate(90deg); }
     z-index: 50;
   }
 
-  /* ---------- 18. Touch targets: all interactive nav tiles ---- */
-  .nb-nav-tile {
+  /* ---------- 18. Touch targets: launcher row + Apps popup tiles ---- */
+  .nb-apps-btn,
+  .nb-newbtn {
     min-height: 44px;
   }
-  .nb-nav-grid {
-    gap: 6px;
+  .nb-qtile {
+    min-height: 56px;
   }
 
   /* ---------- 19. Today toolbar: wrap on small screens ---- */
@@ -446,7 +447,7 @@ details[open] .nb-error-detail-toggle::before { transform: rotate(90deg); }
 
 /* Extra-small phones (< 375px) */
 @media (max-width: 374px) {
-  .nb-nav-grid {
+  .nb-qgrid {
     grid-template-columns: 1fr;
   }
   .nb-msg { padding: 0 12px; }
