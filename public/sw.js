@@ -27,7 +27,7 @@ self.addEventListener("push", (event) => {
 
 	let title = "NanoBee";
 	let body = "You have a new update.";
-	let icon = "/favicon.svg";
+	let icon = "/brand/nanobee-logo-256.png";
 
 	if (pushEvent.data) {
 		try {
@@ -44,7 +44,7 @@ self.addEventListener("push", (event) => {
 		self.registration.showNotification(title, {
 			body,
 			icon,
-			badge: "/favicon.svg",
+			badge: "/brand/nanobee-logo-64.png",
 			tag: "nanobee-update",      // collapses duplicate notifications
 			renotify: true,             // vibrate/sound even when replacing a tag
 			data: { url: self.location.origin },

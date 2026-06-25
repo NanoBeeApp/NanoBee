@@ -4,16 +4,21 @@ The NanoBee mascot is a friendly honey **bee** — fitting both the product name
 and its core idea: a proactive assistant that gathers what you care about and
 brings it back to you, the way a bee gathers nectar.
 
-Its two antennae end in **AI "sparkle" stars** (the now-universal AI symbol) — so
-the mark reads as *bee* and *AI* at once, signaling a smart, AI-powered assistant.
+The bee is shown in a **dynamic 3/4 flying pose** with a small **3-dot motion
+trail**, so the mark itself says *proactive / in motion / bringing something to
+you*. Its two antennae end in crisp **AI "sparkle" stars** (the now-universal AI
+symbol) — so the mark reads as *bee* and *AI* at once, signaling a smart,
+AI-powered assistant. The sparkles are hard-edged (no glow) and the eyes use a
+single catchlight, so the icon stays legible all the way down to 32px.
 
 | File | Use |
 | --- | --- |
-| `nanobee-logo-icon.png` | Primary app icon — honey-amber rounded-square tile with a cream bee (1024×1024). |
+| `nanobee-logo-icon.png` | Primary app icon — honey-amber rounded-square tile with a cream bee in flight (1024×1024). |
 | `nanobee-logo-512/256/128/64/32.png` | Pre-scaled square icon sizes derived from the primary icon. |
-| `nanobee-mascot.png` | Standalone full-color bee mascot on a transparent background (1024×1024) — for white surfaces, page headers, onboarding and marketing. |
+| `nanobee-mascot.png` | Standalone full-color (golden) bee mascot on a transparent background (1024×1024) — for white surfaces, page headers, onboarding and marketing. |
 
 **Brand color:** honey amber gradient `#e9a13b → #d98b2b`.
 
-**Style:** flat vector, single focal point, clean edges — modern and professional
-(no 3D, no glossy plastic highlights, no realistic fur, no text in the mark).
+**Style:** flat vector, single focal point, clean hard edges — modern and
+professional (no 3D, no glossy plastic highlights, no soft glows, no realistic
+fur, no text in the mark).

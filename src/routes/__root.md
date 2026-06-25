@@ -17,6 +17,18 @@ QueryClientProvider.
 
 ## Change history
 
+### 2026-06-26 — favicon switched to the V3 bee-in-flight logo
+- **Motivation**: the brand logo was redesigned from scratch (V3, a dynamic
+  bee-in-flight with a motion trail and crisp AI sparkle stars). The favicon must
+  reflect the new mark, and the old hand-coded `public/favicon.svg` (static
+  front-facing bee) was removed.
+- **Changes**: replaced the single `image/svg+xml` favicon link with PNG icon
+  links pointing at the new brand assets (`/brand/nanobee-logo-32.png`,
+  `/brand/nanobee-logo-64.png`) plus an `apple-touch-icon`
+  (`/brand/nanobee-logo-256.png`). The new icon stays legible down to 32px
+  (verified in the logo review). `public/sw.js` notification icon/badge were
+  repointed to the same brand PNGs in the same change.
+
 ### 2026-06-15 — global error boundary + mobile CSS
 - **Motivation**: a crashed React subtree left a blank white screen; mobile devices
   got an unusable overflowing two-column layout.

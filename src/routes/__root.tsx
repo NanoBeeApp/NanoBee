@@ -28,7 +28,10 @@ export const Route = createRootRoute({
 			{ title: "NanoBee — 主动式 AI 助理" },
 		],
 		links: [
-			{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+			// Favicon: new V3 bee-in-flight app icon (PNG, legible down to 32px)
+			{ rel: "icon", type: "image/png", sizes: "32x32", href: "/brand/nanobee-logo-32.png" },
+			{ rel: "icon", type: "image/png", sizes: "64x64", href: "/brand/nanobee-logo-64.png" },
+			{ rel: "apple-touch-icon", sizes: "256x256", href: "/brand/nanobee-logo-256.png" },
 			{ rel: "stylesheet", href: fontsCss },
 			{ rel: "stylesheet", href: colorsCss },
 			{ rel: "stylesheet", href: typographyCss },
