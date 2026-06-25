@@ -1,12 +1,20 @@
 /* ============================================================
-   QuickChat — collapsed re-open tab
+   QuickChat — collapsed re-open button
    The quick-chat assistant docks as a right sidebar (`.nb-rightchat`, defined in
    app.css — a real grid column on today/tasks/artifacts, a fixed overlay over
    the position-stable research canvas). When collapsed, the panel is hidden and
-   only this slim tab clings to the right edge of the viewport to bring it back.
+   this button brings it back.
+
+   The toggle must NOT move when you open/close the panel: this re-open button is
+   pinned to the SAME top-right corner spot as the open-state collapse chevron
+   (`.nb-rc-tools` button — a 28×28 icon at top:8px/right:8px from the viewport).
+   Both states therefore share one fixed position in the top-right corner, so the
+   control stays put as the panel slides in and out (it does not jump to the
+   right edge's vertical centre as the old tab did).
+
    z-index (35) sits above content, the floating corner controls (app.css
    `.nb-float` z-index 25) and the research reading overlay (`.rc-reading-scrim`
-   z-index 30) — so the tab stays reachable while reading an article. It stays
+   z-index 30) — so the button stays reachable while reading an article. It stays
    below the system layers that should fully own the screen: notification scrim
    (40), the image lightbox (60), modal scrims (80), the selection float (200)
    and toasts (300).
@@ -14,23 +22,24 @@
 
 .nb-rc-reopen {
   position: fixed;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 8px;
+  right: 8px;
   z-index: 35;
-  width: 26px;
-  height: 60px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   /* The panelRight glyph (a panel with its divider on the right) mirrors the
      left rail's panelLeft toggle — no rotation needed. */
   color: var(--ink-3);
-  background: var(--surface);
+  /* Translucent floating-control treatment (matches app.css `.fbtn`) so the
+     button stays discoverable over whatever content/canvas sits behind it. */
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(140%) blur(10px);
   border: 1px solid var(--border);
-  border-right: 0;
-  border-radius: 11px 0 0 11px;
-  box-shadow: var(--sh-2);
-  transition: color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out),
-    width var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+  border-radius: 9px;
+  box-shadow: var(--sh-1);
+  transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out);
 }
-.nb-rc-reopen:hover { width: 30px; color: var(--ink); background: #fff; border-color: var(--border-2); }
+.nb-rc-reopen:hover { color: var(--ink); background: #fff; border-color: var(--border-2); }

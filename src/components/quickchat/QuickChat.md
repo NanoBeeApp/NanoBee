@@ -1,7 +1,7 @@
 # src/components/quickchat/QuickChat.tsx
 
 ## Responsibility
-Quick-chat assistant, present on every non-chat surface (today / tasks / artifacts / research). It docks as a **collapsible right sidebar** — a real grid column (`.nb-rightchat`) on today/tasks/artifacts, a fixed overlay floating over the position-stable research canvas. **No header bar.** When open, top-to-bottom: a single top row (`.nb-rc-top`) with the optional context chip (`"正在看 · …"` ("Now viewing · …") with clear button) on the **left** sharing the row with a minimal control cluster (`.nb-rc-tools` — collapse chevron, plus an `"在聊天页打开"` ("Open in chat") handoff once there are messages) pinned **right**; then the message feed reusing MessageView (or a centered empty state), and the composer. When collapsed, the panel is gone and only a slim re-open tab (`.nb-rc-reopen`) clings to the right edge of the screen. The collapsed-tab styles live in `styles/quickchat.css`; the panel internals (`.nb-rightchat` / `.nb-rc-*` / `.nb-qc`) live in app.css.
+Quick-chat assistant, present on every non-chat surface (today / tasks / artifacts / research). It docks as a **collapsible right sidebar** — a real grid column (`.nb-rightchat`) on today/tasks/artifacts, a fixed overlay floating over the position-stable research canvas. **No header bar.** When open, top-to-bottom: a single top row (`.nb-rc-top`) with the optional context chip (`"正在看 · …"` ("Now viewing · …") with clear button) on the **left** sharing the row with a minimal control cluster (`.nb-rc-tools` — collapse chevron, plus an `"在聊天页打开"` ("Open in chat") handoff once there are messages) pinned **right**; then the message feed reusing MessageView (or a centered empty state), and the composer. When collapsed, the panel is gone and only a small re-open button (`.nb-rc-reopen`) stays pinned to the **top-right corner** — the same fixed spot as the open-state collapse chevron, so the toggle never moves between states. The collapsed-button styles live in `styles/quickchat.css`; the panel internals (`.nb-rightchat` / `.nb-rc-*` / `.nb-qc`) live in app.css.
 
 ## Dependencies
 - Upstream: store, icons, MessageView, ThinkingIndicator, `lib/useImeComposition`, `styles/quickchat.css`
@@ -9,13 +9,29 @@ Quick-chat assistant, present on every non-chat surface (today / tasks / artifac
 
 ## Key notes
 - Returns null on the chat view (centered bottom composer is the quick chat's "full form") and on the settings page (a configuration surface). The shell's `withRightChat` flag mirrors this exact condition.
-- Collapsed by default (`rightCollapsed` starts `true`): only the re-open tab shows, keeping the content area maximal. The tab toggles `rightCollapsed`; while open (`!rightCollapsed`) the docked panel renders and stays open until the collapse chevron, Escape or ⌘J folds it.
+- Collapsed by default (`rightCollapsed` starts `true`): only the top-right re-open button shows, keeping the content area maximal. The button toggles `rightCollapsed`; while open (`!rightCollapsed`) the docked panel renders and stays open until the collapse chevron, Escape or ⌘J folds it. The collapsed button and the open-state collapse chevron occupy the **same top-right position** (both `top:8px/right:8px`, 28×28), so the toggle never jumps when you open/close the panel.
 - **⌘J / Ctrl+J toggles the sidebar, and Escape collapses it when open** (the listener is inert on the chat / settings surfaces where the widget isn't rendered). It `preventDefault`s so the browser's own ⌘J (downloads) stays out of the way while the app owns it. The shortcut is surfaced via the tab's and the collapse button's tooltips. Opening (via the shortcut or a tab click) auto-focuses the composer.
 - On the research canvas the docked column is lifted into a fixed right-edge overlay (app.css `.research-canvas .nb-rightchat`) so opening/closing it never resizes or shifts the canvas; on the other surfaces it pushes content as the grid's third column.
 - The feed pins to the bottom on new messages, on the pending indicator, and whenever the sidebar (re)opens.
 - Quick conversations get session metadata so they appear in the sidebar's `"刚刚"` ("Just now") group.
 
 ## Change history
+
+### 2026-06-25 — toggle button stays in one fixed top-right spot
+- **Motivation**: the expand/collapse control jumped between two positions —
+  collapsed, the `.nb-rc-reopen` re-open tab clung to the **vertical centre** of
+  the right edge (`top:50%`); open, the collapse chevron sat at the panel's
+  **top-right**. Toggling made the button hop. The user asked for it to be fixed
+  in one place: the top-right corner, in both states.
+- **Change**: re-pinned `.nb-rc-reopen` (in `quickchat.css`) from the centred
+  right-edge tab to `top:8px / right:8px`, 28×28 — pixel-aligned with the
+  open-state `.nb-rc-tools` collapse chevron (which sits at the same offset via
+  `.nb-rc-top`'s padding), so the control occupies one stable top-right position
+  across open/collapsed. Restyled it from the slim rounded-left tab into a
+  compact square button with the translucent floating-control treatment (matches
+  app.css `.fbtn`) so it stays discoverable over the content/canvas behind it.
+  Icon size matched to the collapse chevron (17). Behaviour, tooltip and the
+  `expand-right-chat` test-id are unchanged.
 
 ### 2026-06-25 — context chip shares the top row with the toggle button
 - **Motivation**: the `"正在看 · 研究画布"` chip rendered on its own row
