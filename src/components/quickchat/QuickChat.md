@@ -1,7 +1,7 @@
 # src/components/quickchat/QuickChat.tsx
 
 ## Responsibility
-Quick-chat assistant, present on every non-chat surface (today / tasks / artifacts / research). It docks as a **collapsible right sidebar** — a real grid column (`.nb-rightchat`) on today/tasks/artifacts, a fixed overlay floating over the position-stable research canvas. **No header bar.** When open, top-to-bottom: a minimal right-aligned control cluster (`.nb-rc-tools` — collapse chevron, plus an `"在聊天页打开"` ("Open in chat") handoff once there are messages), an optional context chip (`"正在看 · …"` ("Now viewing · …") with clear button), the message feed reusing MessageView (or a centered empty state), and the composer. When collapsed, the panel is gone and only a slim re-open tab (`.nb-rc-reopen`) clings to the right edge of the screen. The collapsed-tab styles live in `styles/quickchat.css`; the panel internals (`.nb-rightchat` / `.nb-rc-*` / `.nb-qc`) live in app.css.
+Quick-chat assistant, present on every non-chat surface (today / tasks / artifacts / research). It docks as a **collapsible right sidebar** — a real grid column (`.nb-rightchat`) on today/tasks/artifacts, a fixed overlay floating over the position-stable research canvas. **No header bar.** When open, top-to-bottom: a single top row (`.nb-rc-top`) with the optional context chip (`"正在看 · …"` ("Now viewing · …") with clear button) on the **left** sharing the row with a minimal control cluster (`.nb-rc-tools` — collapse chevron, plus an `"在聊天页打开"` ("Open in chat") handoff once there are messages) pinned **right**; then the message feed reusing MessageView (or a centered empty state), and the composer. When collapsed, the panel is gone and only a slim re-open tab (`.nb-rc-reopen`) clings to the right edge of the screen. The collapsed-tab styles live in `styles/quickchat.css`; the panel internals (`.nb-rightchat` / `.nb-rc-*` / `.nb-qc`) live in app.css.
 
 ## Dependencies
 - Upstream: store, icons, MessageView, ThinkingIndicator, `lib/useImeComposition`, `styles/quickchat.css`
@@ -16,6 +16,17 @@ Quick-chat assistant, present on every non-chat surface (today / tasks / artifac
 - Quick conversations get session metadata so they appear in the sidebar's `"刚刚"` ("Just now") group.
 
 ## Change history
+
+### 2026-06-25 — context chip shares the top row with the toggle button
+- **Motivation**: the `"正在看 · 研究画布"` chip rendered on its own row
+  (`.nb-rc-ctx`) below the control cluster, leaving the panel's top-right
+  toggle button visually stranded on an empty line above it. The user pointed
+  out the chip belongs on the **same row** as the sidebar toggle.
+- **Change**: merged `.nb-rc-tools` and the former `.nb-rc-ctx` into one flex
+  top row (`.nb-rc-top`): the chip sits on the left, the control cluster keeps
+  itself pinned right via `margin-left:auto` (so the toggle stays put whether or
+  not the chip is present). Removed the standalone `.nb-rc-ctx` rule from
+  app.css. Behaviour, tooltips and test-ids are unchanged.
 
 ### 2026-06-18 — panel-toggle icon (match the left rail) + D shortcut
 - **Motivation**: the right sidebar's collapse / re-open buttons used `chevR`

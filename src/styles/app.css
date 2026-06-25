@@ -531,11 +531,12 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 /* Third grid column on every non-chat view: feed (top) + composer (bottom). */
 .nb-rightchat { grid-column: 3; display: flex; flex-direction: column; min-height: 0; height: 100vh; background: var(--bg); border-left: 1px solid var(--border); }
 
-/* No header bar — just a minimal right-aligned control cluster (collapse, and
-   the "open in full chat" handoff) floating at the top of the panel. */
-.nb-rc-tools { display: flex; align-items: center; justify-content: flex-end; gap: 2px; padding: 8px 8px 2px; flex-shrink: 0; }
-
-.nb-rc-ctx { padding: 8px 14px 0; }
+/* No header bar — a single top row: the "正在看 · …" context chip on the left
+   shares the row with a minimal control cluster on the right (collapse, and the
+   "open in full chat" handoff). `margin-left:auto` on the cluster keeps it
+   pinned right whether or not the chip is present. */
+.nb-rc-top { display: flex; align-items: center; gap: 8px; padding: 8px 8px 2px 14px; flex-shrink: 0; min-height: 28px; }
+.nb-rc-tools { display: flex; align-items: center; justify-content: flex-end; gap: 2px; margin-left: auto; }
 
 .nb-rc-feed { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 0; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
 /* Messages span the narrow panel width with tighter side padding. */

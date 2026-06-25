@@ -4,7 +4,8 @@
 // position-stable research canvas). The sidebar is collapsible: when open it
 // stacks (top→bottom) a minimal floating control cluster (no header bar),
 // an optional context chip, the message feed and the composer; when collapsed
-// only a slim re-open tab clings to the right edge of the screen. Context-aware
+// only a small re-open button stays in the top-right corner — the same fixed
+// spot as the open-state collapse chevron, so the toggle never moves. Context-aware
 // ("正在看 · …" chip) and can promote the conversation to the full chat page.
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore, VIEW_CONTEXT } from '../../store/useAppStore';
@@ -110,7 +111,8 @@ export function QuickChat() {
     }
   };
 
-  // Collapsed: only a slim re-open tab clings to the right edge.
+  // Collapsed: a small re-open button pinned to the top-right corner — the same
+  // fixed spot as the open-state collapse chevron, so the toggle stays put.
   if (!open) {
     return (
       <button
@@ -120,7 +122,7 @@ export function QuickChat() {
         aria-label="展开快速对话（⌘J）"
         aria-expanded={false}
         data-testid="expand-right-chat">
-        <Icons.panelRight size={18} />
+        <Icons.panelRight size={17} />
       </button>
     );
   }
@@ -137,23 +139,12 @@ export function QuickChat() {
 
   return (
     <aside className="nb-rightchat" data-testid="right-chat-panel">
-      {/* Minimal floating controls — no header bar, just the collapse chevron
-          (and the "open in full chat" handoff once there are messages). */}
-      <div className="nb-rc-tools">
-        {hasMessages && (
-          <button className="btn btn-ghost btn-icon btn-sm" title="在聊天页打开" onClick={openQuickInChat}
-            data-testid="open-quick-chat-in-full">
-            <Icons.arrowRight size={15} />
-          </button>
-        )}
-        <button className="btn btn-ghost btn-icon btn-sm" title="收起 · ⌘J / Esc" onClick={() => setRightCollapsed(true)}
-          data-testid="collapse-right-chat" aria-label="收起快速对话">
-          <Icons.panelRight size={17} />
-        </button>
-      </div>
-
-      {ctxLabel && (
-        <div className="nb-rc-ctx">
+      {/* Top bar — no header chrome: the "正在看 · …" context chip sits on the
+          left, sharing one row with the minimal control cluster on the right
+          (the collapse chevron, plus the "open in full chat" handoff once there
+          are messages). The chip is optional; the controls stay pinned right. */}
+      <div className="nb-rc-top">
+        {ctxLabel && (
           <span className="nb-chip" style={{ borderColor: 'var(--nb-amber-line)', background: 'var(--nb-amber-soft)', color: 'var(--nb-amber-ink)', fontFamily: 'var(--font-sans)' }}
             title="NanoBee 能读取你当前查看的内容，作为这段对话的上下文"
             data-testid="viewing-context-chip">
@@ -165,8 +156,20 @@ export function QuickChat() {
                 onClick={() => setQuickCtx(null)} data-testid="clear-viewing-context"><Icons.x size={11} /></span>
             )}
           </span>
+        )}
+        <div className="nb-rc-tools">
+          {hasMessages && (
+            <button className="btn btn-ghost btn-icon btn-sm" title="在聊天页打开" onClick={openQuickInChat}
+              data-testid="open-quick-chat-in-full">
+              <Icons.arrowRight size={15} />
+            </button>
+          )}
+          <button className="btn btn-ghost btn-icon btn-sm" title="收起 · ⌘J / Esc" onClick={() => setRightCollapsed(true)}
+            data-testid="collapse-right-chat" aria-label="收起快速对话">
+            <Icons.panelRight size={17} />
+          </button>
         </div>
-      )}
+      </div>
 
       <div className="nb-rc-feed" ref={feedRef} data-testid="quick-chat-feed">
         {hasMessages ? (
