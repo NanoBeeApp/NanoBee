@@ -4,6 +4,9 @@ The NanoBee mascot is a friendly honey **bee** — fitting both the product name
 and its core idea: a proactive assistant that gathers what you care about and
 brings it back to you, the way a bee gathers nectar.
 
+Its two antennae end in **AI "sparkle" stars** (the now-universal AI symbol) — so
+the mark reads as *bee* and *AI* at once, signaling a smart, AI-powered assistant.
+
 | File | Use |
 | --- | --- |
 | `nanobee-logo-icon.png` | Primary app icon — honey-amber rounded-square tile with a cream bee (1024×1024). |
