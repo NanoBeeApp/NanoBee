@@ -52,7 +52,9 @@ export const Icons: Record<IconName, IconComponent> = {
   redo: (p) => <Svg {...p}><path d="M3 12a9 9 0 1 0 3-7M3 4v5h5" /></Svg>,
   more: (p) => <Svg {...p}><circle cx="5" cy="12" r="1.4" fill="currentColor" /><circle cx="12" cy="12" r="1.4" fill="currentColor" /><circle cx="19" cy="12" r="1.4" fill="currentColor" /></Svg>,
   check: (p) => <Svg {...p}><path d="M20 6 9 17l-5-5" /></Svg>,
-  bee: (p) => <Svg {...p}><ellipse cx="12" cy="14" rx="5" ry="6.5" /><path d="M12 9v11M8.5 11.5h7M8.2 16h7.6" /><path d="M9 6 6.5 3.5M15 6l2.5-2.5" /><circle cx="9.2" cy="6.2" r="1" /><circle cx="14.8" cy="6.2" r="1" /></Svg>,
+  // Friendly bee echoing the NanoBee mark: round head, spread wings, striped
+  // body and ball-tipped antennae. Antenna tips are filled with currentColor.
+  bee: (p) => <Svg {...p}><path d="M10.5 5.4C9.8 4 8.9 3.3 8 3.1" /><path d="M13.5 5.4C14.2 4 15.1 3.3 16 3.1" /><circle cx="7.7" cy="3" r="0.9" fill="currentColor" stroke="none" /><circle cx="16.3" cy="3" r="0.9" fill="currentColor" stroke="none" /><circle cx="12" cy="7.3" r="2.2" /><ellipse cx="6.6" cy="11.6" rx="3" ry="2.1" transform="rotate(-25 6.6 11.6)" /><ellipse cx="17.4" cy="11.6" rx="3" ry="2.1" transform="rotate(25 17.4 11.6)" /><ellipse cx="12" cy="15.4" rx="4.5" ry="5.7" /><path d="M7.9 14h8.2" /><path d="M8.6 18h6.8" /></Svg>,
   panelRight: (p) => <Svg {...p}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M15 4v16" /></Svg>,
   panelLeft: (p) => <Svg {...p}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16" /></Svg>,
   list: (p) => <Svg {...p}><path d="M9 6h12M9 12h12M9 18h12" /><circle cx="4.5" cy="6" r="0.9" fill="currentColor" /><circle cx="4.5" cy="12" r="0.9" fill="currentColor" /><circle cx="4.5" cy="18" r="0.9" fill="currentColor" /></Svg>,

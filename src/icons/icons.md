@@ -17,6 +17,14 @@ Inline SVG line-icon set (Lucide-class, 24x24, rounded caps) ported 1:1 from the
 
 ## Change history
 
+### 2026-07-01 — redrew the `bee` glyph to match the new logo
+- **Motivation**: the brand mark became a friendly cartoon honey bee; the old
+  symmetric line-bee (plain striped oval + antennae) no longer echoed it.
+- **Key decision**: keep it a monochrome stroke glyph (used at 11–28px in many
+  places), but add a round head, spread wings and ball-tipped antennae so it
+  reads as the same bee. Antenna tips are `fill="currentColor"` dots so they
+  inherit the icon color (white on the honey tile, brand color inline).
+
 ### 2026-06-15 — added `stop` icon
 - **Motivation**: the chat composer's stop-generating button needed a filled
   rounded-square glyph (added to `IconName` in `types.ts` too).

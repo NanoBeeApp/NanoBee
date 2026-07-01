@@ -13,9 +13,13 @@ geometric enough to remain recognizable down to 32px.
 | --- | --- |
 | `nanobee-logo-icon.png` | Primary app icon — cream rounded-square tile with the honey bee (1024×1024). Source of truth for the scaled sizes below. |
 | `nanobee-logo-512/256/128/64/32.png` | Pre-scaled square icon sizes derived from the primary icon tile (favicons + apple-touch-icon). |
-| `nanobee-mascot.png` | Standalone bee mark on a plain white background (1024×1024) — for white surfaces, page headers, onboarding and marketing. |
-| `nanobee-lockup-horizontal.png` | Horizontal lockup: bee + `NanoBee` wordmark, side by side (1200×800) — headers, docs, README banners. |
-| `nanobee-lockup-vertical.png` | Vertical lockup: bee above the `NanoBee` wordmark (1024×1024) — splash / centered layouts. |
+| `nanobee-mascot.png` | Standalone bee mark on a **transparent** background (1024×1024) — for white surfaces, page headers, onboarding and marketing. |
+| `nanobee-lockup-horizontal.png` | Horizontal lockup: bee + `NanoBee` wordmark, side by side, **transparent** background (1200×800) — headers, docs, README banners. |
+| `nanobee-lockup-vertical.png` | Vertical lockup: bee above the `NanoBee` wordmark, **transparent** background (1024×1024) — splash / centered layouts. |
+
+All PNGs are optimized (pngquant + oxipng). Only the app-icon tile keeps its
+cream background; the mascot and both lockups are transparent so they sit
+cleanly on any surface.
 
 **Brand colors:**
 - Honey / amber yellow — `#FEC826` (body stripes, the `Bee` in the wordmark)
