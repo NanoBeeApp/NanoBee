@@ -15,20 +15,28 @@
 /* ---------- Floating status ----------
    No header bar — the canvas fills the whole surface, and starting a new
    research lives in the left sidebar (ResearchNavList). The only floating canvas
-   chrome is a transient generation-status / error pill at top-left, deliberately
+   chrome is a transient generation-status / error pill at the top, deliberately
    opposite the global FloatingControls cluster (app.css `.nb-float.tr`, z-index
-   25: notification / settings / account at top-right) so they never collide. */
+   25: notification / settings / account at top-right) so they never collide.
+
+   On the research canvas the left sidebar is a FIXED overlay (app.css
+   `.nb-app.research-canvas .nb-side`: position:fixed, width `--nb-side-w-open`,
+   z-index 30) floating above the full-width canvas — so the pill must start to
+   the RIGHT of that sidebar, else it renders underneath it and is never seen
+   (this hid both the generating status AND the failure message). */
 .rc-actions {
   position: absolute;
   top: 12px;
-  left: 14px;
+  /* Clear the expanded fixed sidebar (its width + a 14px gutter). */
+  left: calc(var(--nb-side-w-open) + 14px);
   z-index: 20;
   display: flex;
   align-items: center;
   gap: 10px;
 }
-/* When the sidebar is collapsed, the global expand-sidebar button occupies the
-   top-left corner (app.css `.nb-float.tl`, left:12px + 34px); shift clear of it. */
+/* When the sidebar is collapsed it's hidden, freeing the left edge; the global
+   expand-sidebar button then occupies the top-left corner (app.css
+   `.nb-float.tl`, left:12px + 34px), so shift just clear of it. */
 .nb-app.side-collapsed .rc-actions {
   left: 56px;
 }
@@ -114,11 +122,51 @@
 .rc-outline-banner:hover .rc-outline-banner-title {
   color: var(--brand-2);
 }
-.rc-outline-rootloading {
+/* Outline-generation skeleton: shimmering placeholder cards shown in the main
+   content area while the AI builds the outline (see ResearchCanvas). Mirrors the
+   real node-card metrics so the eye is anchored where the outline will appear and
+   there's no layout jump when it lands. */
+.rc-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
   margin-bottom: 28px;
 }
-.rc-outline-rootloading .rc-node {
-  width: 100%;
+.rc-skel-card {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 15px 18px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(15, 17, 23, 0.04), 0 4px 14px rgba(15, 17, 23, 0.05);
+}
+.rc-skel-line {
+  height: 11px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-3) 25%,
+    var(--surface-2) 50%,
+    var(--surface-3) 75%
+  );
+  background-size: 200% 100%;
+  animation: rc-shimmer 1.4s ease-in-out infinite;
+}
+.rc-skel-title {
+  height: 13px;
+}
+.rc-skel-brief {
+  opacity: 0.75;
+}
+@keyframes rc-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+/* Respect reduced-motion: keep the placeholder, drop the sweep. */
+@media (prefers-reduced-motion: reduce) {
+  .rc-skel-line { animation: none; }
 }
 
 /* Top-level outline items stack vertically; each item indents its own children

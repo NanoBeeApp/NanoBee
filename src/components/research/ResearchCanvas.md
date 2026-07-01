@@ -34,6 +34,20 @@ indented under its parent along a vertical rail.
 
 ## Change history
 
+### 2026-07-01 — Skeleton loading state in the main content area
+- **Motivation**: While the AI generated the outline, the sidebar showed a
+  "大纲生成中…" hint but the main canvas showed only the topic banner plus a
+  redundant root card (identical to a static card) — there was no clear loading
+  affordance where the outline was about to appear, so the canvas read as empty.
+- **Goal**: Give the main content area an obvious "loading here" state during
+  outline generation, matching the sidebar hint and the floating status pill.
+- **Key decision**: Replace the `rc-outline-rootloading` root-card placeholder
+  (redundant with the banner) with `rc-skeleton` — a small fixed set of shimmering
+  placeholder cards (`OUTLINE_SKELETON`, a couple indented to hint at hierarchy)
+  rendered while `root.status === "loading"`. Metrics mirror the real node card so
+  the real branches replace the skeleton with no layout jump; the shimmer is
+  disabled under `prefers-reduced-motion`.
+
 ### 2026-06-17 — Scroll to the focused node, not just the active one
 - **Motivation**: The canvas quick-chat (`askOnCanvas`) lights a freshly created
   node WITHOUT opening its reading overlay (it sets only `highlightedNodeId`), so

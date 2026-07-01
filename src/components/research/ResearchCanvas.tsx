@@ -31,6 +31,19 @@ const INITIAL_SCALE = 1;
 // article column; per-depth cards shrink further via CSS max-width.
 const OUTLINE_WIDTH = 760;
 
+// Placeholder outline rows shown in the main canvas while the AI is generating
+// the outline (root still `loading`, no children yet). They mimic the shape of
+// the incoming tree — a couple of nested rows hint at the hierarchy — so the
+// content area reads as "the outline is loading here", not empty. Widths/indents
+// are fixed (deterministic) and purely decorative; keys are stable indices.
+const OUTLINE_SKELETON: ReadonlyArray<{ indent: number; title: string; brief: string }> = [
+  { indent: 0, title: "58%", brief: "86%" },
+  { indent: 0, title: "46%", brief: "72%" },
+  { indent: 30, title: "40%", brief: "64%" },
+  { indent: 30, title: "50%", brief: "68%" },
+  { indent: 0, title: "54%", brief: "80%" },
+];
+
 export function ResearchCanvas() {
   const nodes = useResearchStore((s) => s.nodes);
   const order = useResearchStore((s) => s.order);
@@ -235,9 +248,22 @@ export function ResearchCanvas() {
               directory). Appears once the outline-generation trace exists. */}
           {outlineTrace && <ResearchTraceLauncher trace={outlineTrace} placement="outline" />}
 
+          {/* While the outline is being generated the root has no children yet;
+              show shimmering skeleton rows in the main content area so it reads
+              as "loading here" (not an empty canvas), matching the sidebar's
+              "大纲生成中…". Replaced by the real branches once they land. */}
           {rootLoading && (
-            <div className="rc-outline-rootloading">
-              <ResearchNodeCard node={root} active={false} onOpen={openNode} />
+            <div
+              className="rc-skeleton"
+              data-testid="research-outline-skeleton"
+              aria-label="大纲生成中"
+              aria-busy="true">
+              {OUTLINE_SKELETON.map((row, i) => (
+                <div className="rc-skel-card" key={i} style={{ marginLeft: row.indent }}>
+                  <div className="rc-skel-line rc-skel-title" style={{ width: row.title }} />
+                  <div className="rc-skel-line rc-skel-brief" style={{ width: row.brief }} />
+                </div>
+              ))}
             </div>
           )}
 
