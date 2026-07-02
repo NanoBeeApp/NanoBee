@@ -22,6 +22,11 @@ footnote. No app sidebar.
 
 ## Change history
 
+### 2026-07-02 — brand tile shows the real bee logo
+- **Change**: the `.nb-auth-brand .glyph` tile now renders the real logo image
+  (`/brand/nanobee-bee.png`) on a cream app-icon tile instead of the inline
+  `Icons.bee` glyph; dropped the now-unused `Icons` import.
+
 ### 2026-06-12 — created
 - **Motivation**: the auth system needs a dedicated page outside the app
   shell — an embedded modal would complicate OAuth redirects.

@@ -157,10 +157,11 @@ details[open] .nb-error-detail-toggle::before { transform: rotate(90deg); }
   width: 26px;
   height: 26px;
   border-radius: 8px;
-  background: linear-gradient(150deg, #e9a13b, #d98b2b);
+  background: var(--nb-icon-tile);
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 .nb-mobile-brand b { color: #8c5a12; }
 

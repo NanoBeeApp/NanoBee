@@ -37,7 +37,7 @@ export function MobileHeader() {
 
       <div className="nb-mobile-brand" aria-hidden="true">
         <div className="glyph">
-          <Icons.bee size={14} sw={1.6} style={{ color: "#fff" }} />
+          <img className="nb-brand-bee" src="/brand/nanobee-bee.png" alt="" />
         </div>
         Nano<b>Bee</b>
       </div>

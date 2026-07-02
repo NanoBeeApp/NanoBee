@@ -21,6 +21,11 @@ slides the sidebar in and shows the scrim.
 
 ## Change history
 
+### 2026-07-02 — brand tile shows the real bee logo
+- **Change**: the `.nb-mobile-brand .glyph` tile now renders the real logo
+  image (`/brand/nanobee-bee.png`) on a cream app-icon tile instead of the
+  monochrome `Icons.bee` line glyph.
+
 ### 2026-06-18 — remove the account avatar
 - **Motivation**: the top-right avatar was removed app-wide; account lives in
   Settings → Account now.

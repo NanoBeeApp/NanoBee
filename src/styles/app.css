@@ -13,6 +13,8 @@
   --nb-amber-line: #f0dcb4;
   /* honey/bee brand */
   --nb-honey: #e9a13b;
+  /* app-icon tile background (matches the cream tile in the brand logo) */
+  --nb-icon-tile: #fef6e6;
 }
 html, body { height: 100%; }
 body { background: var(--bg); color: var(--ink); overflow: hidden; }
@@ -117,10 +119,13 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-brand { display: flex; align-items: center; gap: 10px; padding: 2px 6px 12px; }
 .nb-brand .glyph {
   width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
-  background: linear-gradient(150deg, var(--nb-honey), #d98b2b);
+  background: var(--nb-icon-tile);
   display: grid; place-items: center; position: relative; overflow: hidden;
-  box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow: var(--sh-1);
 }
+/* The real NanoBee bee mark, shown inside the app-icon tile (sidebar / mobile
+   header / auth). object-fit keeps the mark centered and undistorted. */
+.nb-brand-bee { width: 100%; height: 100%; object-fit: contain; padding: 2px; display: block; }
 .nb-brand .name { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
 .nb-brand .name b { color: var(--nb-amber-ink); }
 .nb-brand .sub { font-size: 10.5px; color: var(--ink-3); font-family: var(--font-mono); letter-spacing: 0.02em; margin-top: 1px; white-space: nowrap; }
@@ -562,7 +567,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 /* ============ AUTH (login / register / verify) ============ */
 .nb-auth-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 32px 20px; background: var(--bg); }
 .nb-auth-brand { display: flex; align-items: center; gap: 10px; }
-.nb-auth-brand .glyph { width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(150deg, var(--nb-honey), #d98b2b); display: grid; place-items: center; }
+.nb-auth-brand .glyph { width: 34px; height: 34px; border-radius: 11px; background: var(--nb-icon-tile); display: grid; place-items: center; overflow: hidden; box-shadow: var(--sh-1); }
 .nb-auth-brand .name { font-size: 19px; font-weight: 500; letter-spacing: -0.01em; }
 .nb-auth-brand .name b { font-weight: 800; }
 .nb-auth-card { width: min(400px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--sh-2); padding: 28px 28px 24px; }

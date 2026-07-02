@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Icons } from "@/icons/icons";
 import { LoginCard } from "@/components/auth/LoginCard";
 
 // Standalone auth page (no app sidebar). Client-only like the home page:
@@ -23,7 +22,7 @@ function LoginPage() {
 		<div className="nb-auth-page" data-testid="login-page">
 			<div className="nb-auth-brand">
 				<div className="glyph">
-					<Icons.bee size={20} sw={1.6} style={{ color: "#fff" }} />
+					<img className="nb-brand-bee" src="/brand/nanobee-bee.png" alt="NanoBee" />
 				</div>
 				<div className="name">
 					Nano<b>Bee</b>

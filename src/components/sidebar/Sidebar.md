@@ -19,6 +19,12 @@ shows on the chat view. The account avatar lives in the top-right floating bar
 
 ## Change history
 
+### 2026-07-02 — brand tile shows the real bee logo
+- **Motivation**: the header showed the monochrome `Icons.bee` line glyph, not
+  the actual NanoBee logo, so the app never displayed the real brand mark.
+- **Change**: the `.nb-brand .glyph` tile now renders `/brand/nanobee-bee.png`
+  (the cartoon bee on the cream app-icon tile) instead of the inline glyph.
+
 ### 2026-06-18 — settings categories show in the sidebar scroll area
 - **Motivation**: the user asked to move the settings page's leftmost categories
   column into the left sidebar, shown when the Settings page is active.

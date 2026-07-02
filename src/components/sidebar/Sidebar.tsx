@@ -93,7 +93,7 @@ export function Sidebar() {
       <div className="nb-side-top">
         <div className="nb-brand">
           <div className="glyph">
-            <Icons.bee size={18} sw={1.6} style={{ color: '#fff' }} />
+            <img className="nb-brand-bee" src="/brand/nanobee-bee.png" alt="NanoBee" />
           </div>
           <div>
             <div className="name">Nano<b>Bee</b></div>
