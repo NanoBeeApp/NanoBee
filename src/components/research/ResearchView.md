@@ -3,9 +3,10 @@
 ## File responsibility
 Research view container: switches welcome ↔ canvas and renders the reading
 overlay. There is no header bar — the canvas fills the surface. Starting a new
-research lives in the left sidebar (ResearchNavList); the only floating canvas
-chrome is a transient generation-status / error pill. Imports the scoped
-`research.css`.
+research lives in the left sidebar (ResearchNavList). Outline-generation progress
+is shown in place by the canvas skeleton (ResearchCanvas), not by a floating pill
+— nothing floats over and occludes the canvas; the only floating chrome left is a
+transient error pill. Imports the scoped `research.css`.
 
 ## Core exports / API
 - `ResearchView()` — mounted by `App.tsx` when `view === "research"`.
@@ -19,8 +20,9 @@ chrome is a transient generation-status / error pill. Imports the scoped
 ## Key implementation notes
 - Phase-driven: welcome screen vs live canvas. No header — the topic shows in the
   canvas banner instead. New-research is a sidebar entry (ResearchNavList), not a
-  canvas button; only a transient status/error pill floats top-left, opposite the
-  global top-right FloatingControls cluster. CSS is imported here.
+  canvas button. Generation progress is shown in place by the canvas skeleton, so
+  nothing floats over the canvas while loading; only a transient error pill floats
+  (opposite the global top-right FloatingControls cluster). CSS is imported here.
 - Calls `useResearchUrlSync()` once at the top (unconditionally, before the
   phase branch) to keep `?project=&node=` and the store in sync.
 - Renders the canvas with `key={projectId}` so it re-mounts per topic — each
@@ -28,6 +30,17 @@ chrome is a transient generation-status / error pill. Imports the scoped
   `ResearchCanvas` viewport memory).
 
 ## Change history
+
+### 2026-07-02 — Drop the floating "AI 正在铺开大纲…" status pill
+- **Motivation**: With the canvas now showing an in-place skeleton during outline
+  generation (ResearchCanvas), the floating status pill was redundant — and any
+  floating element over the canvas occludes content, which the user wants avoided.
+- **Goal**: Show generation progress only in place (the skeleton); keep the canvas
+  unobstructed.
+- **Key decision**: Remove the `generating` status branch (and the now-unused
+  `generating` selector); the `.rc-actions` container now renders only on `error`.
+  The failure pill keeps the sidebar-clearing offset so errors stay visible; the
+  dead `.rc-actions-status` rule was folded away.
 
 ### 2026-06-17 — Feed the quick-chat "正在看 · …" context from the canvas
 - **Motivation**: The quick chat should know which node the user is currently

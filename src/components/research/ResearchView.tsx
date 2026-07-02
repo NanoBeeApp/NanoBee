@@ -2,8 +2,10 @@
 // canvas, and renders the reading overlay. There is intentionally NO top header
 // bar — the research topic lives in the canvas banner, so the canvas fills the
 // whole surface (maximize content, minimize chrome). Starting a new research
-// lives in the left sidebar (ResearchNavList → "新研究"), not on the canvas; the
-// only floating canvas chrome is a transient generation-status / error pill.
+// lives in the left sidebar (ResearchNavList → "新研究"), not on the canvas.
+// Outline-generation progress is shown IN PLACE by the canvas skeleton (see
+// ResearchCanvas), not by a floating status pill — nothing should float over and
+// occlude the canvas. The only floating chrome left is a transient error pill.
 
 import { useEffect } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
@@ -20,7 +22,6 @@ export function ResearchView() {
   useResearchUrlSync();
 
   const phase = useResearchStore((s) => s.phase);
-  const generating = useResearchStore((s) => s.generating);
   const error = useResearchStore((s) => s.error);
   // Re-mount the canvas per topic so each project initialises (and restores) its
   // own saved pan/zoom independently — see ResearchCanvas' viewport memory.
@@ -54,15 +55,9 @@ export function ResearchView() {
     <div className="rc-root" data-testid="research-view">
       <ResearchCanvas key={projectId ?? "none"} />
 
-      {(generating || error) && (
+      {error && (
         <div className="rc-actions">
-          {generating && (
-            <span className="rc-actions-status" data-testid="research-generating">
-              <span className="rc-node-spinner" />
-              AI 正在铺开大纲…
-            </span>
-          )}
-          {error && <span className="rc-actions-error">{error}</span>}
+          <span className="rc-actions-error">{error}</span>
         </div>
       )}
 

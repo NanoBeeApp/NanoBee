@@ -22,7 +22,7 @@ This project is a **public open-source repository**. **The public repo must only
 ## UI
 
 - **🎨 UI rules** → [claude-rules/ui-rules.md](./claude-rules/ui-rules.md)
-  - Every page has a **white background** (`var(--bg)` = `#ffffff`); gray surface tokens are for small inset elements only. **Always maximize the main content area** — keep framing chrome (headers/footers/toolbars/nested cards) minimal.
+  - Every page has a **white background** (`var(--bg)` = `#ffffff`); gray surface tokens are for small inset elements only. **Always maximize the main content area** — keep framing chrome (headers/footers/toolbars/nested cards) minimal. **🚫 Never casually float any UI element over/occluding the canvas or primary content** — show progress/loading/empty state IN PLACE (a size-matched skeleton), not a floating status pill; a floating element is justified only when genuinely transient and impossible to show in place (e.g. an error pill), and any overlay must clear fixed chrome (sidebar) so it neither hides behind it nor obstructs content.
 
 ## Architecture & runtime principles
 
