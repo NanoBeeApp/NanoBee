@@ -3,6 +3,7 @@
 // ordered pipeline steps — building the prompt (with the full messages sent),
 // the model request (with raw output + timing), JSON parse/validation, and any
 // repair retry. Pure render — receives the trace and an onClose.
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type {
   ResearchGenerationTrace,
@@ -73,19 +74,54 @@ function StepView({ step, index }: { step: ResearchTraceStep; index: number }) {
 }
 
 export function ResearchTraceModal({ trace, onClose }: ResearchTraceModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Close on Escape, or a pointer press either outside the panel (click-outside)
+  // or on the ✕ button — driven by NATIVE listeners, deliberately NOT React
+  // `onClick={onClose}`. This modal is portaled to `document.body` (see below)
+  // while the app is hydrated on `document`; in that setup React's synthetic
+  // click delegation does not fire for real user clicks inside the portal, so
+  // the old scrim/button onClicks silently did nothing and the modal was
+  // uncloseable. We use ONE capture-phase `pointerdown` on document instead of
+  // `click`: pointerdown reliably targets the pressed element (a real click's
+  // mousedown/mouseup can land on different nodes here, so no `click` fires on
+  // the button/scrim), and capture is immune to any stopPropagation up the tree.
+  // Listeners mount/unmount with the modal.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    const onDocPointerDown = (e: Event) => {
+      const target = e.target as Node;
+      const closeBtn = closeBtnRef.current;
+      const panel = panelRef.current;
+      // Press on the ✕, or anywhere outside the panel → close.
+      if ((closeBtn && closeBtn.contains(target)) || (panel && !panel.contains(target))) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDocPointerDown, true);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onDocPointerDown, true);
+    };
+  }, [onClose]);
+
   // Render via a portal to <body>: one entry (the canvas outline launcher) sits
   // inside the canvas `.rc-world`, whose CSS `transform` (pan/zoom) would
   // otherwise become the containing block for this fixed-position scrim and
   // shift it off-screen. The portal escapes any transformed ancestor.
   if (typeof document === "undefined") return null;
   return createPortal(
-    <div className="nb-modal-scrim" onClick={onClose}>
+    <div className="nb-modal-scrim">
       <div
+        ref={panelRef}
         className="nb-modal rc-trace-modal"
         role="dialog"
         aria-modal="true"
         aria-label="生成过程"
-        onClick={(e) => e.stopPropagation()}
         data-testid="research-trace-modal">
         <div className="rc-trace-head">
           <div>
@@ -98,8 +134,8 @@ export function ResearchTraceModal({ trace, onClose }: ResearchTraceModalProps) 
           </div>
           <button
             type="button"
+            ref={closeBtnRef}
             className="nb-ai-close"
-            onClick={onClose}
             aria-label="关闭"
             data-testid="research-trace-close">
             <Icons.x size={16} />

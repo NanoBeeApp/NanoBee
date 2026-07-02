@@ -8,7 +8,8 @@ model, the raw model output, timing, and any error. Pure render: receives the
 trace and an `onClose`.
 
 ## Core exports / API
-- `ResearchTraceModal({ trace, onClose })` — pure render; no own data fetching
+- `ResearchTraceModal({ trace, onClose })` — mostly render; owns only its
+  close-handling effect (Escape / outside-click / ✕), no data fetching
 - Testids: `research-trace-modal` / `research-trace-meta` /
   `research-trace-step-{i}` / `research-trace-close`
 
@@ -29,6 +30,23 @@ trace and an `onClose`.
   block so a long reply can't blow up the modal.
 
 ## Change history
+
+### 2026-07-02 — Fix: modal was uncloseable (portal + document-root event bug)
+- **Motivation**: clicking outside the modal (and even the ✕) did nothing — the
+  modal could not be closed. Reproduced via Playwright: real clicks on the scrim
+  and ✕ leave it open, while a synthetic `.click()` closes it.
+- **Root cause**: this is the ONLY modal that `createPortal`s to `document.body`,
+  and the app is hydrated on `document` (`hydrateRoot(document, …)`). In that
+  configuration React's synthetic click delegation does not fire for real user
+  clicks inside the portal, so the scrim's and button's `onClick={onClose}` never
+  ran. There was also no Escape handler.
+- **Key decision**: drive close from NATIVE listeners bound in a `useEffect`
+  while mounted — `keydown` Escape, a capture-phase `document` `pointerdown` with
+  a `panelRef.contains` test for click-outside (immune to stopPropagation and to
+  the delegation bug), and a native `click` on the close button via `closeBtnRef`.
+  Dropped the now-dead React `onClick`s and the panel's `stopPropagation`. Matches
+  the CLAUDE.md lightweight-overlay rule (capture-phase, ref-contains, Esc,
+  mount/unmount binding). Other modals render in-tree and are unaffected.
 
 ### 2026-06-15 — created
 - **Motivation**: let users inspect, from the research canvas, exactly how the
