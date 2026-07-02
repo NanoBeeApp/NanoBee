@@ -24,6 +24,13 @@ show the same visual treatment without crashing the shell.
 
 ## Change history
 
+### 2026-07-02 — brand mark uses the real logo asset (single source of truth)
+- **Change**: replaced the inline SVG bee (a duplicated, stale bee shape) in
+  both `.nb-error-logo` blocks with `<img src="/brand/nanobee-bee.png">` on a
+  cream app-icon tile. A same-origin static PNG has no JS dependency and is
+  normally cached, so the error screen stays resilient while pointing at the
+  one authoritative logo asset instead of a hand-drawn copy.
+
 ### 2026-06-15 — created
 - **Motivation**: the app had no render-error recovery — any crash in a React
   component produced a blank white screen with no user affordance to recover.

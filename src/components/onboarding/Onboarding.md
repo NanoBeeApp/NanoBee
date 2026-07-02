@@ -35,5 +35,6 @@ or skip) calls `store.markOnboardingDone()` which persists
 
 ## Change history
 
+- 2026-07-02  Welcome brand mark now renders the real logo (`/brand/nanobee-bee.png`, 60px) instead of the monochrome `Icons.bee` glyph — a brand moment should show the actual logo (single source of truth).
 - 2026-06-15  Initial implementation.
 - 2026-06-15  Used `TOTAL_STEPS` in the confirm-step `StepDots` call (was unused local variable); fixes TS6133 error.

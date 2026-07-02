@@ -29,10 +29,10 @@
   width: 56px;
   height: 56px;
   border-radius: 16px;
-  background: linear-gradient(150deg, #e9a13b, #d98b2b);
-  color: #fff;
+  background: var(--nb-icon-tile);
   display: grid;
   place-items: center;
+  overflow: hidden;
   margin-bottom: 4px;
 }
 .nb-error-wordmark {

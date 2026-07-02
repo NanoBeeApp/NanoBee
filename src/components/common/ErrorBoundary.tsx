@@ -58,16 +58,11 @@ export class ErrorBoundary extends Component<Props, State> {
     return (
       <div className="nb-error-boundary" role="alert" aria-live="assertive">
         <div className="nb-error-card">
-          {/* Bee logo — inline so it has zero runtime dependency */}
+          {/* Brand mark — the real logo asset (single source of truth). A
+              same-origin static PNG has no JS dependency and is normally
+              already cached, so it stays resilient on the error screen. */}
           <div className="nb-error-logo" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"
-              strokeLinejoin="round">
-              <path d="M12 2a7 7 0 0 1 7 7v4a7 7 0 0 1-14 0V9a7 7 0 0 1 7-7Z" />
-              <path d="M8 9h8M8 12h8" />
-              <path d="M9 16a3 3 0 0 0 6 0" />
-              <path d="M12 2v2M7.5 4l1 1.5M16.5 4l-1 1.5" />
-            </svg>
+            <img className="nb-brand-bee" src="/brand/nanobee-bee.png" alt="" />
           </div>
           <div className="nb-error-wordmark">
             Nano<b>Bee</b>
@@ -116,14 +111,7 @@ export function RouteErrorFallback({
     <div className="nb-error-boundary" role="alert" aria-live="assertive">
       <div className="nb-error-card">
         <div className="nb-error-logo" aria-hidden="true">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M12 2a7 7 0 0 1 7 7v4a7 7 0 0 1-14 0V9a7 7 0 0 1 7-7Z" />
-            <path d="M8 9h8M8 12h8" />
-            <path d="M9 16a3 3 0 0 0 6 0" />
-            <path d="M12 2v2M7.5 4l1 1.5M16.5 4l-1 1.5" />
-          </svg>
+          <img className="nb-brand-bee" src="/brand/nanobee-bee.png" alt="" />
         </div>
         <div className="nb-error-wordmark">
           Nano<b>Bee</b>

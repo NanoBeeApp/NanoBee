@@ -134,7 +134,7 @@ export function Onboarding() {
           </button>
 
           <div className="nb-ob-bee" aria-hidden>
-            <Icons.bee size={32} />
+            <img src="/brand/nanobee-bee.png" alt="" />
           </div>
           <h1 className="nb-ob-title">NanoBee 帮你盯着</h1>
           <p className="nb-ob-sub">选一个你感兴趣的场景，几秒就能跑起来</p>

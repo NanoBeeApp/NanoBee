@@ -71,10 +71,10 @@
 
 /* Bee icon glyph */
 .nb-ob-bee {
-  color: var(--nb-honey);
   margin-bottom: 12px;
   margin-top: 4px;
 }
+.nb-ob-bee img { width: 60px; height: 60px; object-fit: contain; display: block; }
 
 /* Headline */
 .nb-ob-title {
