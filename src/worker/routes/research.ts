@@ -15,6 +15,7 @@ import { streamSSE } from "hono/streaming";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { Env } from "../api-worker";
+import { RESEARCH_STYLE_IDS } from "../../research/styles";
 import { resolveAiConfig } from "../ai/settings";
 import { getSessionToken } from "../auth/cookies";
 import { getUserBySessionToken } from "../auth/store";
@@ -48,6 +49,7 @@ const generateSchema = z.object({
   focusParagraph: z.string().trim().min(1).max(2000).optional(),
   generationMode: z.enum(["outline", "content"]).optional(),
   locale: z.string().trim().min(2).max(10).optional(),
+  style: z.enum(RESEARCH_STYLE_IDS).optional(),
 });
 
 // Full node schema (matches the client's ResearchNode), so unknown fields are

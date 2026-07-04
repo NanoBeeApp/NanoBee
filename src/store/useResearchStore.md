@@ -14,7 +14,8 @@ snapshot persistence.
 
 ## Dependencies
 - Upstream: `lib/api-client.ts` (typed RPC), `data/ids.ts`, `research/types.ts`,
-  `research/streaming.ts` (`extractStreamingContent`).
+  `research/streaming.ts` (`extractStreamingContent`),
+  `store/useResearchPrefs.ts` (reply style sent with each request).
 - Downstream: every `components/research/*` component;
   `components/research/useResearchUrlSync.ts` (URL ↔ store bridge).
 
@@ -30,6 +31,14 @@ snapshot persistence.
   user's chat provider config.
 
 ## Change history
+
+### 2026-06-18 — Send the user's AI reply style with every generation
+- **Motivation**: the new Settings → 研究画布 → 回复风格 choice must apply to all
+  research generation (outline + every content call).
+- **Key decision**: read `useResearchPrefs.getState().replyStyle` inside the two
+  generation helpers (`generate` and `generateContentStream`) and add it to the
+  request body — one place each, so all five call sites inherit it without
+  threading a param through every action.
 
 ### 2026-06-17 — Add `askOnCanvas` for research-aware quick chat
 - **Motivation**: On the research canvas the quick chat should feed the canvas:

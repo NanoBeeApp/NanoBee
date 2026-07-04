@@ -29,6 +29,13 @@ worker (AI generation + D1 persistence) and the client (canvas + store).
 
 ## Change history
 
+### 2026-06-18 — Add optional `style` to `ResearchGenerationInput`
+- **Motivation**: the new Settings → 研究画布 → 回复风格 picker must reach the
+  prompt builder so the outline + article voice changes per the chosen style.
+- **Key decision**: optional `style?: ResearchReplyStyle` (type from
+  `research/styles.ts`); absent → `DEFAULT_RESEARCH_STYLE`. Sent by the client
+  store with each generate request and woven in by `research/prompt.ts`.
+
 ### 2026-06-15 — Add optional `trace` to `ResearchGenerationResult`
 - **Motivation**: the generation execution trace (built by the worker) needs to
   reach the client so the canvas/reading overlay can render it for debugging.

@@ -11,6 +11,11 @@
 // users; only code comments are English (public-repo language rule).
 
 import { FOLLOWUP_COUNT } from "./contract";
+import {
+  DEFAULT_RESEARCH_STYLE,
+  researchStyleDirective,
+  type ResearchReplyStyle,
+} from "./styles";
 import type { ResearchGenerationInput, ResearchGenerationMode } from "./types";
 
 /** Pick the generation mode: explicit override, else inferred from `question`. */
@@ -50,7 +55,7 @@ const LOCALE_SUFFIX = (locale: string) => `回答语言使用 ${locale}。`;
 
 // --- System prompts -----------------------------------------------------------
 
-function outlineSystemPrompt(locale: string): string {
+function outlineSystemPrompt(locale: string, style: ResearchReplyStyle): string {
   return [
     "你是 NanoBee 的领域研究助手。",
     "本次任务是「大纲模式」：用户开启一个全新研究主题，没有具体追问问题。你不写正文，只生成一份覆盖该领域核心知识点的「极简标题树 + 镜像简介树」研究目录。",
@@ -70,11 +75,13 @@ function outlineSystemPrompt(locale: string): string {
     "==【title 写作要求】==",
     "每个 title 是一句「能勾起好奇心的具体切入点」，10~30 字，可以是问题句/悬念句/反常识结论；禁止只是名词短语（「量子力学」）或干巴口号（「核心理论」）。",
     "",
+    researchStyleDirective(style, "outline"),
+    "",
     LOCALE_SUFFIX(locale),
   ].join("\n");
 }
 
-function contentSystemPrompt(locale: string): string {
+function contentSystemPrompt(locale: string, style: ResearchReplyStyle): string {
   return [
     "你是 NanoBee 的领域研究助手。",
     "本次任务是「正文模式」：用户带着具体问题追问，或大纲里某个节点被展开。目标是把这一个节点写成一篇能读 1-3 分钟的好文章。",
@@ -88,6 +95,8 @@ function contentSystemPrompt(locale: string): string {
     "",
     NARRATIVE_RULES,
     EMPHASIS_RULE,
+    "",
+    researchStyleDirective(style, "content"),
     "",
     LOCALE_SUFFIX(locale),
   ].join("\n");
@@ -155,10 +164,11 @@ export function buildResearchMessages(input: ResearchGenerationInput): {
   user: string;
 } {
   const locale = input.locale?.trim() || "zh-CN";
+  const style = input.style ?? DEFAULT_RESEARCH_STYLE;
   if (resolveMode(input) === "content") {
-    return { system: contentSystemPrompt(locale), user: contentUserPrompt(input) };
+    return { system: contentSystemPrompt(locale, style), user: contentUserPrompt(input) };
   }
-  return { system: outlineSystemPrompt(locale), user: outlineUserPrompt(input) };
+  return { system: outlineSystemPrompt(locale, style), user: outlineUserPrompt(input) };
 }
 
 /** Repair instruction injected as a retry when the first reply fails the schema. */

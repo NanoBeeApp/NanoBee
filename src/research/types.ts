@@ -8,6 +8,7 @@
 // following one of its three follow-up questions or by deep-diving a bold term.
 
 import type { ResearchGenerationTrace } from "./generation-trace";
+import type { ResearchReplyStyle } from "./styles";
 
 /** AI generation mode: an outline tree, or one node's full article. */
 export type ResearchGenerationMode = "outline" | "content";
@@ -22,6 +23,12 @@ export interface ResearchGenerationInput {
   context?: string;
   /** Output language; defaults to zh-CN. */
   locale?: string;
+  /**
+   * The user's chosen AI reply style (popularization / professional / concise),
+   * which re-shapes the outline + article voice. Defaults to
+   * {@link DEFAULT_RESEARCH_STYLE} when absent.
+   */
+  style?: ResearchReplyStyle;
   /** Forced mode; otherwise inferred from `question` presence. */
   generationMode?: ResearchGenerationMode;
   /**

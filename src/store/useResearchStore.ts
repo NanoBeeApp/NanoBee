@@ -9,6 +9,7 @@
 import { create } from "zustand";
 import { apiClient } from "../lib/api-client";
 import { nextId } from "../data/ids";
+import { useResearchPrefs } from "./useResearchPrefs";
 import { extractStreamingContent } from "../research/streaming";
 import type { ResearchGenerationTrace } from "../research/generation-trace";
 import type {
@@ -151,7 +152,9 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     generationMode?: "outline" | "content";
   }): Promise<{ result: ResearchGenerationResult | null; trace: ResearchGenerationTrace | null }> {
     try {
-      const res = await apiClient.research.generate.$post({ json: body });
+      // Apply the user's chosen reply style (科普 / 专业 / 简练) to every request.
+      const style = useResearchPrefs.getState().replyStyle;
+      const res = await apiClient.research.generate.$post({ json: { ...body, style } });
       if (!res.ok) {
         // The 502 error body may still carry a failure trace for debugging.
         const body = (await res.json().catch(() => null)) as
@@ -186,11 +189,13 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     onContent: (partial: string) => void,
   ): Promise<{ result: ResearchGenerationResult | null; trace: ResearchGenerationTrace | null }> {
     try {
+      // Apply the user's chosen reply style (科普 / 专业 / 简练) to every request.
+      const style = useResearchPrefs.getState().replyStyle;
       const res = await fetch("/api/research/generate-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ ...body, generationMode: "content" }),
+        body: JSON.stringify({ ...body, generationMode: "content", style }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 

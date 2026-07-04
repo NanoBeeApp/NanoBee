@@ -18,7 +18,8 @@ Hono routes for the Research Canvas: AI node generation + project snapshot CRUD.
 
 ## Dependencies
 - Upstream: `worker/ai/settings.ts`, `worker/auth/{cookies,store}.ts`,
-  `worker/research/{generate,repo}.ts`, `research/types.ts`, zod.
+  `worker/research/{generate,repo}.ts`, `research/types.ts`,
+  `research/styles.ts` (`RESEARCH_STYLE_IDS` for the generate enum), zod.
 - Downstream: mounted by `worker/routes/api.ts`; consumed via the typed RPC
   client by `store/useResearchStore.ts`.
 
@@ -30,6 +31,14 @@ Hono routes for the Research Canvas: AI node generation + project snapshot CRUD.
   passthrough) so the client can evolve node shape without a schema bump.
 
 ## Change history
+
+### 2026-06-18 — Accept `style` in the generate schema
+- **Motivation**: the client sends the user's AI reply style (`科普 / 专业 /
+  简练`) with each generate request so the prompt can re-shape its output.
+- **Key decision**: added `style: z.enum(RESEARCH_STYLE_IDS).optional()` to
+  `generateSchema`; the validated input already flows into
+  `generateResearchNode(Stream)` → `buildResearchMessages`, so no other route
+  change was needed.
 
 ### 2026-06-15 — Return the generation trace (success + failure)
 - **Motivation**: the UI needs the generation execution trace to debug how the

@@ -33,6 +33,17 @@ either outline mode (title tree + brief tree) or content mode (one article).
   meta-prompt) to halve latency/cost; can be reintroduced later if quality needs
   it. Deep-dive is supported via an optional `focusTerm` anchor block.
 
+### 2026-06-18 — AI reply-style directive
+- **Motivation**: the new Settings → 研究画布 → 回复风格 picker (`科普 / 专业 / 简练`)
+  must re-shape both the outline and the article output.
+- **Changes**: `outlineSystemPrompt` / `contentSystemPrompt` now take a
+  `ResearchReplyStyle` and append `researchStyleDirective(style, mode)` (from
+  `research/styles.ts`) after the base rules; `buildResearchMessages` resolves
+  the style from `input.style` (defaulting to `DEFAULT_RESEARCH_STYLE`).
+- **Key decision**: the directive is appended last and explicitly outranks the
+  default tone/length, so each style can override (e.g. 简练 shrinks 500~1200 字
+  to 300~600). Style ids/labels/text live in `research/styles.ts`.
+
 ### 2026-06-14 — Ground deep-dives in their paragraph (Phase B)
 - **Motivation**: the bare `focusTerm` lost the context the reader clicked from.
 - **Goal**: include the anchor's enclosing paragraph in the content prompt.
