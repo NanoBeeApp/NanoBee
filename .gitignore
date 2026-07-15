@@ -20,7 +20,7 @@ tanstack-start-demo
 
 # Localflare generated files
 .localflare/
-.playwright-mcp
+.playwright-mcp/
 
 # Dev logs
 logs/*.log
@@ -43,3 +43,5 @@ build
 # TypeScript incremental build artifact
 tsconfig.tsbuildinfo
 screenshots
+
+.playwright-cli
