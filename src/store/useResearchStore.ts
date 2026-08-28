@@ -4,13 +4,23 @@
 // reading overlay selection, and snapshot persistence through the typed RPC.
 //
 // Data flow mirrors useAppStore: optimistic node creation on the canvas, AI
-// fills content in the background, snapshots persist (debounced) to D1.
+// fills content in the background, snapshots persist (debounced) to D1 with a
+// same-browser localStorage cache so a deep link still opens if the remote
+// write has not landed yet.
 
 import { create } from "zustand";
 import { apiClient } from "../lib/api-client";
 import { nextId } from "../data/ids";
 import { useResearchPrefs } from "./useResearchPrefs";
 import { extractStreamingContent } from "../research/streaming";
+import {
+  cacheSnapshot,
+  isResearchSnapshot,
+  listCachedProjects,
+  loadCachedSnapshot,
+  mergeProjectLists,
+  newerSnapshot,
+} from "../research/snapshot-cache";
 import type { ResearchGenerationTrace } from "../research/generation-trace";
 import type {
   ResearchGenerationResult,
@@ -119,17 +129,17 @@ function outlineToNodes(
 }
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
+const PERSIST_RETRY_MS = [0, 1500, 4000];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export const useResearchStore = create<ResearchState>((set, get) => {
-  /** Debounced snapshot save. */
-  function schedulePersist() {
-    if (persistTimer) clearTimeout(persistTimer);
-    persistTimer = setTimeout(() => void persistNow(), 800);
-  }
-  async function persistNow() {
+  function currentSnapshot(): ResearchSnapshot | null {
     const s = get();
-    if (!s.projectId) return;
-    const snapshot: ResearchSnapshot = {
+    if (!s.projectId) return null;
+    return {
       projectId: s.projectId,
       title: s.title,
       topic: s.topic,
@@ -137,12 +147,54 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       order: s.order,
       updatedAt: new Date().toISOString(),
     };
-    try {
-      const res = await apiClient.research.snapshots.$post({ json: snapshot });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    } catch (error) {
-      console.error("[research] persist failed:", String(error));
+  }
+
+  /** Cache immediately, then debounce the D1 POST (with retries). */
+  function schedulePersist() {
+    const snap = currentSnapshot();
+    if (snap) cacheSnapshot(snap);
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => void persistNow(), 800);
+  }
+
+  async function persistNow() {
+    const snapshot = currentSnapshot();
+    if (!snapshot) return;
+    cacheSnapshot(snapshot);
+    const projectId = snapshot.projectId;
+    for (const delay of PERSIST_RETRY_MS) {
+      if (delay) await sleep(delay);
+      const latest = currentSnapshot();
+      if (!latest || latest.projectId !== projectId) return;
+      cacheSnapshot(latest);
+      try {
+        const res = await apiClient.research.snapshots.$post({ json: latest });
+        if (res.ok) return;
+        throw new Error(`HTTP ${res.status}`);
+      } catch (error) {
+        console.error("[research] persist failed:", String(error));
+      }
     }
+  }
+
+  function applyLoadedSnapshot(snap: ResearchSnapshot, openNodeId?: string): void {
+    const willOpen = openNodeId && snap.nodes[openNodeId] ? openNodeId : null;
+    set({
+      phase: "canvas",
+      projectId: snap.projectId,
+      title: snap.title,
+      topic: snap.topic,
+      nodes: snap.nodes,
+      order: snap.order,
+      activeNodeId: willOpen,
+      generating: false,
+      error: null,
+      loadingProject: false,
+      projectHighlighted: false,
+      highlightedNodeId: willOpen,
+      traces: {},
+    });
+    if (willOpen) void get().openNode(willOpen);
   }
 
   /**
@@ -329,13 +381,18 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     traces: {},
 
     listProjects: async () => {
+      const local = listCachedProjects();
       try {
         const res = await apiClient.research.projects.$get();
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as { projects: ResearchProjectMeta[] };
-        set({ projects: data.projects });
+        set({ projects: mergeProjectLists(data.projects, local) });
       } catch (error) {
         console.error("[research] listProjects failed:", String(error));
+        if (local.length) {
+          set({ projects: local });
+          return;
+        }
         // Don't clobber a more specific deep-link load error that raced us.
         if (!get().error) {
           set({ error: "研究项目列表加载失败，请稍后重试。" });
@@ -371,6 +428,18 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         highlightedNodeId: null,
         traces: {},
       });
+      // Cache the stub immediately so a refresh during outline generation still
+      // reopens this project instead of 404ing an id that only existed in memory.
+      const stub: ResearchSnapshot = {
+        projectId,
+        title: topic.slice(0, 60),
+        topic,
+        nodes: { [rootId]: root },
+        order: [rootId],
+        updatedAt: new Date().toISOString(),
+      };
+      cacheSnapshot(stub);
+      void persistNow();
 
       const { result, trace } = await generate({ topic, generationMode: "outline" });
       // Stash the outline-generation trace under the root node id (even on
@@ -382,6 +451,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
           error: result ? "AI 未能生成大纲，请重试" : "生成失败，请检查 AI 配置后重试",
           nodes: { ...s.nodes, [rootId]: { ...s.nodes[rootId], status: "failed" } },
         }));
+        schedulePersist();
         return;
       }
 
@@ -664,9 +734,16 @@ export const useResearchStore = create<ResearchState>((set, get) => {
 
     loadProject: async (id, openNodeId) => {
       set({ loadingProject: true, error: null });
+      const cached = loadCachedSnapshot(id);
       try {
         const res = await apiClient.research.snapshots[":id"].$get({ param: { id } });
         if (res.status === 404) {
+          if (cached) {
+            console.error("[research] loadProject: D1 404, opening local cache");
+            applyLoadedSnapshot(cached, openNodeId);
+            void persistNow();
+            return true;
+          }
           console.error("[research] loadProject failed: HTTP 404");
           set({
             loadingProject: false,
@@ -676,34 +753,20 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as { snapshot: ResearchSnapshot };
-        const snap = data.snapshot;
-        // Open the deep-linked node up front (single set → no URL flicker);
-        // ignore a stale id that isn't in this snapshot.
-        const willOpen = openNodeId && snap.nodes[openNodeId] ? openNodeId : null;
-        set({
-          phase: "canvas",
-          projectId: snap.projectId,
-          title: snap.title,
-          topic: snap.topic,
-          nodes: snap.nodes,
-          order: snap.order,
-          activeNodeId: willOpen,
-          generating: false,
-          error: null,
-          loadingProject: false,
-          // Programmatic / deep-link load starts unhighlighted; the sidebar
-          // click handler re-enables the highlight after this resolves.
-          projectHighlighted: false,
-          // Deep-link opens a node → light it; a bare project load lights nothing.
-          highlightedNodeId: willOpen,
-          // Traces aren't persisted; a loaded project starts with none until a
-          // node is (re)generated this session.
-          traces: {},
-        });
-        // A bookmarked node that was never filled in still needs its article.
-        if (willOpen) void get().openNode(willOpen);
+        const remote = data.snapshot;
+        if (!isResearchSnapshot(remote)) throw new Error("Malformed snapshot");
+        const snap = newerSnapshot(remote, cached) ?? remote;
+        cacheSnapshot(snap);
+        applyLoadedSnapshot(snap, openNodeId);
+        if (cached && cached.updatedAt > remote.updatedAt) void persistNow();
         return true;
       } catch (error) {
+        if (cached) {
+          console.error("[research] loadProject failed, opening local cache:", String(error));
+          applyLoadedSnapshot(cached, openNodeId);
+          void persistNow();
+          return true;
+        }
         console.error("[research] loadProject failed:", String(error));
         set({
           loadingProject: false,

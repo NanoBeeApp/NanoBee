@@ -46,7 +46,7 @@ export function ResearchWelcome() {
         )}
         {error && (
           <p className="rc-welcome-error" role="alert" data-testid="research-load-error">
-            {error}
+            {error} 可以在下方重新开始一项研究。
           </p>
         )}
 

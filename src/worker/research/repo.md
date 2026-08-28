@@ -23,6 +23,13 @@ snapshot row per project, scoped to an owner bucket.
 
 ## Change history
 
+### 2026-08-28 — Client cache is the same-browser fallback
+- **Motivation**: remote D1 was empty for `rp_mI6BYoThLD` after persist 500s
+  while the table was missing; this repo stays the cross-device source of
+  truth, but the client now keeps a local copy (see `research/snapshot-cache.ts`).
+- **Goal**: keep owner-scoped D1 queries unchanged; recovery of a never-written
+  row is a client concern, not a looser `WHERE id = ?` read.
+
 ### 2026-06-13 — Created
 - **Motivation**: The canvas must persist and restore projects across reloads.
 - **Goal**: Minimal CRUD over a single snapshot table.

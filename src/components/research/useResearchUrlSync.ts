@@ -63,6 +63,8 @@ export function useResearchUrlSync(): void {
         void navigate({ to: "/research", search: {}, replace: true });
       }
     }
+    // Failed / in-flight deep links leave projectId null without `had`, so the
+    // URL's ?project= stays — that is what the user asked to open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, activeNodeId]);
 }

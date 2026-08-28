@@ -16,6 +16,7 @@ snapshot persistence.
 ## Dependencies
 - Upstream: `lib/api-client.ts` (typed RPC), `data/ids.ts`, `research/types.ts`,
   `research/streaming.ts` (`extractStreamingContent`),
+  `research/snapshot-cache.ts` (same-browser snapshot cache),
   `store/useResearchPrefs.ts` (reply style sent with each request).
 - Downstream: every `components/research/*` component;
   `components/research/useResearchUrlSync.ts` (URL ↔ store bridge).
@@ -27,16 +28,30 @@ snapshot persistence.
   node keeps its `parentId`/`depth`; the canvas derives the outline structure).
   `openNode` fills a stub node's article on demand. `growChild` creates a child
   optimistically (loading), generates its article, and focuses it. Snapshot
-  saves are debounced (800ms).
+  saves write localStorage immediately, then POST to D1 with retries
+  (0 / 1.5s / 4s). `startResearch` POSTs the stub right away (not only after
+  the outline lands) so a refresh mid-generation can still reopen. Later
+  node edits still debounce 800ms.
 - Generation goes through `POST /api/research/generate`, which reuses the
   user's chat provider config.
-- `loadProject` returns `true` only after the snapshot is in the store. A 404
-  keeps the current phase (usually welcome) and sets a user-facing `error`;
-  other transport failures do the same with a retry message. `listProjects`
-  failures set `error` only when none is already set, so they cannot overwrite
-  a more specific deep-link 404.
+- `loadProject` returns `true` only after the snapshot is in the store. It
+  tries D1 first, then the local cache; a cache hit on D1 404 / transport
+  error still opens the canvas and re-POSTs so D1 can catch up. A true miss
+  keeps the welcome phase and sets a user-facing `error`. `listProjects`
+  merges server + local lists (newer `updatedAt` wins) and falls back to the
+  cache when the list request fails.
 
 ## Change history
+
+### 2026-08-28 — Local snapshot cache + persist retry
+- **Motivation**: `rp_mI6BYoThLD` was minted into the URL before D1 had
+  `research_projects`; persist failed silently, so the deep link 404ed with
+  nothing to reopen.
+- **Goal**: a same-browser copy of every snapshot, written before the remote
+  POST, so refresh / share-on-this-device still opens the canvas.
+- **Key decision**: localStorage cache (not IndexedDB) matching the viewport
+  helper; `startResearch` caches the stub immediately; `loadProject` prefers
+  the newer of D1 vs cache and re-POSTs a local-only / newer-local snapshot.
 
 ### 2026-08-28 — Surface load/list failures instead of a silent welcome
 - **Motivation**: a bookmarked `?project=` that 404s (or a D1/list outage) left

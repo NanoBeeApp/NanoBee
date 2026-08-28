@@ -17,11 +17,19 @@ saved projects to resume.
   list; recent projects call `loadProject`. Deep-link / list failures from the
   store (`error`, `loadingProject`) render in place above the composer so a
   missing `?project=` is explained instead of looking like an empty welcome.
+  The error line also tells the user they can start a new research below.
 - The topic input submits on Enter through the shared `useImeComposition` guard,
   so an Enter that confirms a Chinese / kana / hangul candidate does not start a
   research run prematurely.
 
 ## Change history
+
+### 2026-08-28 — Point a missing deep link at starting a new research
+- **Motivation**: `rp_mI6BYoThLD` has no D1 row and no browser cache, so the
+  page cannot reopen that canvas; a bare 404 line still felt like "won't open".
+- **Goal**: keep the in-place error and make the next action obvious.
+- **Key decision**: append "可以在下方重新开始一项研究。" to the error copy;
+  do not invent a fake project for an id we never persisted.
 
 ### 2026-08-28 — Show deep-link load status / error in place
 - **Motivation**: `loadProject` failures used to leave this screen looking idle.

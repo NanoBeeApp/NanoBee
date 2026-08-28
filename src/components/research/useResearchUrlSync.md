@@ -27,9 +27,19 @@ are bookmarkable / shareable.
   distinguish an *initial* null (store not yet hydrated from a deep link — leave
   the URL alone for URL→store to load) from a null caused by the user resetting
   to the welcome screen (clear the URL). Without this, a deep-linked / refreshed
-  `?project=…` would be wiped before it loads.
+  `?project=…` would be wiped before it loads. A failed load also leaves
+  `projectId` null without that "had" transition, so the URL's `?project=` stays.
 
 ## Change history
+
+### 2026-08-28 — Keep ?project= on a failed deep-link load
+- **Motivation**: a missing snapshot used to look like a blank welcome with the
+  query string still in the bar (hydration-safe), but that behaviour must stay
+  explicit so a later "clear on null" change cannot swallow the bookmark.
+- **Goal**: document that only `newResearch` (projectId went non-null → null)
+  clears the URL; a 404 keeps `?project=`.
+- **Key decision**: no extra navigate on failure — the existing `had` guard
+  already leaves the deep-link query in place.
 
 ### 2026-06-14 — Created
 - **Motivation**: the research canvas put nothing about the open project or the
