@@ -15,14 +15,16 @@ This is the sidebar counterpart to the in-canvas outline drawn by
   nested `<ul>`. Clicking a row calls `openNode(id)` — the reading overlay opens
   immediately (the canvas scrolls to the node behind it). Renders a
   `"大纲生成中…"` ("Generating outline…") placeholder while the root has no
-  children yet.
+  children and is still loading; if the root is `failed`, an in-place
+  "重新生成" button calls `retryOutline`.
 - `OutlineRow` (file-local, recursive) — one node row + its indented children,
   mirroring `ResearchCanvas`'s `NodeBranch` pattern (recursive helper co-located
   with its connected parent).
 
 ## Dependencies
-- Upstream: `useResearchStore` (state + `openNode`), `research/outline`
-  (`buildChildrenMap`), `research/types` (`ResearchNode`).
+- Upstream: `useResearchStore` (state + `openNode` + `retryOutline`),
+  `research/outline` (`buildChildrenMap`), `research/types` (`ResearchNode`),
+  `icons/icons.tsx` (`redo` on the failed-outline retry).
 - Downstream: rendered by `sidebar/ResearchNavList` when a project is open on the
   research canvas.
 - Styling: `nb-outline-*` classes in `src/styles/app.css`.
@@ -41,6 +43,14 @@ This is the sidebar counterpart to the in-canvas outline drawn by
   stay lit together.
 
 ## Change history
+
+### 2026-08-28 — Failed-outline retry in the sidebar
+- **Motivation**: after a failed outline resume the sidebar still said
+  "大纲生成中…" with no way to retry.
+- **Goal**: match the canvas in-place retry — failed + no children shows
+  "大纲生成失败" and a "重新生成" button.
+- **Key decision**: reuse `retryOutline` from the store; keep the empty copy
+  only while the root is still loading.
 
 ### 2026-06-14 — open the overlay immediately on a row click (drop the delay)
 - **Motivation**: the user found the scroll-then-wait (~1s) before the overlay

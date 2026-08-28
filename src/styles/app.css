@@ -223,6 +223,24 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .nb-item-ic { display: inline-flex; flex-shrink: 0; color: var(--ink-4); }
 /* Empty-state line shared by every per-page sidebar list. */
 .nb-side-empty { padding: 18px 12px; font-size: 12.5px; color: var(--ink-4); text-align: center; }
+.nb-side-empty p { margin: 0 0 10px; font-size: 12.5px; color: var(--ink-3); }
+.nb-outline-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+}
+.nb-outline-retry:hover { background: var(--surface-2); color: var(--ink); }
 
 /* Research outline tree (研究目录) — the left rail's view of an open project's
    node tree. Ported from Curve's SidePanel into NanoBee's token system: white

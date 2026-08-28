@@ -16,6 +16,7 @@ import { ResearchNodeCard } from "./ResearchNodeCard";
 import { ResearchTraceLauncher } from "./ResearchTraceLauncher";
 import { buildChildrenMap } from "../../research/outline";
 import { loadViewport, saveViewport } from "./canvas-viewport";
+import { Icons } from "../../icons/icons";
 import type { ResearchNode } from "../../research/types";
 
 interface Transform {
@@ -54,6 +55,7 @@ export function ResearchCanvas() {
   const highlightedNodeId = useResearchStore((s) => s.highlightedNodeId);
   const clearNodeHighlight = useResearchStore((s) => s.clearNodeHighlight);
   const projectId = useResearchStore((s) => s.projectId);
+  const retryOutline = useResearchStore((s) => s.retryOutline);
   // The outline-generation trace is stashed under the root node's id (order[0]).
   const traces = useResearchStore((s) => s.traces);
 
@@ -215,7 +217,9 @@ export function ResearchCanvas() {
   }, [onWheel]);
 
   if (!root) return null;
-  const rootLoading = root.status === "loading";
+  const rootKids = childrenOf[root.id] ?? [];
+  const rootLoading = root.status === "loading" && rootKids.length === 0;
+  const rootFailed = root.status === "failed" && rootKids.length === 0;
   // The lit card. Driven by `highlightedNodeId`, which (unlike `activeNodeId`)
   // survives closing the reading overlay — it only clears on a blank-canvas
   // press or moves when another node is opened.
@@ -264,6 +268,19 @@ export function ResearchCanvas() {
                   <div className="rc-skel-line rc-skel-brief" style={{ width: row.brief }} />
                 </div>
               ))}
+            </div>
+          )}
+
+          {rootFailed && (
+            <div className="rc-outline-retry" data-testid="research-outline-retry">
+              <p>大纲生成失败，可以重新生成。</p>
+              <button
+                type="button"
+                className="rc-chip"
+                onClick={() => void retryOutline()}
+                data-testid="research-outline-retry-button">
+                <Icons.redo size={14} /> 重新生成大纲
+              </button>
             </div>
           )}
 

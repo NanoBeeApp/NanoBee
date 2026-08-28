@@ -7,10 +7,12 @@ Hono routes for the Research Canvas: AI node generation + project snapshot CRUD.
 - `researchRoutes` (mounted at `/api/research` in `routes/api.ts`):
   - `POST /generate` — generate one node (outline/content/deep-dive), one-shot
     JSON. On failure returns `502 { error, trace }` (the failure trace, if any).
-  - `POST /generate-stream` — content-mode streaming sibling: emits SSE `token`
-    events as the body streams, then a `final` event (validated result, with a
-    `trace`) or an `error` event (`{ message, trace }`). Tokens are JSON-encoded
-    so newlines never break SSE framing.
+  - `POST /generate-stream` — streaming sibling for content *and* outline:
+    emits a `start` event immediately (keeps proxies / the Worker from treating
+    a long model call as a hung request), then SSE `token` events as the body
+    streams, then a `final` event (validated result, with a `trace`) or an
+    `error` event (`{ message, trace }`). Tokens are JSON-encoded so newlines
+    never break SSE framing. Outline clients ignore tokens and wait for `final`.
   - `GET /projects` — list the owner's projects.
   - `GET /snapshots/:id` — load one snapshot (404 if missing/not owned).
   - `POST /snapshots` — save a snapshot (upsert).
@@ -31,6 +33,14 @@ Hono routes for the Research Canvas: AI node generation + project snapshot CRUD.
   passthrough) so the client can evolve node shape without a schema bump.
 
 ## Change history
+
+### 2026-08-28 — Emit SSE `start` before the model call
+- **Motivation**: outline generation can sit silent for ~100s; a one-shot or
+  idle stream was killed with 0 bytes, so the canvas never left the skeleton.
+- **Goal**: the first SSE frame must leave the Worker before `streamAgentText`.
+- **Key decision**: write `{ event: "start", data: { ok: true } }` immediately
+  inside `streamSSE`, then a 15s `ping` heartbeat so a silent repair retry
+  cannot look like a hung connection. Clients may ignore both.
 
 ### 2026-06-18 — Accept `style` in the generate schema
 - **Motivation**: the client sends the user's AI reply style (`科普 / 专业 /

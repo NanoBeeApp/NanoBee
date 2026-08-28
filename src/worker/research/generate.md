@@ -9,7 +9,8 @@ reply against the contract, and retries once with a repair instruction.
   `trace` attached).
 - `generateResearchNodeStream(cfg, input, onDelta)` → `ResearchGenerationResult`
   — streams raw model tokens through `onDelta`, then validates the full reply
-  (one non-streamed repair retry on contract failure). Used for content mode.
+  (one non-streamed repair retry on contract failure). Used for content mode
+  (live typewriter) and outline mode (keeps the Worker request alive).
 - `ResearchGenerationError` — thrown on failure; carries the partial
   `ResearchGenerationTrace` so the route can return it for debugging.
 
@@ -25,6 +26,13 @@ reply against the contract, and retries once with a repair instruction.
   second reply still fails the contract.
 
 ## Change history
+
+### 2026-08-28 — Outline generation also uses the stream path
+- **Motivation**: the one-shot `/generate` call sat silent for ~100s and was
+  killed (curl 28, 0 bytes), leaving a loading stub that never resumed.
+- **Goal**: document that `generateResearchNodeStream` is the outline path too.
+- **Key decision**: no new model helper — the existing stream already shares
+  `CALL_OPTS`; the route emits a `start` SSE event before the model call.
 
 ### 2026-06-16 — default model → DeepSeek V4 Flash: widen the per-call timeout
 - **Motivation**: the backend default switched to DeepSeek V4 Flash, which is

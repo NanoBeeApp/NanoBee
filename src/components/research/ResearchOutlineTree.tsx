@@ -10,6 +10,7 @@
 import { useMemo } from "react";
 import { useResearchStore } from "../../store/useResearchStore";
 import { buildChildrenMap } from "../../research/outline";
+import { Icons } from "../../icons/icons";
 import type { ResearchNode } from "../../research/types";
 
 export function ResearchOutlineTree() {
@@ -18,6 +19,7 @@ export function ResearchOutlineTree() {
   const highlightedNodeId = useResearchStore((s) => s.highlightedNodeId);
   // Clicking a row opens the reading overlay immediately (no scroll-then-wait).
   const openNode = useResearchStore((s) => s.openNode);
+  const retryOutline = useResearchStore((s) => s.retryOutline);
 
   const childrenOf = useMemo(() => buildChildrenMap(nodes, order), [nodes, order]);
 
@@ -26,12 +28,27 @@ export function ResearchOutlineTree() {
   const highlightId = highlightedNodeId;
 
   const rootId = order[0];
+  const root = rootId ? nodes[rootId] : undefined;
   const rootChildren = rootId ? (childrenOf[rootId] ?? []) : [];
 
   if (rootChildren.length === 0) {
+    const failed = root?.status === "failed";
     return (
       <div className="nb-side-empty" data-testid="sidebar-outline-empty">
-        大纲生成中…
+        {failed ? (
+          <>
+            <p>大纲生成失败</p>
+            <button
+              type="button"
+              className="nb-outline-retry"
+              onClick={() => void retryOutline()}
+              data-testid="sidebar-outline-retry">
+              <Icons.redo size={14} /> 重新生成
+            </button>
+          </>
+        ) : (
+          "大纲生成中…"
+        )}
       </div>
     );
   }

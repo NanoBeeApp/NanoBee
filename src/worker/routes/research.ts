@@ -110,14 +110,17 @@ export const researchRoutes = new Hono<{ Bindings: Env }>()
       return c.json({ error: "Generation failed", trace }, 502);
     }
   })
-  // Streaming sibling of /generate (content mode): emits `token` events as the
-  // article body streams, then a `final` event with the validated result, or an
-  // `error` event. Tokens are JSON-encoded so newlines never break SSE framing.
-  // Config is checked BEFORE opening the stream — an opened SSE response can no
-  // longer change its HTTP status, so a missing provider returns a clean 400.
+  // Streaming sibling of /generate (content + outline): emits a `start` event
+  // immediately so the stream is open before the (slow) model call, then
+  // `token` events as the body streams, then a `final` event with the
+  // validated result, or an `error` event. A `ping` heartbeat keeps proxies
+  // from closing the connection during a silent repair retry. Tokens are
+  // JSON-encoded so newlines never break SSE framing. Config is checked BEFORE
+  // opening the stream — an opened SSE response can no longer change its HTTP
+  // status, so a missing provider returns a clean 400.
   .post("/generate-stream", zValidator("json", generateSchema), async (c) => {
     const input = c.req.valid("json");
-    console.log("[API] POST /api/research/generate-stream, topic:", input.topic);
+    console.log("[API] POST /api/research/generate-stream, topic:", input.topic, "mode:", input.generationMode ?? (input.question ? "content" : "outline"));
     const token = getSessionToken(c);
     const user = token ? await getUserBySessionToken(c.env.DB, token) : null;
     const aiConfig = await resolveAiConfig(c.env, user?.id ?? null);
@@ -125,20 +128,49 @@ export const researchRoutes = new Hono<{ Bindings: Env }>()
       return c.json({ error: "No AI provider configured" }, 400);
     }
     return streamSSE(c, async (stream) => {
+      // Serialize writes so a heartbeat ping cannot interleave bytes with a
+      // token/final/error frame. Keep the SSE connection alive during long
+      // model calls and the non-streamed repair retry (no tokens for up to
+      // CALL_OPTS.timeoutMs). `stream.sleep` is the Workers-safe wait.
+      let beating = true;
+      let writeChain = Promise.resolve();
+      const writeEvent = (event: string, data: string) => {
+        writeChain = writeChain
+          .then(() => stream.writeSSE({ event, data }))
+          .catch(() => undefined);
+        return writeChain;
+      };
+      void (async () => {
+        while (beating) {
+          await stream.sleep(15_000);
+          if (!beating) break;
+          try {
+            await writeEvent("ping", "{}");
+          } catch {
+            break;
+          }
+        }
+      })();
       try {
+        // First byte before the model call so proxies / the Worker itself
+        // treat this as an open stream rather than a hung request. Outline
+        // mode can sit silent for ~100s otherwise.
+        await writeEvent("start", JSON.stringify({ ok: true }));
         const result = await generateResearchNodeStream(aiConfig, input, (delta) =>
-          stream.writeSSE({ event: "token", data: JSON.stringify(delta) }),
+          writeEvent("token", JSON.stringify(delta)),
         );
-        await stream.writeSSE({ event: "final", data: JSON.stringify(result) });
+        await writeEvent("final", JSON.stringify(result));
       } catch (error) {
         console.error("[API] POST /api/research/generate-stream failed:", String(error));
         // Carry the failure trace (if any) on the error event so the client can
         // still surface how the failed run unfolded for debugging.
         const trace = error instanceof ResearchGenerationError ? error.trace : null;
-        await stream.writeSSE({
-          event: "error",
-          data: JSON.stringify({ message: String(error).slice(0, 300), trace }),
-        });
+        await writeEvent(
+          "error",
+          JSON.stringify({ message: String(error).slice(0, 300), trace }),
+        );
+      } finally {
+        beating = false;
       }
     });
   })

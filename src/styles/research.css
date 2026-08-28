@@ -168,6 +168,30 @@
   .rc-skel-line { animation: none; }
 }
 
+/* In-place retry after a failed outline (replaces the skeleton, never floats). */
+.rc-outline-retry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px;
+  margin-bottom: 28px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--danger);
+  box-shadow: 0 1px 2px rgba(15, 17, 23, 0.04), 0 4px 14px rgba(15, 17, 23, 0.05);
+}
+.rc-outline-retry p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.rc-outline-retry .rc-chip {
+  cursor: pointer;
+  user-select: none;
+}
+
 /* Top-level outline items stack vertically; each item indents its own children
    beneath a vertical rail. */
 .rc-branches {

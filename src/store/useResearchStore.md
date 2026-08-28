@@ -10,8 +10,8 @@ snapshot persistence.
   `activeNodeId`, `generating`, `projects`, `error`, `loadingProject`,
   `projectHighlighted`, `highlightedNodeId`, `traces`) and actions:
   `listProjects`, `startResearch`, `openNode`, `growChild`, `closeReading`,
-  `loadProject(id, openNodeId?)` (returns `boolean`), `newResearch`,
-  `highlightProject`, `clearProjectHighlight`.
+  `loadProject(id, openNodeId?)` (returns `boolean`), `retryOutline`,
+  `newResearch`, `highlightProject`, `clearProjectHighlight`.
 
 ## Dependencies
 - Upstream: `lib/api-client.ts` (typed RPC), `data/ids.ts`, `research/types.ts`,
@@ -32,16 +32,40 @@ snapshot persistence.
   (0 / 1.5s / 4s). `startResearch` POSTs the stub right away (not only after
   the outline lands) so a refresh mid-generation can still reopen. Later
   node edits still debounce 800ms.
-- Generation goes through `POST /api/research/generate`, which reuses the
-  user's chat provider config.
+- Outline and article generation both go through `POST /api/research/generate-stream`
+  (SSE). Outline mode ignores token frames and waits for `final`; streaming
+  keeps the Worker alive through a ~100s model call. Leaving the project or
+  starting a new one aborts the in-flight outline (`AbortController` + epoch).
 - `loadProject` returns `true` only after the snapshot is in the store. It
   tries D1 first, then the local cache; a cache hit on D1 404 / transport
   error still opens the canvas and re-POSTs so D1 can catch up. A true miss
-  keeps the welcome phase and sets a user-facing `error`. `listProjects`
-  merges server + local lists (newer `updatedAt` wins) and falls back to the
-  cache when the list request fails.
+  keeps the welcome phase and sets a user-facing `error`. If the loaded
+  snapshot is a root stub with `status: "loading"` or `"failed"` and no
+  children, it automatically resumes outline generation (`retryOutline` is
+  the same path for the in-place retry control). `listProjects` merges
+  server + local lists (newer `updatedAt` wins) and falls back to the cache
+  when the list request fails.
+
+## Functional verification
+- Start a research topic: canvas skeleton, then outline cards (streamed).
+- Refresh mid-generation: the same `?project=` reopens and resumes the outline.
+- Open a missing `?project=`: welcome error copy, composer still usable.
+- Failed outline: in-place retry on canvas + sidebar; click regenerates.
 
 ## Change history
+
+### 2026-08-28 — Resume incomplete outlines; stream outline generation
+- **Motivation**: opening `?project=rp_n8BWTsAi05` restored a stub whose root
+  was still `status: "loading"` with no children. `loadProject` set
+  `generating: false` and never called generate again, so the canvas skeleton
+  hung forever. The one-shot `POST /generate` also timed out with 0 bytes on
+  a ~100s outline call.
+- **Goal**: a deep-linked in-flight / failed outline must resume and either
+  land a tree or show an in-place retry — never an infinite skeleton.
+- **Key decision**: detect incomplete stubs in `applyLoadedSnapshot` and
+  re-run outline via the existing SSE endpoint (first `start` event keeps
+  the connection alive). `retryOutline` is the same path for the canvas /
+  sidebar retry control. Abort + epoch so a stale run cannot write back.
 
 ### 2026-08-28 — Local snapshot cache + persist retry
 - **Motivation**: `rp_mI6BYoThLD` was minted into the URL before D1 had
@@ -67,10 +91,9 @@ snapshot persistence.
 ### 2026-06-18 — Send the user's AI reply style with every generation
 - **Motivation**: the new Settings → 研究画布 → 回复风格 choice must apply to all
   research generation (outline + every content call).
-- **Key decision**: read `useResearchPrefs.getState().replyStyle` inside the two
-  generation helpers (`generate` and `generateContentStream`) and add it to the
-  request body — one place each, so all five call sites inherit it without
-  threading a param through every action.
+- **Key decision**: read `useResearchPrefs.getState().replyStyle` inside the
+  generation helper (`generateContentStream`) and add it to the request body
+  so every call site inherits it without threading a param through every action.
 
 ### 2026-06-17 — Add `askOnCanvas` for research-aware quick chat
 - **Motivation**: On the research canvas the quick chat should feed the canvas:

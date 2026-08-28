@@ -122,11 +122,13 @@ export async function generateResearchNode(
 }
 
 /**
- * Streaming variant of {@link generateResearchNode} for content mode. Streams
- * the raw model tokens through `onDelta` (so the client can render the article
- * as it arrives), then validates the full reply against the contract — with one
- * NON-streamed repair retry if the first reply is malformed. Returns the same
- * validated result shape (with trace attached) as the non-streamed path.
+ * Streaming variant of {@link generateResearchNode}. Used for content mode
+ * (live article typewriter) and outline mode (keeps the Worker request alive
+ * through a long JSON tree; the client waits for `final`, not tokens). Streams
+ * raw model tokens through `onDelta`, then validates the full reply against
+ * the contract — with one NON-streamed repair retry if the first reply is
+ * malformed. Returns the same validated result shape (with trace attached) as
+ * the non-streamed path.
  *
  * Note: when the streamed reply fails the contract, the (bad) tokens have
  * already reached the client; the repair runs non-streamed and its

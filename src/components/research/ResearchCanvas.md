@@ -11,7 +11,8 @@ indented under its parent along a vertical rail.
 
 ## Dependencies
 - Upstream: `store/useResearchStore.ts`, `ResearchNodeCard.tsx`, `research/types.ts`,
-  `ResearchTraceLauncher.tsx` (the "查看大纲生成过程" debug entry).
+  `ResearchTraceLauncher.tsx` (the "查看大纲生成过程" debug entry),
+  `icons/icons.tsx` (`redo` on the failed-outline retry).
 - Downstream: `components/research/ResearchView.tsx`.
 
 ## Key implementation notes
@@ -33,6 +34,14 @@ indented under its parent along a vertical rail.
   the scroll phase), not only once the reading overlay opens ~1s later.
 
 ## Change history
+
+### 2026-08-28 — In-place retry when the outline failed
+- **Motivation**: a deep-linked stub whose outline never landed sat on the
+  skeleton forever; after a failed resume the canvas still had no way to retry.
+- **Goal**: show an in-place retry (not a floating pill) when the root is
+  `failed` with no children; keep the skeleton only while `loading`.
+- **Key decision**: `rootFailed` replaces the skeleton with `.rc-outline-retry`
+  + `retryOutline`; the sidebar has a matching control.
 
 ### 2026-07-01 — Skeleton loading state in the main content area
 - **Motivation**: While the AI generated the outline, the sidebar showed a

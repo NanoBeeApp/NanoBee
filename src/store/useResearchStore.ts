@@ -92,6 +92,12 @@ interface ResearchState {
    * canvas banner must not run on a 404 / transport failure.
    */
   loadProject: (id: string, openNodeId?: string) => Promise<boolean>;
+  /**
+   * Re-run outline generation for the open project. Used when a deep link
+   * reopens a stub whose outline never finished, and by the in-place retry
+   * control after a failed run. No-ops while an outline run is already in flight.
+   */
+  retryOutline: () => Promise<void>;
   newResearch: () => void;
   /** Highlight the open project's banner on the canvas (sidebar selection). */
   highlightProject: () => void;
@@ -130,6 +136,32 @@ function outlineToNodes(
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 const PERSIST_RETRY_MS = [0, 1500, 4000];
+/** Outline can take one model call + one repair (each up to 150s). Abort a
+ *  hung client wait a bit after that so the skeleton cannot last forever. */
+const OUTLINE_CLIENT_TIMEOUT_MS = 330_000;
+/** Bumped on every outline run so a stale in-flight result cannot land on a
+ *  project the user has already left (or on a newer retry of the same one). */
+let outlineEpoch = 0;
+/** Aborts the in-flight outline stream when the user leaves or retries. */
+let outlineAbort: AbortController | null = null;
+
+function bumpOutlineEpoch(): void {
+  outlineEpoch += 1;
+  outlineAbort?.abort();
+  outlineAbort = null;
+}
+
+/** True when the snapshot is only a root stub whose outline never landed —
+ *  `status: "loading"` mid-generation, or `"failed"` after a dead run. Loading
+ *  that stub must resume generation; otherwise the canvas skeleton hangs forever. */
+function outlineIsIncomplete(snap: Pick<ResearchSnapshot, "nodes" | "order">): boolean {
+  const rootId = snap.order[0];
+  const root = rootId ? snap.nodes[rootId] : undefined;
+  if (!root) return false;
+  const hasChildren = snap.order.some((id) => snap.nodes[id]?.parentId === rootId);
+  if (hasChildren) return false;
+  return root.status === "loading" || root.status === "failed";
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -178,63 +210,109 @@ export const useResearchStore = create<ResearchState>((set, get) => {
   }
 
   function applyLoadedSnapshot(snap: ResearchSnapshot, openNodeId?: string): void {
+    // Drop any in-flight outline for a previous project before hydrating.
+    bumpOutlineEpoch();
     const willOpen = openNodeId && snap.nodes[openNodeId] ? openNodeId : null;
+    const resumeOutline = outlineIsIncomplete(snap);
+    const nodes = resumeOutline
+      ? {
+          ...snap.nodes,
+          [snap.order[0]]: { ...snap.nodes[snap.order[0]], status: "loading" as const },
+        }
+      : snap.nodes;
     set({
       phase: "canvas",
       projectId: snap.projectId,
       title: snap.title,
       topic: snap.topic,
-      nodes: snap.nodes,
+      nodes,
       order: snap.order,
       activeNodeId: willOpen,
-      generating: false,
+      generating: resumeOutline,
       error: null,
       loadingProject: false,
       projectHighlighted: false,
       highlightedNodeId: willOpen,
       traces: {},
     });
-    if (willOpen) void get().openNode(willOpen);
-  }
-
-  /**
-   * Call the (non-streamed) generation endpoint. Returns the validated result
-   * (null on failure) AND the execution trace when present — the failure path
-   * still carries a trace (in the error body) so the UI can debug a failed run.
-   */
-  async function generate(body: {
-    topic: string;
-    question?: string;
-    context?: string;
-    focusTerm?: string;
-    generationMode?: "outline" | "content";
-  }): Promise<{ result: ResearchGenerationResult | null; trace: ResearchGenerationTrace | null }> {
-    try {
-      // Apply the user's chosen reply style (科普 / 专业 / 简练) to every request.
-      const style = useResearchPrefs.getState().replyStyle;
-      const res = await apiClient.research.generate.$post({ json: { ...body, style } });
-      if (!res.ok) {
-        // The 502 error body may still carry a failure trace for debugging.
-        const body = (await res.json().catch(() => null)) as
-          | { trace?: ResearchGenerationTrace | null }
-          | null;
-        console.error("[research] generate failed: HTTP", String(res.status));
-        return { result: null, trace: body?.trace ?? null };
-      }
-      const result = (await res.json()) as ResearchGenerationResult;
-      return { result, trace: result.trace ?? null };
-    } catch (error) {
-      console.error("[research] generate failed:", String(error));
-      return { result: null, trace: null };
+    if (willOpen && !resumeOutline) void get().openNode(willOpen);
+    // Resume in-place — do not go through retryOutline, whose in-flight guard
+    // would no-op because we just set generating + status:"loading".
+    if (resumeOutline) {
+      console.error("[research] loadProject: incomplete outline, resuming", snap.projectId);
+      void runOutlineGeneration();
     }
   }
 
   /**
-   * Stream a content-mode generation. Calls `onContent` with the article body
-   * decoded so far on every token (drives the reading overlay's typewriter), and
-   * resolves with the authoritative validated result once the `final` event
-   * arrives. Returns null on transport/stream error. The non-streamed `generate`
-   * above still backs outline mode (a tree, not a typed-out body).
+   * Drive one outline run for the currently open project. Streams so the
+   * Worker stays alive through a long model call; a stale epoch (user left, or
+   * a newer retry started) discards the result instead of writing it back.
+   */
+  async function runOutlineGeneration(): Promise<void> {
+    bumpOutlineEpoch();
+    const epoch = outlineEpoch;
+    const s = get();
+    const rootId = s.order[0];
+    const topic = s.topic;
+    if (!rootId || !topic) return;
+
+    const controller = new AbortController();
+    outlineAbort = controller;
+    const timeoutId = setTimeout(() => controller.abort(), OUTLINE_CLIENT_TIMEOUT_MS);
+    const { result, trace } = await generateContentStream(
+      { topic, generationMode: "outline" },
+      () => {},
+      controller.signal,
+    );
+    clearTimeout(timeoutId);
+    if (outlineAbort === controller) outlineAbort = null;
+    if (epoch !== outlineEpoch || get().projectId !== s.projectId) return;
+
+    if (trace) set((st) => ({ traces: { ...st.traces, [rootId]: trace } }));
+    if (!result || !result.outline?.length) {
+      const reason = result
+        ? "empty outline"
+        : controller.signal.aborted
+          ? "client timeout"
+          : "transport or stream error";
+      console.error("[research] outline generation failed:", reason);
+      set((st) => {
+        const root = st.nodes[rootId];
+        if (!root) return { generating: false };
+        return {
+          generating: false,
+          error: null,
+          nodes: { ...st.nodes, [rootId]: { ...root, status: "failed" } },
+        };
+      });
+      schedulePersist();
+      return;
+    }
+
+    const root = get().nodes[rootId];
+    if (!root) return;
+    const nodes: Record<string, ResearchNode> = {
+      [rootId]: {
+        ...root,
+        status: "ready",
+        questions: result.questions,
+        tags: result.tags,
+      },
+    };
+    const order = [rootId];
+    outlineToNodes(result.outline, rootId, 1, nodes, order);
+    set({ nodes, order, generating: false, error: null });
+    schedulePersist();
+  }
+
+  /**
+   * Stream a generation (content or outline). For content mode, `onContent` is
+   * called with the article body decoded so far on every token (the reading
+   * overlay typewriter). Outline mode ignores tokens and waits for `final` —
+   * streaming still keeps the Worker alive through a long model call. Resolves
+   * with the validated result once `final` arrives; null on transport/stream
+   * error. A `start` SSE frame (no payload the client needs) is ignored.
    */
   async function generateContentStream(
     body: {
@@ -243,17 +321,21 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       context?: string;
       focusTerm?: string;
       focusParagraph?: string;
+      generationMode?: "outline" | "content";
     },
     onContent: (partial: string) => void,
+    signal?: AbortSignal,
   ): Promise<{ result: ResearchGenerationResult | null; trace: ResearchGenerationTrace | null }> {
     try {
       // Apply the user's chosen reply style (科普 / 专业 / 简练) to every request.
       const style = useResearchPrefs.getState().replyStyle;
+      const generationMode = body.generationMode ?? "content";
       const res = await fetch("/api/research/generate-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ ...body, generationMode: "content", style }),
+        body: JSON.stringify({ ...body, generationMode, style }),
+        signal,
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
@@ -302,7 +384,10 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         }
         const data = dataParts.join("");
         if (!data) return;
+        if (event === "start" || event === "ping") return;
         if (event === "token") {
+          // Outline JSON is a tree, not a typed-out body — skip live extract.
+          if (generationMode !== "content") return;
           try {
             raw += JSON.parse(data) as string;
             scheduleEmit(extractStreamingContent(raw));
@@ -359,6 +444,9 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       const finalResult = result as ResearchGenerationResult | null;
       return { result: finalResult, trace: finalResult?.trace ?? null };
     } catch (error) {
+      if (signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
+        return { result: null, trace: null };
+      }
       console.error("[research] generateContentStream failed:", String(error));
       return { result: null, trace: null };
     }
@@ -403,6 +491,8 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     startResearch: async (topicRaw) => {
       const topic = topicRaw.trim();
       if (!topic) return;
+      // Drop any in-flight outline before swapping the open project.
+      bumpOutlineEpoch();
       const projectId = nextId("rp");
       const rootId = nextId("rn");
       const root: ResearchNode = {
@@ -440,33 +530,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       };
       cacheSnapshot(stub);
       void persistNow();
-
-      const { result, trace } = await generate({ topic, generationMode: "outline" });
-      // Stash the outline-generation trace under the root node id (even on
-      // failure) so the canvas can open the "生成过程" debug modal.
-      if (trace) set((s) => ({ traces: { ...s.traces, [rootId]: trace } }));
-      if (!result || !result.outline?.length) {
-        set((s) => ({
-          generating: false,
-          error: result ? "AI 未能生成大纲，请重试" : "生成失败，请检查 AI 配置后重试",
-          nodes: { ...s.nodes, [rootId]: { ...s.nodes[rootId], status: "failed" } },
-        }));
-        schedulePersist();
-        return;
-      }
-
-      const nodes: Record<string, ResearchNode> = {
-        [rootId]: {
-          ...root,
-          status: "ready",
-          questions: result.questions,
-          tags: result.tags,
-        },
-      };
-      const order = [rootId];
-      outlineToNodes(result.outline, rootId, 1, nodes, order);
-      set({ nodes, order, generating: false });
-      schedulePersist();
+      await runOutlineGeneration();
     },
 
     openNode: async (id) => {
@@ -776,7 +840,26 @@ export const useResearchStore = create<ResearchState>((set, get) => {
       }
     },
 
+    retryOutline: async () => {
+      const s = get();
+      const rootId = s.order[0];
+      const root = rootId ? s.nodes[rootId] : undefined;
+      if (!root || !s.topic) return;
+      if (s.generating && root.status === "loading") return;
+      const hasChildren = s.order.some((id) => s.nodes[id]?.parentId === rootId);
+      if (hasChildren && root.status !== "failed") return;
+
+      set({
+        generating: true,
+        error: null,
+        nodes: { ...s.nodes, [rootId]: { ...root, status: "loading" } },
+      });
+      schedulePersist();
+      await runOutlineGeneration();
+    },
+
     newResearch: () => {
+      bumpOutlineEpoch();
       set({
         phase: "welcome",
         projectId: null,
