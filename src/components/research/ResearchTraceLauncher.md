@@ -21,8 +21,16 @@ container half of the container/presentational split with `ResearchTraceModal`.
 - Pure entry point: it only opens the modal — the trace itself is read from the
   store by the host component and passed in as a prop, so this stays stateless
   apart from the boolean open flag.
+- `placement="content"` is in-flow inside `.rc-reading-scroll` (above the
+  title). `placement="outline"` stays tucked under the canvas banner.
 
 ## Change history
+
+### 2026-08-28 — Content placement in document flow
+- **Motivation**: absolute top-left positioning overlapped the reading title.
+- **Goal**: content placement occupies flow so the heading stays fully visible.
+- **Key decision**: CSS only (`.rc-trace-open--content` drops `position:
+  absolute`); the host moves the launcher into the scroll column.
 
 ### 2026-06-15 — created
 - **Motivation**: both the canvas (outline) and the reading overlay (article)

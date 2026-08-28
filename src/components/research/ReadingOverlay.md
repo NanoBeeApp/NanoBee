@@ -19,6 +19,8 @@ backdrop.
 - Structure: a `.rc-reading-scrim` backdrop flex-centers the `.rc-reading` sheet;
   clicking the backdrop closes, clicking the sheet `stopPropagation`s. White
   background, chrome minimized (floating close button, no header/footer bars).
+  The generation-trace entry sits in the scroll flow above the title (and the
+  back-to-parent button when present), not as a floating overlay.
 - Shows loading / failed / root-hint states. While the article streams, the
   body renders its partial content (any text → `<Markdown>`); the spinner only
   shows before the first token lands (`loading && !content`), and a blinking
@@ -27,6 +29,18 @@ backdrop.
   (`!loading`).
 
 ## Change history
+
+### 2026-08-28 — Trace entry no longer overlaps the title
+- **Motivation**: the content-placement "查看生成过程" pill was `position:
+  absolute` at the sheet's top-left, so it sat on top of the article title
+  (especially on the root node, which has no back-to-parent button to push the
+  heading down).
+- **Goal**: keep the debug entry reachable without covering the heading.
+- **Key decision**: move `<ResearchTraceLauncher placement="content">` into
+  `.rc-reading-scroll`, above the back button / title, so it occupies document
+  flow like `.rc-reading-back`. The close button stays floating (title already
+  has `padding-right`). The modal still portals, so nesting the launcher in
+  the scroller does not clip it.
 
 ### 2026-06-15 — "查看生成过程" debug entry for the article
 - **Motivation**: the user wants to inspect, from the article detail panel, how

@@ -135,10 +135,6 @@ export function ReadingOverlay() {
         className="rc-reading"
         data-testid="research-reading-overlay"
         onClick={(e) => e.stopPropagation()}>
-        {/* Debug entry: inspect how the AI generated this article. Floats at the
-            top-left (mirrors the close button), shown once a trace exists. */}
-        {nodeTrace && <ResearchTraceLauncher trace={nodeTrace} placement="content" />}
-
         <button
           className="rc-reading-close"
           onClick={closeReading}
@@ -148,6 +144,11 @@ export function ReadingOverlay() {
         </button>
 
         <div className="rc-reading-scroll" ref={scrollRef}>
+          {/* Debug entry: inspect how the AI generated this article. Flows above
+              the title (and back button) so it never overlaps the heading.
+              Shown once a trace exists. */}
+          {nodeTrace && <ResearchTraceLauncher trace={nodeTrace} placement="content" />}
+
           {/* Back to the parent node: only when this node has a parent. Lets the
               reader pop up one level (after deep-diving a term) without closing.
               Flows above the title so it never overlaps it. */}

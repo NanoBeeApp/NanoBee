@@ -121,6 +121,9 @@
    of the banner block. */
 .rc-trace-open--outline { align-self: flex-start; margin: -18px 0 26px; }
 
-/* Content placement: floats at the reading panel's top-left, mirroring the
-   top-right close button. */
-.rc-trace-open--content { position: absolute; top: 12px; left: 16px; z-index: 2; }
+/* Content placement: in the reading scroll flow, above the title. Capped so a
+   long label cannot crowd the floating close button on the right. */
+.rc-trace-open--content {
+  max-width: calc(100% - 44px);
+  margin-bottom: 12px;
+}
