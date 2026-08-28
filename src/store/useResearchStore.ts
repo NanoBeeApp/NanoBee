@@ -36,6 +36,8 @@ interface ResearchState {
   /** Saved projects for the sidebar list. */
   projects: ResearchProjectMeta[];
   error: string | null;
+  /** True while a deep-link / sidebar `loadProject` request is in flight. */
+  loadingProject: boolean;
   /** Transient purple-border highlight on the canvas project banner. Turned on
    *  ONLY by clicking a project in the sidebar list; any other interaction
    *  (opening a node, loading/creating a project, clicking the canvas) clears it. */
@@ -74,8 +76,12 @@ interface ResearchState {
     onContent?: (partial: string) => void,
   ) => Promise<{ content: string } | null>;
   closeReading: () => void;
-  /** Load a project; optionally open `openNodeId`'s reading overlay (deep link). */
-  loadProject: (id: string, openNodeId?: string) => Promise<void>;
+  /**
+   * Load a project; optionally open `openNodeId`'s reading overlay (deep link).
+   * Returns whether the snapshot actually landed — callers that highlight the
+   * canvas banner must not run on a 404 / transport failure.
+   */
+  loadProject: (id: string, openNodeId?: string) => Promise<boolean>;
   newResearch: () => void;
   /** Highlight the open project's banner on the canvas (sidebar selection). */
   highlightProject: () => void;
@@ -317,6 +323,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     generating: false,
     projects: [],
     error: null,
+    loadingProject: false,
     projectHighlighted: false,
     highlightedNodeId: null,
     traces: {},
@@ -329,6 +336,10 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         set({ projects: data.projects });
       } catch (error) {
         console.error("[research] listProjects failed:", String(error));
+        // Don't clobber a more specific deep-link load error that raced us.
+        if (!get().error) {
+          set({ error: "研究项目列表加载失败，请稍后重试。" });
+        }
       }
     },
 
@@ -355,6 +366,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         activeNodeId: null,
         generating: true,
         error: null,
+        loadingProject: false,
         projectHighlighted: false,
         highlightedNodeId: null,
         traces: {},
@@ -651,8 +663,17 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     closeReading: () => set({ activeNodeId: null }),
 
     loadProject: async (id, openNodeId) => {
+      set({ loadingProject: true, error: null });
       try {
         const res = await apiClient.research.snapshots[":id"].$get({ param: { id } });
+        if (res.status === 404) {
+          console.error("[research] loadProject failed: HTTP 404");
+          set({
+            loadingProject: false,
+            error: "找不到这个研究项目，可能已被删除或属于其他账号。",
+          });
+          return false;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as { snapshot: ResearchSnapshot };
         const snap = data.snapshot;
@@ -669,6 +690,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
           activeNodeId: willOpen,
           generating: false,
           error: null,
+          loadingProject: false,
           // Programmatic / deep-link load starts unhighlighted; the sidebar
           // click handler re-enables the highlight after this resolves.
           projectHighlighted: false,
@@ -680,8 +702,14 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         });
         // A bookmarked node that was never filled in still needs its article.
         if (willOpen) void get().openNode(willOpen);
+        return true;
       } catch (error) {
         console.error("[research] loadProject failed:", String(error));
+        set({
+          loadingProject: false,
+          error: "研究项目加载失败，请稍后重试。",
+        });
+        return false;
       }
     },
 
@@ -696,6 +724,7 @@ export const useResearchStore = create<ResearchState>((set, get) => {
         activeNodeId: null,
         generating: false,
         error: null,
+        loadingProject: false,
         projectHighlighted: false,
         highlightedNodeId: null,
         traces: {},

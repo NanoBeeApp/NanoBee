@@ -7,10 +7,11 @@ snapshot persistence.
 
 ## Core exports / API
 - `useResearchStore` with state (`phase`, `projectId`, `nodes`, `order`,
-  `activeNodeId`, `generating`, `projects`, `error`, `projectHighlighted`,
-  `highlightedNodeId`, `traces`) and actions: `listProjects`, `startResearch`, `openNode`,
-  `growChild`, `closeReading`, `loadProject(id, openNodeId?)`, `newResearch`,
-  `highlightProject`, `clearProjectHighlight`, `focusAndOpenNode`.
+  `activeNodeId`, `generating`, `projects`, `error`, `loadingProject`,
+  `projectHighlighted`, `highlightedNodeId`, `traces`) and actions:
+  `listProjects`, `startResearch`, `openNode`, `growChild`, `closeReading`,
+  `loadProject(id, openNodeId?)` (returns `boolean`), `newResearch`,
+  `highlightProject`, `clearProjectHighlight`.
 
 ## Dependencies
 - Upstream: `lib/api-client.ts` (typed RPC), `data/ids.ts`, `research/types.ts`,
@@ -29,8 +30,24 @@ snapshot persistence.
   saves are debounced (800ms).
 - Generation goes through `POST /api/research/generate`, which reuses the
   user's chat provider config.
+- `loadProject` returns `true` only after the snapshot is in the store. A 404
+  keeps the current phase (usually welcome) and sets a user-facing `error`;
+  other transport failures do the same with a retry message. `listProjects`
+  failures set `error` only when none is already set, so they cannot overwrite
+  a more specific deep-link 404.
 
 ## Change history
+
+### 2026-08-28 — Surface load/list failures instead of a silent welcome
+- **Motivation**: a bookmarked `?project=` that 404s (or a D1/list outage) left
+  the welcome screen looking like "no projects", with the failure only in the
+  console — the page felt like it "wouldn't open".
+- **Goal**: tell the user why the deep link didn't load, and keep the canvas
+  banner highlight from firing on a failed load.
+- **Key decision**: `loadProject` now returns `boolean`, sets `loadingProject`
+  while in flight, and writes a specific 404 / transport `error`. `listProjects`
+  only fills `error` when none is already set, so a racing deep-link 404 isn't
+  overwritten by the generic list-failure copy.
 
 ### 2026-06-18 — Send the user's AI reply style with every generation
 - **Motivation**: the new Settings → 研究画布 → 回复风格 choice must apply to all

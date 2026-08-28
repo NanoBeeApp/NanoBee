@@ -39,8 +39,16 @@ Starting a new research project is the sidebar header's page-aware "new" button
   purple selection ring. For a fresh load it is set in `loadProject(id).then(...)`
   (loadProject clears the flag while swapping snapshots, so setting it after the
   promise resolves avoids the race); the already-open branch sets it synchronously.
+  The `.then` only highlights when `loadProject` returns `true`, so a 404 /
+  transport failure does not paint a selection ring on an empty canvas.
 
 ## Change history
+
+### 2026-08-28 — Don't highlight the banner after a failed load
+- **Motivation**: `loadProject` now returns whether the snapshot landed; highlighting
+  after a 404 would flash a ring on the welcome screen / empty canvas.
+- **Goal**: only call `highlightProject` on a successful load.
+- **Key decision**: `loadProject(id).then((ok) => { if (ok) highlightProject(); })`.
 
 ### 2026-06-13 — created
 - **Motivation**: per the user request that each page's sidebar reflect its own

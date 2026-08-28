@@ -16,6 +16,8 @@ export function ResearchWelcome() {
   const projects = useResearchStore((s) => s.projects);
   const listProjects = useResearchStore((s) => s.listProjects);
   const loadProject = useResearchStore((s) => s.loadProject);
+  const error = useResearchStore((s) => s.error);
+  const loadingProject = useResearchStore((s) => s.loadingProject);
 
   useEffect(() => {
     void listProjects();
@@ -36,6 +38,17 @@ export function ResearchWelcome() {
         <p className="rc-welcome-sub">
           说出你想研究的领域，AI 会自动铺开核心知识点大纲；逐节点深读，沿好奇心继续生长。
         </p>
+
+        {loadingProject && (
+          <p className="rc-welcome-status" data-testid="research-load-status">
+            正在打开研究项目…
+          </p>
+        )}
+        {error && (
+          <p className="rc-welcome-error" role="alert" data-testid="research-load-error">
+            {error}
+          </p>
+        )}
 
         <div className="rc-welcome-input">
           <input

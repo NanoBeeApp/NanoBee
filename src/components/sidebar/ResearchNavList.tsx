@@ -69,7 +69,9 @@ export function ResearchNavList() {
       setBrowsing(false);
       highlightProject();
     } else {
-      void loadProject(id).then(() => highlightProject());
+      void loadProject(id).then((ok) => {
+        if (ok) highlightProject();
+      });
     }
   };
 

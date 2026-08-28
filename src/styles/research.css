@@ -319,6 +319,15 @@
   margin: 0 auto 26px;
   max-width: 480px;
 }
+.rc-welcome-status,
+.rc-welcome-error {
+  margin: -10px auto 18px;
+  max-width: 480px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.rc-welcome-status { color: var(--ink-3); }
+.rc-welcome-error { color: var(--danger); }
 .rc-welcome-input {
   display: flex;
   gap: 8px;
